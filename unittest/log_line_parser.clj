@@ -1,4 +1,4 @@
-(ns unittest.log-line-parser-unittest
+(ns unittest.log-line-parser
     (:use testing.core
         log-collector.log-line-parser
         clojure.java.io 
