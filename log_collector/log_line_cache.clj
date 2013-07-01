@@ -5,4 +5,8 @@
 (def ^:private cache (atom #{}))
 
 (defn cache-log-line [l]
+    (when-not (@cache (:timestamp l))
+        (swap! cache conj (:timestamp l))
+        l
+    )
 )
