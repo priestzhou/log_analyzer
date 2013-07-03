@@ -55,3 +55,4 @@ env.install(env.compileAndJar('log_analyzer_hadoop_adapt.jar', 'hadoop_adapt',
     env.File('$EXTLIB/lib-for-hadoop/commons-lang-2.4.jar')
     ],
     standalone=True, manifest={'Main-Class': 'hadoop_adapt.jobtracker'}))
+
