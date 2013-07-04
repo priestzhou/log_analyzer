@@ -26,17 +26,12 @@ env.install(env.compileAndJar('log_analyzer_smoketest.jar', 'smoketest',
         env.File('$BUILD_DIR/kfktools.jar'),
     ],
     standalone=True, manifest={'Main-Class': 'smoketest.main'}))
-
 env.install(env.compileAndJar('log_analyzer_web.jar', 'web',
     libs=[env['CLOJURE'],
-    env.File('$EXTLIB/jetty-http-7.6.1.v20120215.jar'),
-    env.File('$EXTLIB/jetty-io-7.6.1.v20120215.jar'),
-    env.File('$EXTLIB/jetty-server-7.6.1.v20120215.jar'),
-    env.File('$EXTLIB/jetty-util-7.6.1.v20120215.jar'),
-    env.File('$EXTLIB/ring-core-1.1.8.jar'),
-    env.File('$EXTLIB/ring-jetty-adapter-1.1.8.jar'),
-    env.File('$EXTLIB/ring-servlet-1.1.8.jar'),
-    env.File('$EXTLIB/javax.servlet-2.5.0.v201103041518.jar'),
-    env.File('$EXTLIB/jetty-continuation-7.6.1.v20120215.jar')
+    env.File('$EXTLIB/ring-1.1.8.jar'),
+    env.File('$EXTLIB/ring-jetty-adapter-1.1.8.jar')
     ],
     standalone=True, manifest={'Main-Class': 'web.main'}))
+env.install(env.compileAndJar('log_analyzer_consumer.jar', 'log_consumer',
+    libs=[env['CLOJURE']],
+    standalone=True, manifest={'Main-Class': 'log_consumer.main'}))

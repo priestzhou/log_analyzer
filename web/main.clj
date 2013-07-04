@@ -1,5 +1,6 @@
 (ns web.main
     (:use ring.adapter.jetty)
+    (:gen-class)
 )
 
 (defn app
