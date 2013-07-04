@@ -1,4 +1,4 @@
-(ns unittest.log-line-cache
+(ns unittest.log-collector.log-line-cache
     (:use testing.core
         log-collector.log-line-cache
     )
