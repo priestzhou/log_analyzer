@@ -131,7 +131,7 @@
         ["get_hdfs_read",filter-HDFSREAD,parse-hdfsread]
     ]
 )
- 
+
 
 (defn- get-filter [rule]
     (nth rule 1)
@@ -161,7 +161,6 @@
                 )
             )
         )
-
     ) 
 )
 
@@ -220,3 +219,4 @@
         (reduce concat)
     )
 )
+
