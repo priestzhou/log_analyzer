@@ -30,7 +30,7 @@
     (concat "HDFS_READ" "adf")
 )
 
-(def app 
+(def parse-rules 
     [
         ["rule_filter",filter-userless-log,just-skip],
         ["get_hdfs_write",filter-HDFSWRITE,gen-json-for-hdfswrite],

@@ -15,5 +15,5 @@
 
 
 (defn -main [& arg]
-    (println (parse-log app teststr))
+    (println (parse-log parse-rules teststr))
 )
