@@ -12,8 +12,6 @@
 )
 
 
-
-
 (defn -main [& arg]
     (println (parse-log parse-rules teststr))
 )
