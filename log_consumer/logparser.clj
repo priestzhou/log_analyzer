@@ -19,7 +19,15 @@
 )
 
 (defn- parse-hdfswrite [instr]
-    (concat "HDFS_WRITE" "adf")
+    (let [srcip (re-find #"(?<=src: /)[0-9.]+(?=:)" instr)
+        destip (re-find #"(?<=dest: /)[0-9.]+(?=:)" instr)
+        filesize (re-find #"(?<=bytes: )[0-9]+" instr)]
+        {
+            "srcip" (str destip),"destip" (str srcip ),
+            "filesize"  (read-string filesize), "tag" "write"
+        }
+
+    )
 )
 
 (defn- filter-HDFSREAD [instr]
@@ -32,7 +40,7 @@
         filesize (re-find #"(?<=bytes: )[0-9]+" instr)]
         {
             "srcip" (str srcip),"destip" (str destip),
-            "filesize"  (read-string filesize), "tag" "read1"
+            "filesize"  (read-string filesize), "tag" "read"
         }
 
     )
@@ -83,12 +91,12 @@
 
 (def parse-rules 
     [
-        ["get_hdfs_read",filter-HDFSREAD,parse-hdfsread],
-        ["rule_filter",filter-userless-log,just-skip]
-
+        ["rule_filter",filter-userless-log,just-skip],
+        ["get_hdfs_write",filter-HDFSWRITE,parse-hdfswrite],
+        ["get_hdfs_read",filter-HDFSREAD,parse-hdfsread]
     ]
 )
- (comment ["get_hdfs_write",filter-HDFSWRITE,parse-hdfswrite],)
+ 
 
 (defn- get-filter [rule]
     (nth rule 1)
@@ -126,9 +134,8 @@
     (->> 
         loglist
         (filter 
-            #(<  1 (count %))
+            #(not (empty? (first %)))
         )
-        concat
-        first
+        (reduce concat)
     )
 )
