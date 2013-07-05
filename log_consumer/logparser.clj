@@ -104,11 +104,18 @@
             f-fitler (get-filter tr)
             f-parse (get-parse tr)
             log-group (group-by f-fitler logs)
-            t-logs (val (find log-group true) )
-            f-logs (val (find log-group false) )
-            this-re (map f-parse t-logs)]
-            (concat [this-re] 
-                (parse-log (rest rules) f-logs)
+            t-logs (find log-group true) 
+            f-logs (find log-group false)
+            this-re (if (nil? t-logs) 
+                    []
+                    (map f-parse (val t-logs))
+                )
+            ]
+            (concat [this-re]
+                (if (nil? f-logs) 
+                    []
+                    (parse-log (rest rules) (val f-logs))
+                )
             )
         )
 
