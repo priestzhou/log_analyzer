@@ -1,29 +1,29 @@
 (ns log-consumer.logparser)
 
-(defn- common-filter [pstr,str]
-    (if (re-find pstr str)
+(defn- common-filter [pstr,instr]
+    (if (re-find pstr instr)
         true
         false
     )
 )
 
-(defn- filter-userless-log [str]
-    (not (common-filter #"clienttrace" str) )
+(defn- filter-userless-log [instr]
+    (not (common-filter #"clienttrace" instr) )
 )
 
-(defn- just-skip [str]
+(defn- just-skip [instr]
     []
 )
-(defn- filter-HDFSWRITE [str]
-    (common-filter #"HDFS_WRITE" str)
+(defn- filter-HDFSWRITE [instr]
+    (common-filter #"HDFS_WRITE" instr)
 )
 
-(defn- parse-hdfswrite [str]
+(defn- parse-hdfswrite [instr]
     (concat "HDFS_WRITE" "adf")
 )
 
-(defn- filter-HDFSREAD [str]
-    (common-filter #"HDFS_READ" str)
+(defn- filter-HDFSREAD [instr]
+    (common-filter #"HDFS_READ" instr)
 )
 
 (defn- parse-hdfsread [instr]
