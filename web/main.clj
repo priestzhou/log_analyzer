@@ -11,10 +11,14 @@
 (defn app
     [{:keys [uri]}]
     {:body 
-        (format "You requested %s" 
-            (count
-                (parse-log parse-rules @logcahe)
+        (->>  
+            (parse-log parse-rules @logcahe)
+            (filter 
+                #(<  1 (count %))
             )
+            concat
+            first
+            gen-json
         )
 
     }
@@ -22,12 +26,22 @@
 
 (defn -main []
     (run-jetty #'app {:port 8085 :join? false})
-    (Thread/sleep 20000)
+    (Thread/sleep 2000)
     (reset! logcahe 
         (.split
             (slurp "/Users/zhangjun/Desktop/code/fs/log_analyzer/log_consumer/test.log") 
          "\n"
         )
+    )
+    (->> 
+        (parse-log parse-rules @logcahe)
+        (filter 
+                #(<  1 (count %))
+        )
+            concat
+            first
+            gen-json
+            println
     )
 )
 
