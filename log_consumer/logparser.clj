@@ -121,3 +121,14 @@
 
     ) 
 )
+
+(defn after-parse [loglist]
+    (->> 
+        loglist
+        (filter 
+            #(<  1 (count %))
+        )
+        concat
+        first
+    )
+)

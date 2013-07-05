@@ -14,11 +14,7 @@
             (slurp fpath)
             (#(.split % "\n"))
             (parse-log parse-rules)
-                        (filter 
-                #(<  1 (count %))
-            )
-            concat
-            first
+            after-parse
             (reset! log-atom)
         )
     )
