@@ -29,7 +29,8 @@ env.install(env.compileAndJar('log_analyzer_smoketest.jar', 'smoketest',
 env.install(env.compileAndJar('log_analyzer_web.jar', 'web',
     libs=[env['CLOJURE'],
     env.File('$EXTLIB/ring-1.1.8.jar'),
-    env.File('$EXTLIB/ring-jetty-adapter-1.1.8.jar')
+    env.File('$EXTLIB/ring-jetty-adapter-1.1.8.jar'),
+    env.File('$BUILD_DIR/log_analyzer_consumer.jar')    
     ],
     standalone=True, manifest={'Main-Class': 'web.main'}))
 env.install(env.compileAndJar('log_analyzer_consumer.jar', 'log_consumer',
