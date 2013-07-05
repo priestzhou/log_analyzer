@@ -21,16 +21,13 @@
 )
 
 (defn -main []
-    (println logcahe)
     (run-jetty #'app {:port 8085 :join? false})
     (Thread/sleep 20000)
-    (println "sleep over")
     (reset! logcahe 
         (.split
             (slurp "/Users/zhangjun/Desktop/code/fs/log_analyzer/log_consumer/test.log") 
          "\n"
         )
     )
-    (println (count @logcahe))
 )
 

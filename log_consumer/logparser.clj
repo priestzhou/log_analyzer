@@ -26,15 +26,15 @@
     (common-filter #"HDFS_READ" str)
 )
 
-(defn- gen-json-for-hdfread [str]
+(defn- gen-json-for-hdfsread [str]
     (concat "HDFS_READ" "adf")
 )
 
 (def parse-rules 
     [
         ["rule_filter",filter-userless-log,just-skip],
-        ["get_hdfs_write",filter-HDFSWRITE,gen-json-for-hdfswrite],
-        ["get_hdfs_read",filter-HDFSREAD,gen-json-for-hdfread]
+        (comment ["get_hdfs_write",filter-HDFSWRITE,gen-json-for-hdfswrite],)
+        ["get_hdfs_read",filter-HDFSREAD,gen-json-for-hdfsread]
     ]
 )
 
