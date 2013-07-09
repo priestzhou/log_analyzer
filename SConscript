@@ -36,3 +36,13 @@ env.install(env.compileAndJar('log_analyzer_web.jar', 'web',
 env.install(env.compileAndJar('log_analyzer_consumer.jar', 'log_consumer',
     libs=[env['CLOJURE']],
     standalone=True, manifest={'Main-Class': 'log_consumer.main'}))
+env.install(env.compileAndJar('log_analyzer_hadoop_adapt.jar', 'hadoop_adapt',
+    libs=[env['CLOJURE'],
+    env.File('$EXTLIB/hadoop-core-1.1.2.jar'),
+    env.File('$EXTLIB/lib-for-hadoop/jackson-mapper-asl-1.8.8.jar'),
+    env.File('$EXTLIB/lib-for-hadoop/jackson-core-asl-1.8.8.jar'),
+    env.File('$EXTLIB/lib-for-hadoop/commons-logging-1.1.1.jar'),
+    env.File('$EXTLIB/lib-for-hadoop/commons-configuration-1.6.jar'),
+    env.File('$EXTLIB/lib-for-hadoop/commons-lang-2.4.jar')
+    ],
+    standalone=True, manifest={'Main-Class': 'hadoop_adapt.jobtracker'}))
