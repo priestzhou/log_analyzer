@@ -1,9 +1,9 @@
-(ns log-consumer.tasktracker_log_parser.clj
+(ns log-consumer.tasktracker-log-parser
     (:use log-consumer.logparser)
 )
 
 (defn- get-att-id [instr]
-    (re-find #"attempt_[0-9]+_\S+" instr)
+    (re-find #"attempt_[0-9]+_\\S+" instr)
 )
 
 (defn- task-start-filter [instr]
@@ -69,7 +69,7 @@
 (defn- task-r-status-prase [instr]
     (let 
         [attempt-id (get-att-id instr)
-        status (re-find "(?<=reduce > )[\S]+")
+        status (re-find "(?<=reduce > )[\\S]+")
         ]
         (   
             {
@@ -81,5 +81,19 @@
     )
 )
 
+(defn- task-useless-filter [instr]
+    (not (common-filter #"org.apache.hadoop.mapred.TaskTracker" instr))
+)
 
+
+
+(def tasktarcker-parse-rules 
+    [
+        ["useless",task-useless-filter,just-skip],
+        ["start",task-start-filter,task-start-prase],
+        ["status",task-r-status-filter,task-r-status-prase],
+        ["kill",task-kill-filter,task-kill-prase],
+        ["done",task-done-filter,task-done-prase]
+    ]
+)
 

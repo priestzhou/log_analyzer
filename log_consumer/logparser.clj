@@ -1,6 +1,6 @@
 (ns log-consumer.logparser)
 
-(defn- common-filter [pstr,instr]
+(defn common-filter [pstr,instr]
     (if (re-find pstr instr)
         true
         false
@@ -11,7 +11,7 @@
     (not (common-filter #"clienttrace" instr) )
 )
 
-(defn- just-skip [instr]
+(defn just-skip [instr]
     []
 )
 (defn- filter-HDFSWRITE [instr]
@@ -86,6 +86,7 @@
     )
 
 )
+
 (comment reduce concat #(str "{ info:[" % "]}"))
             
 
@@ -97,6 +98,7 @@
     ]
 )
  
+
 
 (defn- get-filter [rule]
     (nth rule 1)
