@@ -8,12 +8,32 @@
 )
 
 (defn- filter-userless-log [instr]
-    (not (common-filter #"clienttrace" instr) )
+    (or
+        (not (common-filter #"clienttrace" instr))
+        (not (common-filter #"Received block" instr))
+    )
 )
 
 (defn- just-skip [instr]
     []
 )
+
+(defn- filter-receive-block [instr]
+    (common-filter #"Received block" instr)
+)
+
+(defn- parse-receive-block [instr]
+    (let [srcip (re-find #"(?<=src: /)[0-9.]+(?=:)" instr)
+        destip (re-find #"(?<=dest: /)[0-9.]+(?=:)" instr)
+        filesize (re-find #"(?<=size )[0-9]+" instr)]
+        {
+            "srcip" (str destip),"destip" (str srcip ),
+            "filesize"  (read-string filesize), "tag" "received"
+        }
+
+    )    
+)
+
 (defn- filter-HDFSWRITE [instr]
     (common-filter #"HDFS_WRITE" instr)
 )
@@ -92,6 +112,7 @@
 (def parse-rules 
     [
         ["rule_filter",filter-userless-log,just-skip],
+        ["received_block",filter-receive-block,parse-receive-block ],
         ["get_hdfs_write",filter-HDFSWRITE,parse-hdfswrite],
         ["get_hdfs_read",filter-HDFSREAD,parse-hdfsread]
     ]
