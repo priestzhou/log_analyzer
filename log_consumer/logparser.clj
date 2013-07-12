@@ -8,7 +8,7 @@
 )
 
 (defn- filter-userless-log [instr]
-    (or
+    (and
         (not (common-filter #"clienttrace" instr))
         (not (common-filter #"Received block" instr))
     )
