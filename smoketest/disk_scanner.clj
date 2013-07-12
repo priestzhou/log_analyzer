@@ -32,7 +32,7 @@
             (dsks/scan sort base #"haha[.]log.*")
         )
         :eq
-        (constantly 
+        (fn [_] 
             (map sh/getPath 
                 ["st_dsks/haha.log" "st_dsks/haha.log.2014-07-01"]
             )
