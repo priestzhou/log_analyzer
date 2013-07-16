@@ -14,8 +14,12 @@
 
 (defn app
     [{:keys [uri]}]
-    {:body 
-        (gen-json @logdata)
+    {:body
+        (if (= uri "dataflow")
+            (gen-json @logdata)
+            ()
+        ) 
+        
     }
 )
 
