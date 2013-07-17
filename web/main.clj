@@ -36,6 +36,7 @@
                 )
             )
             (get-json)            
+            (gen-json @logdata)
         )
     }
 )
