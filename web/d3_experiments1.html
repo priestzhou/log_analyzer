@@ -21,8 +21,15 @@
   </head>
   <body>
       <script type="text/javascript">
+<<<<<<< HEAD
   
        var computer =[{
+=======
+
+//       var computer = "";
+
+              var computer =[{
+>>>>>>> chord demo
         "from_id": "0",
         "to_id": "0",
         "value":0
@@ -103,6 +110,7 @@
         "value":0
 }
 ];
+<<<<<<< HEAD
       var computername=
           [
             {"name": "tt"},
@@ -126,6 +134,12 @@
         [ 8010, 16145, 8090, 8045],
         [ 1013,   990,  940, 6907]
     ];
+=======
+
+
+    function loaddata( matrix){
+
+>>>>>>> chord demo
     var width = 960,
             height = 500,
             innerRadius = Math.min(width, height) * .41,
@@ -182,7 +196,57 @@
             .style("opacity", 1);
 
    
+<<<<<<< HEAD
 
+=======
+     }
+       var requestConfig = {  
+        url :'http://127.0.0.1:8085/dataflow', 
+        callback : function(options,success,response){
+            var msg = ["is:" ,success,"/n",  
+                        "return:",response.responseText];  
+            alert(msg.join(''));
+            var jsondata = Ext.JSON.decode(response.responseText);
+            //var jsonstring = Ext.JSON.encode(computer);
+            //var jsondata2 = Ext.JSON.decode(jsonstring);
+            //alert(jsonstring);
+            //alert(jsondata.info);
+            //loaddata(jsondata.info); 
+            getMatrix(jsondata.info) 
+        }  
+    }
+    function getMatrix(dataflowlist){
+      alert(dataflowlist);
+      var serverList=new Array();
+      for(var i=0;i<dataflowlist.length;i++){
+        //alert(dataflowlist[i]);
+        //for(j in dataflowlist[i]){
+        //  alert(j);//i就是test的属性名
+        //  alert(dataflowlist[i].j);//test.i就是属性值
+        //}
+        serverList.push(dataflowlist[i].src);
+        serverList.push(dataflowlist[i].dest);
+      }
+      alert(serverList);
+      var uniqueList = Ext.Array.unique(serverList); 
+      alert(uniqueList);
+      var serverCount = uniqueList.length
+      var newMatrix = new Array();
+      for(var i=0;i<serverCount;i++){
+        newMatrix.push(new Array());
+        for(var j=0;j<serverCount;j++){
+          newMatrix[i][j]=10;
+        }
+      }
+      loaddata(newMatrix);
+      alert(newMatrix);
+      for(var i=0;i<dataflowlist.length;i++){
+        serverFrom=dataflowlist[i].src;
+        //dataflowlist[i].dest);
+      }
+    }
+    Ext.Ajax.request(requestConfig);   
+>>>>>>> chord demo
     </script>
 
   </body>
