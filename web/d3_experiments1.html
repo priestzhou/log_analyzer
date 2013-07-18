@@ -124,8 +124,9 @@
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
     var chord = d3.layout.chord();
 
-    function loaddata( matrix){
-
+    function loaddata( matrix,computername){
+    alert(matrix);
+    alert(computername);
     chord.padding(.05)
             .matrix(matrix);
     svg.append("g").selectAll("path")
@@ -134,6 +135,13 @@
             .style("fill", function(d) { return fill[d.index] })
             .style("stroke", function(d) { return fill[d.index]; })
             .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius));
+
+    svg.append("g").selectAll("path")
+            .data(chord.groups)
+            .enter().append("text")
+            .attr("transform",function(d){return "translate("+d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius).centroid(d)+")";})
+            .attr("text-anchor","middle")
+            .text(function(d,i){return computername[i];});
             
     svg.append("g")
             .attr("class", "chord")
@@ -176,9 +184,12 @@
         serverTo = dataflowlist[i].dest;
         var indexFrom = Ext.Array.indexOf(uniqueList,serverFrom,0);
         var indexTo = Ext.Array.indexOf(uniqueList,serverTo,0);
-        newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
+        if(indexFrom!=indexTo){
+          
+          newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
+        }
       }
-      loaddata(newMatrix);
+      loaddata(newMatrix,uniqueList);
       
     }
     var task = {
