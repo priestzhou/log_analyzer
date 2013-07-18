@@ -1,185 +1,139 @@
-<html>
-  <head>
-    <meta http-equiv="content-type" content="text/html;charset=utf-8">
-    <title>d3 experiment1</title>
-    <script type="text/javascript"
-            src="https://raw.github.com/mbostock/d3/master/d3.js">
-    </script>
-    <script type="text/javascript"
-            src="http://docs.sencha.com/extjs/4.2.1/extjs-build/ext-all.js">
-    </script>
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
 
-    <style type="text/css">
-      .box {
-        background-color: skyblue;
-        width: 24px;
-        height: 18px;
-        padding: 4px;
-        margin: 1px;
-      }
-    </style>
-
-  </head>
-  <body>
-      <script type="text/javascript">
-
-       var computer =[{
-        "from_id": "0",
-        "to_id": "0",
-        "value":0
-    },
-{
-        "from_id": "0",
-        "to_id": "1",
-        "value":5871
-},
-{
-       "from_id": "0",
-        "to_id": "2",
-        "value":8916
-},
-{
-       "from_id": "0",
-        "to_id": "3",
-        "value":2868
-},
-{
-       "from_id": "1",
-        "to_id": "0",
-        "value":1951
-},
-{
-       "from_id": "1",
-        "to_id": "1",
-        "value":0
-},
-{
-       "from_id": "1",
-        "to_id": "2",
-        "value":200
-},
-{
-       "from_id": "1",
-        "to_id": "3",
-        "value":6171
-},
-{
-       "from_id": "2",
-        "to_id": "0",
-        "value":8010
-},
-{
-      "from_id": "2",
-        "to_id": "1",
-        "value":1614
-},
-{
-      "from_id": "2",
-        "to_id": "2",
-        "value":0
-},
-{
-      "from_id": "2",
-        "to_id": "3",
-        "value":8045
-},
-{
-      "from_id": "3",
-        "to_id": "0",
-        "value":1013
-},
-{
-      "from_id": "3",
-        "to_id": "1",
-        "value":990
-},
-{
-      "from_id": "3",
-        "to_id": "2",
-        "value":940
-},
-{
-      "from_id": "3",
-        "to_id": "3",
-        "value":0
+body {
+  font: 10px sans-serif;
 }
+
+.chord path {
+  fill-opacity: .67;
+  stroke: #000;
+  stroke-width: .5px;
+}
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+// From http://mkweb.bcgsc.ca/circos/guide/tables/
+var matrix = [
+  [11975,  5871, 8916, 2868],
+  [ 1951, 10048, 2060, 6171],
+  [ 8010, 16145, 8090, 8045],
+  [ 1013,   990,  940, 6907]
 ];
-      var computername=
-          [
-            {"name": "tt"},
-            {"name": "ss"},
-            {"name": "dd"},
-            {"name": "rr"}
-          ];
-      var matrix = new Array(4);
-      for (var i = 0; i < 4; i++) 
-      {
-          matrix[i] = new Array(); 
-          for(var j=0;j<4;j++)
-          {
-             matrix[i][j]=computer[i*4+j].value;
-          }
-      } 
-    var width = 960,
-            height = 500,
-            innerRadius = Math.min(width, height) * .41,
-            outerRadius = innerRadius * 1.1;
 
-    var fill =["#DB70DB", "#FFDD89", "#957244", "#F26223"];//
+var chord = d3.layout.chord()
+    .padding(.05)
+    .sortSubgroups(d3.descending)
+    .matrix(matrix);
 
-   // var fill =["#000000", "#FFDD89", "#957244", "#F26223"];//ÑÕÉ«Êý×é
+var width = 960,
+    height = 500,
+    innerRadius = Math.min(width, height) * .41,
+    outerRadius = innerRadius * 1.1;
 
-    var svg = d3.select("body").append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-    var chord = d3.layout.chord()
-            .padding(.05)
-            .sortSubgroups(d3.descending)
-            .matrix(matrix);
-    svg.append("g").selectAll("path")
-            .data(chord.groups)
-            .enter().append("path")
-            .style("fill", function(d) { return fill[d.index] })
-            .style("stroke", function(d) { return fill[d.index]; })
-            .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius));
-   
-   //alert(computername);
-    
-   
-   
+var fill = d3.scale.ordinal()
+    .domain(d3.range(4))
+    .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+svg.append("g").selectAll("path")
+    .data(chord.groups)
+  .enter().append("path")
+    .style("fill", function(d) { return fill(d.index); })
+    .style("stroke", function(d) { return fill(d.index); })
+    .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+    .on("mouseover", fade(0))
+    .on("mouseout", fadethree(1));
+
+alert("11111111111");
 /*
-    svg.selectAll("text")
-            .data(computername)
-            .enter().append("text")
-            .attr("transform",function(d){return "translate("+d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius).centroid(d)+")";})
-            .attr("text-anchor","middle")
-            .text(function(d){return (d[i]);});
+var ticks = svg.append("g").selectAll("g")
+    .data(chord.groups)
+  .enter().append("g").selectAll("g")
+    .data(groupTicks)
+  .enter().append("g")
+    .attr("transform", function(d) {
+      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+          + "translate(" + outerRadius + ",0)";
+    });
+
+ticks.append("line")
+    .attr("x1", 1)
+    .attr("y1", 0)
+    .attr("x2", 5)
+    .attr("y2", 0)
+    .style("stroke", "#000");
+
+ticks.append("text")
+    .attr("x", 8)
+    .attr("dy", ".35em")
+    .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
+    .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+    .text(function(d) { return d.label; });
 */
+//alert(d.souce.index);
+//alert(d.target.index);
 
-    svg.append("g").selectAll("path")
-            .data(chord.groups)
-            .enter().append("text")
-            .attr("transform",function(d){return "translate("+d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius).centroid(d)+")";})
-            .attr("text-anchor","middle")
-            .text(function(d,i){return computername[i].name;});
-            
-    svg.append("g")
-            .attr("class", "chord")
-            .selectAll("path")
-            .data(chord.chords)
-            .enter().append("path")
-            .attr("fill-opacity",.67)
-            .attr("stroke","#000")
-            .attr("stroke-width",.5)
-            .attr("d", d3.svg.chord().radius(innerRadius))
-            .style("fill", function(d) { return fill[d.target.index]; })
-            .style("opacity", 1);
 
-   
+svg.append("g")
+    .attr("class", "chord")
+  .selectAll("path")
+    .data(chord.chords)
+  .enter().append("path")
+    .attr("d", d3.svg.chord().radius(innerRadius))
+    
+    .style("fill", function(d) { return fill(d.target.index); })
+    .style("opacity", fadetwo(0));
 
-    </script>
+   //function(d,i){return (d.source.index==i && d.target.index==i)? 0:1;}
+/*
+// Returns an array of tick angles and labels, given a group.
+function groupTicks(d) {
+  var k = (d.endAngle - d.startAngle) / d.value;
+  return d3.range(0, d.value, 1000).map(function(v, i) {
+    return {
+      angle: v * k + d.startAngle,
+      label: i % 5 ? null : v / 1000 + "k"
+    };
+  });
+}
+*/
+// Returns an event handler for fading a given chord group.
+function fade(opacity) {
+  return function(g, i) {
+    svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index != i && d.target.index != i; })
+      .transition()
+        .style("opacity", opacity);
+  };
+}
 
-  </body>
-</html>
+//return d.source.index != i && d.target.index != i;
+
+function fadetwo(opacity) {
+  return function(g, i) {
+    svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index==i && d.target.index==i; })
+      .transition()
+        .style("opacity", opacity);
+  };
+}
+function fadethree(opacity) {
+  return function(g, i) {
+    svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index!=d.target.index;})
+      .transition()
+        .style("opacity", opacity);
+  };
+}
+
+</script>
