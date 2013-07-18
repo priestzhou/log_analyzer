@@ -80,8 +80,8 @@
     (let [group-list 
             (group-by 
                 #(list 
-                    (val (find % "srcip")) 
-                    (val (find % "destip"))
+                    (get % "srcip")
+                    (get % "destip")
                 ) 
                 dlist
             )
@@ -144,6 +144,43 @@
                 (if (nil? f-logs) 
                     []
                     (parse-log (rest rules) (val f-logs))
+                )
+            )
+        )
+
+    ) 
+)
+
+(defn parse-log-kfk [rules logs]
+    (if (or (empty? rules) (empty? logs))
+        []
+        (let [tr (first rules)
+            f-fitler (get-filter tr)
+            f-parse (get-parse tr)
+            log-group 
+                (group-by 
+                    #(f-fitler 
+                        (get % :message)
+                    )
+                    logs
+                )
+            t-logs (find log-group true) 
+            f-logs (find log-group false)
+            this-re (if (nil? t-logs) 
+                    []
+                    (map 
+                        #(assoc
+                            (f-parse (get % :message) )
+                            "timestamp" (get % :timestamp)
+                        )
+                        (val t-logs)
+                    )
+                )
+            ]
+            (concat [this-re]
+                (if (nil? f-logs) 
+                    []
+                    (parse-log-kfk (rest rules) (val f-logs))
                 )
             )
         )
