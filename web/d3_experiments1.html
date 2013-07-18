@@ -155,6 +155,34 @@ var fill2 = d3.scale.ordinal()
         .append("text")
         
 */
+// Returns an event handler for fading a given chord group.
+function fade(opacity) {
+  return function(g, i) {
+    svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index != i && d.target.index != i; })
+      .transition()
+        .style("opacity", opacity);
+  };
+}
+
+//return d.source.index != i && d.target.index != i;
+
+function fadetwo(opacity) {
+  return function(g, i) {
+    svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index==i && d.target.index==i; })
+      .transition()
+        .style("opacity", opacity);
+  };
+}
+function fadethree(opacity) {
+  return function(g, i) {
+    svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index!=d.target.index;})
+      .transition()
+        .style("opacity", opacity);
+  };
+}
 
      }
        var requestConfig = {  //request data and decode
