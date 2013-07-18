@@ -216,7 +216,7 @@
         }  
     }
     function getMatrix(dataflowlist){
-      alert(dataflowlist);
+      //alert(dataflowlist);
       var serverList=new Array();
       for(var i=0;i<dataflowlist.length;i++){
         //alert(dataflowlist[i]);
@@ -227,23 +227,27 @@
         serverList.push(dataflowlist[i].src);
         serverList.push(dataflowlist[i].dest);
       }
-      alert(serverList);
+      //alert(serverList);
       var uniqueList = Ext.Array.unique(serverList); 
-      alert(uniqueList);
+      //alert(uniqueList);
       var serverCount = uniqueList.length
       var newMatrix = new Array();
       for(var i=0;i<serverCount;i++){
         newMatrix.push(new Array());
         for(var j=0;j<serverCount;j++){
-          newMatrix[i][j]=10;
+          newMatrix[i][j]=0;
         }
       }
-      loaddata(newMatrix);
-      alert(newMatrix);
       for(var i=0;i<dataflowlist.length;i++){
         serverFrom=dataflowlist[i].src;
-        //dataflowlist[i].dest);
+        serverTo = dataflowlist[i].dest;
+        var indexFrom = Ext.Array.indexOf(uniqueList,serverFrom,0);
+        var indexTo = Ext.Array.indexOf(uniqueList,serverTo,0);
+        newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
       }
+      alert(newMatrix);
+      loaddata(newMatrix);
+      
     }
     Ext.Ajax.request(requestConfig);   
 >>>>>>> chord demo
