@@ -137,7 +137,6 @@
 =======
 
 
-    function loaddata( matrix){
 
 >>>>>>> chord demo
     var width = 960,
@@ -154,9 +153,11 @@
             .attr("height", height)
             .append("g")
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-    var chord = d3.layout.chord()
-            .padding(.05)
-            .sortSubgroups(d3.descending)
+    var chord = d3.layout.chord();
+
+    function loaddata( matrix){
+
+    chord.padding(.05)
             .matrix(matrix);
     svg.append("g").selectAll("path")
             .data(chord.groups)
@@ -164,6 +165,7 @@
             .style("fill", function(d) { return fill[d.index] })
             .style("stroke", function(d) { return fill[d.index]; })
             .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius));
+<<<<<<< HEAD
    
    //alert(computername);
     
@@ -184,6 +186,8 @@
             .attr("transform",function(d){return "translate("+d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius).centroid(d)+")";})
             .attr("text-anchor","middle")
             .text(function(d,i){return computername[i].name;});
+=======
+>>>>>>> add time task
             
     svg.append("g")
             .attr("class", "chord")
@@ -196,42 +200,31 @@
             .attr("d", d3.svg.chord().radius(innerRadius))
             .style("fill", function(d) { return fill[d.target.index]; })
             .style("opacity", 1);
+<<<<<<< HEAD
 
    
 <<<<<<< HEAD
 
 =======
+=======
+>>>>>>> add time task
      }
        var requestConfig = {  
         url :'http://127.0.0.1:8085/dataflow', 
         callback : function(options,success,response){
             var msg = ["is:" ,success,"/n",  
                         "return:",response.responseText];  
-            alert(msg.join(''));
             var jsondata = Ext.JSON.decode(response.responseText);
-            //var jsonstring = Ext.JSON.encode(computer);
-            //var jsondata2 = Ext.JSON.decode(jsonstring);
-            //alert(jsonstring);
-            //alert(jsondata.info);
-            //loaddata(jsondata.info); 
             getMatrix(jsondata.info) 
         }  
     }
     function getMatrix(dataflowlist){
-      //alert(dataflowlist);
       var serverList=new Array();
       for(var i=0;i<dataflowlist.length;i++){
-        //alert(dataflowlist[i]);
-        //for(j in dataflowlist[i]){
-        //  alert(j);//i就是test的属性名
-        //  alert(dataflowlist[i].j);//test.i就是属性值
-        //}
         serverList.push(dataflowlist[i].src);
         serverList.push(dataflowlist[i].dest);
       }
-      //alert(serverList);
       var uniqueList = Ext.Array.unique(serverList); 
-      //alert(uniqueList);
       var serverCount = uniqueList.length
       var newMatrix = new Array();
       for(var i=0;i<serverCount;i++){
@@ -247,12 +240,22 @@
         var indexTo = Ext.Array.indexOf(uniqueList,serverTo,0);
         newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
       }
-      alert(newMatrix);
       loaddata(newMatrix);
       
     }
+<<<<<<< HEAD
     Ext.Ajax.request(requestConfig);   
 >>>>>>> chord demo
+=======
+    var task = {
+    run: function(){
+        Ext.Ajax.request(requestConfig);
+    },
+        interval: 10000 //1 second
+    }
+    var runner = new Ext.util.TaskRunner();
+    runner.start(task);
+>>>>>>> add time task
     </script>
 
   </body>
