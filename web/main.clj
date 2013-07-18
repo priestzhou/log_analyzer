@@ -23,7 +23,11 @@
                     "/web/d3_experiments1.html"
                 )
             )
-            (gen-json @logdata)
+            (->>
+                @logdata
+                
+                gen-json 
+            )
         )
         
     }
