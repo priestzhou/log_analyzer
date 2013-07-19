@@ -2,10 +2,10 @@
     (:use ring.adapter.jetty)
     (:use clojure.java.io)
     (:use log-consumer.logparser)
-    (:use log-consumer.logconsumer)
+    (:use log-consumer.logconsumer)  
     (:gen-class)
 )
-
+  
 (def  logcahe (atom ["12","23"])
 )
 (def logdata 
@@ -23,11 +23,7 @@
                     "/web/d3_experiments1.html"
                 )
             )
-            (->>
-                @logdata
-                
-                gen-json 
-            )
+            (gen-json @logdata)
         )
         
     }
