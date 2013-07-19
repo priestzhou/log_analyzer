@@ -1,3 +1,4 @@
+
 <html>
   <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8">
@@ -18,95 +19,15 @@
         margin: 1px;
       }
     </style>
+<script>
 
-  </head>
-  <body>
-      <script type="text/javascript">
-
-//       var computer = "";
-
-              var computer =[{
-        "from_id": "0",
-        "to_id": "0",
-        "value":0
-    },
-{
-        "from_id": "0",
-        "to_id": "1",
-        "value":5871
-},
-{
-       "from_id": "0",
-        "to_id": "2",
-        "value":8916
-},
-{
-       "from_id": "0",
-        "to_id": "3",
-        "value":2868
-},
-{
-       "from_id": "1",
-        "to_id": "0",
-        "value":1951
-},
-{
-       "from_id": "1",
-        "to_id": "1",
-        "value":0
-},
-{
-       "from_id": "1",
-        "to_id": "2",
-        "value":200
-},
-{
-       "from_id": "1",
-        "to_id": "3",
-        "value":6171
-},
-{
-       "from_id": "2",
-        "to_id": "0",
-        "value":8010
-},
-{
-      "from_id": "2",
-        "to_id": "1",
-        "value":1614
-},
-{
-      "from_id": "2",
-        "to_id": "2",
-        "value":0
-},
-{
-      "from_id": "2",
-        "to_id": "3",
-        "value":8045
-},
-{
-      "from_id": "3",
-        "to_id": "0",
-        "value":1013
-},
-{
-      "from_id": "3",
-        "to_id": "1",
-        "value":990
-},
-{
-      "from_id": "3",
-        "to_id": "2",
-        "value":940
-},
-{
-      "from_id": "3",
-        "to_id": "3",
-        "value":0
-}
+// From http://mkweb.bcgsc.ca/circos/guide/tables/
+var matrix11 = [
+  [11975,  5871, 8916, 2868],
+  [ 1951, 10048, 2060, 6171],
+  [ 8010, 16145, 8090, 8045],
+  [ 1013,   990,  940, 6907]
 ];
-
 
     var width = 960,
             height = 500,
@@ -129,31 +50,28 @@
     alert(computername);
     chord.padding(.05)
             .matrix(matrix);
+   
     svg.append("g").selectAll("path")
-            .data(chord.groups)
-            .enter().append("path")
-            .style("fill", function(d) { return fill[d.index] })
-            .style("stroke", function(d) { return fill[d.index]; })
-            .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius));
+        .data(chord.groups)
+      .enter().append("path")
+        .style("fill", function(d) { return fill(d.index); })
+        .style("stroke", function(d) { return fill(d.index); })
+        .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+        .on("mouseover", fade(0))
+        .on("mouseout", fadethree(1));
 
-    svg.append("g").selectAll("path")
-            .data(chord.groups)
-            .enter().append("text")
-            .attr("transform",function(d){return "translate("+d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius).centroid(d)+")";})
-            .attr("text-anchor","middle")
-            .text(function(d,i){return computername[i];});
-            
+
     svg.append("g")
-            .attr("class", "chord")
-            .selectAll("path")
-            .data(chord.chords)
-            .enter().append("path")
-            .attr("fill-opacity",.67)
-            .attr("stroke","#000")
-            .attr("stroke-width",.5)
-            .attr("d", d3.svg.chord().radius(innerRadius))
-            .style("fill", function(d) { return fill[d.target.index]; })
-            .style("opacity", 1);
+        .attr("class", "chord")
+      .selectAll("path")
+        .data(chord.chords)
+      .enter().append("path")
+        .attr("d", d3.svg.chord().radius(innerRadius))
+        
+        .style("fill", function(d) { return fill(d.target.index); })
+        .style("opacity", fadetwo(0));
+
+
      }
        var requestConfig = {  
         url :'http://127.0.0.1:8085/dataflow', 
@@ -184,23 +102,86 @@
         serverTo = dataflowlist[i].dest;
         var indexFrom = Ext.Array.indexOf(uniqueList,serverFrom,0);
         var indexTo = Ext.Array.indexOf(uniqueList,serverTo,0);
-        if(indexFrom!=indexTo){
+        //if(indexFrom!=indexTo){
           
           newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
-        }
+        //}
       }
       loaddata(newMatrix,uniqueList);
       
     }
-    var task = {
-    run: function(){
+    //var task = {
+    //run: function(){
         Ext.Ajax.request(requestConfig);
-    },
-        interval: 10000 //1 second
+    //},
+    //    interval: 10000 //1 second
+    //}
+    //var runner = new Ext.util.TaskRunner();
+    //runner.start(task);
+    function groupTicks(d) {
+      alert("111");
+      var k = (d.endAngle - d.startAngle) / d.value;
+      return d3.range(0, d.value, 1000).map(function(v, i) {
+        return {
+          angle: v * k + d.startAngle,
+          label: i % 5 ? null : v / 1000 + "k"
+        };
+      });
     }
-    var runner = new Ext.util.TaskRunner();
-    runner.start(task);
+    
+    // Returns an event handler for fading a given chord group.
+    function fade(opacity) {
+      alert("112");
+      return function(g, i) {
+        svg.selectAll(".chord path")
+            .filter(function(d) { return d.source.index != i && d.target.index != i; })
+          .transition()
+            .style("opacity", opacity);
+      };
+    }
+
+    //return d.source.index != i && d.target.index != i;
+
+    function fadetwo(opacity) {
+      alert("113");
+      return function(g, i) {
+        svg.selectAll(".chord path")
+            .filter(function(d) { return d.source.index==i && d.target.index==i; })
+          .transition()
+            .style("opacity", opacity);
+      };
+    }
+    function fadethree(opacity) {
+      alert("114");
+      return function(g, i) {
+        svg.selectAll(".chord path")
+            .filter(function(d) { return d.source.index!=d.target.index;})
+          .transition()
+            .style("opacity", opacity);
+      };
+    }
+
     </script>
+  </head>
+  <body>
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.chord path {
+  fill-opacity: .67;
+  stroke: #000;
+  stroke-width: .5px;
+}
+
+</style>
+<body>
+
 
   </body>
 </html>
+
