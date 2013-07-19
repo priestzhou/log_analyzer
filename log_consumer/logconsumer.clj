@@ -1,7 +1,6 @@
 (ns log-consumer.logconsumer
     (:use log-consumer.logparser)
     (:require
-        [zktools.core :as zk]
         [kfktools.core :as kfk]
     )
     (:import
