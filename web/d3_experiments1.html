@@ -6,6 +6,7 @@
     <script type="text/javascript"
             src="https://raw.github.com/mbostock/d3/master/d3.js">
     </script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
     <script type="text/javascript"
             src="http://docs.sencha.com/extjs/4.2.1/extjs-build/ext-all.js">
     </script>
@@ -18,6 +19,7 @@
         margin: 1px;
       }
     </style>
+<<<<<<< HEAD
 
   </head>
   <body>
@@ -113,6 +115,9 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
+=======
+    <style>
+>>>>>>> fix the js con't work problem
 
 body {
   font: 10px sans-serif;
@@ -122,12 +127,22 @@ body {
   fill-opacity: .67;
   stroke: #000;
   stroke-width: .5px;
+<<<<<<< HEAD
 >>>>>>> interaction update version
 }
 
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+=======
+}
+
+</style>
+
+  </head>
+
+<body>
+>>>>>>> fix the js con't work problem
 <script>
 
 // From http://mkweb.bcgsc.ca/circos/guide/tables/
@@ -172,7 +187,9 @@ var matrix = [
             innerRadius = Math.min(width, height) * .41,
             outerRadius = innerRadius * 1.1;
 
-    var fill =["#DB70DB", "#FFDD89", "#957244", "#F26223"];//
+var fill = d3.scale.ordinal()
+    .domain(d3.range(4))
+    .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
 
    // var fill =["#000000", "#FFDD89", "#957244", "#F26223"];//ÑÕÉ«Êý×é
 
