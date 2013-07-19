@@ -1,4 +1,4 @@
-(ns smoketest.disk-scanner
+(ns smoketest.log-collector.disk-scanner
     (:require
         [utilities.shutil :as sh]
         [log-collector.disk-scanner :as dsks]
