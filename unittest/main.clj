@@ -1,6 +1,7 @@
 (ns unittest.main
     (:require 
         unittest.log-collector.log-line-parser
+        unittest.log-search.frame
     )
     (:use testing.core)
     (:gen-class)
@@ -10,6 +11,7 @@
     (->> 
         (load-cases 
             'unittest.log-collector.log-line-parser 
+            'unittest.log-search.frame
         )
         (main args)
     )
