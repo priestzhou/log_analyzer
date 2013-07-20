@@ -104,10 +104,23 @@
             (#(str "{ \"info\":[" % "]}"))
         )
     )
-
 )
-(comment reduce concat #(str "{ info:[" % "]}"))
-            
+(defn filter-by-time [loglist]
+    (let [curtime (System/currentTimeMillis)
+            timeFrom (- curtime 10000)
+            timeTo (+ curtime 1000)
+        ]
+        (
+            filter  
+            #(and 
+                (nil? (get % "timestamp"))
+                (> timeTo (get % "timestamp"))
+                (> (get % "timestamp") timeFrom)
+            )
+            loglist
+        )
+    )
+)            
 
 (def parse-rules 
     [

@@ -23,7 +23,7 @@
                     "/web/d3_experiments1.html"
                 )
             )
-            (gen-json @logdata)
+            (gen-json (filter-by-time @logdata))
         )
         
     }
