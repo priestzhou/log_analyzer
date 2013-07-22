@@ -118,6 +118,14 @@
     }
 )
 
+(def ^:private test-parse-num
+    {:key "num" :parser 
+        (fn [mes]
+            (re-find #"(?<=,)[0-9.]+(?= INFO)")
+        )
+    }
+)
+
 (def ^:private test-parse-nil 
     {:key "test-parse-nil" :parser 
         (fn [mes]
@@ -201,7 +209,7 @@
     )
 )
 
-(def ^:private get-testrule1
+(def ^:private testrule1
     {:eventRules  
         [
             (fn [mes]
@@ -217,10 +225,46 @@
     }
 )
 
+(def ^:private testrule-group
+    {
+        :parseRules
+        [test-parse-1,test-parse-2],
+        :groupKeys
+        ["test-parse-1","test-parse-2"]
+    }
+)
+
+(suite "check-goup"
+    (:fact check-goup1-count
+        (count (do-search testrule-group test-loglist1))
+        :is
+        1
+    )
+    (:fact check-goup1-key
+        (->>
+            (do-search testrule-group test-loglist1)
+            keys
+            first
+        )
+        :is
+        {"test-parse-1" "pr-1","test-parse-2" "pr-2"}
+    )
+    (:fact check-goup1-val-count
+        (->>
+            (do-search testrule-group test-loglist1)
+            vals
+            first
+            count
+        )
+        :is
+        4
+    )    
+)
+
 (suite "check-whole-rule1"
     (:fact check-whole-rule1-count
         (->>
-            (do-search get-testrule1 test-loglist1)
+            (do-search testrule1 test-loglist1)
             count
         )
         :is
@@ -228,7 +272,7 @@
     )
     (:fact check-whole-rule1-key
         (->>
-            (do-search get-testrule1 test-loglist1)
+            (do-search testrule1 test-loglist1)
             first
             keys
         )
@@ -238,7 +282,7 @@
     )
     (:fact check-whole-rule1-value
         (->>
-            (do-search get-testrule1 test-loglist1)
+            (do-search testrule1 test-loglist1)
             first
             (#(get % "test-parse-1"))
         )

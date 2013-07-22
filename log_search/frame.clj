@@ -46,15 +46,19 @@
 )
 
 (defn- do-group [groupKeys loglist]
-    (group-by
-        (fn [log]
-            (reduce
-                #(assoc %1 %2 (get log %2))
-                {}
-                groupKeys
-            )
-        )
+ 
+    (if (nil? groupKeys)
         loglist
+        (group-by
+            (fn [log]
+                (reduce
+                    #(assoc %1 %2 (get log %2))
+                    {}
+                    groupKeys
+                )
+            )
+            loglist
+        )
     )
 )
 
@@ -63,15 +67,13 @@
             logFilted (event-search eventFilter loglist)
             parseRules (get searchrules :parseRules)
             parseResult (apply-parse parseRules logFilted)
+            groupKeys (get searchrules :groupKeys)
+            logGrouped (do-group groupKeys parseResult)
         ]
-        parseResult
+        logGrouped
     )
 )
 
-            (comment parseRules (get searchrules :parseRules)
-            parseResult (apply-parse parseRules logFilted)
-            groupKeys (get searchrules :groupKeys)
-            logGrouped (do-group groupKeys parseResult))
 
 
 
