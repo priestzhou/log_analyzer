@@ -38,7 +38,7 @@
                             parseRules
                         )
                 ]
-                reduce merge log psr 
+                (reduce merge log psr)
             )
         )
         loglist
