@@ -4,26 +4,26 @@
     )
 )
 
-(defn- get-test-loglist1 []
-    (list
+(def ^:private test-loglist1
+    [
         {:message 
             "1970-01-01 08:00:00,001 INFO Class.func: hello world!"}
-            {:message 
-                "1970-01-01 08:00:00,002 INFO Class.func: hello world!"}
-            {:message 
-                "1970-01-01 08:00:00,003 INFO Class.func: hello world!"}
-            {:message 
-                "1970-01-01 08:00:00,004 INFO Class.func: hello world!"}
-            )
+        {:message 
+            "1970-01-01 08:00:00,002 INFO Class.func: hello world!"}
+        {:message 
+            "1970-01-01 08:00:00,003 INFO Class.func: hello world!"}
+        {:message 
+            "1970-01-01 08:00:00,004 INFO Class.func: hello world!"}
+    ]
 )
 
 (suite "check event filter "
     (:fact parse-null
         (let [
-                psr ({:eventRules ()})
+                psr {:eventRules ()}
             ]
             (count 
-                (do-search psr get-test-loglist1)
+                (do-search psr test-loglist1)
             )
         )
         :is
@@ -31,26 +31,28 @@
     )
     (:fact filter-one
         (let [
-                psr ({:eventRules 
-                        (fn [mes]
-                            (->>
-                                (re-find #"003" mes)
-                                nil?
-                                not
+                psr {:eventRules 
+                        [
+                            (fn [mes]
+                                (->>
+                                    (re-find #"003" mes)
+                                    nil?
+                                    not
+                                )
                             )
-                        )})
+                        ]}
             ]
             (count 
-                (do-search psr get-test-loglist1)
+                (do-search psr test-loglist1)
             )
         )
         :is
         3
     )
-    (:fact filter-tow
+    (:fact filter-two
         (let [
-                psr ({:eventRules 
-                        (list
+                psr {:eventRules 
+                        [
                             (fn [mes]
                                 (->>
                                     (re-find #"003" mes)
@@ -65,11 +67,11 @@
                                     not
                                 )
                             )
-                        )
-                    })
+                        ]
+                    }
             ]
             (count 
-                (do-search psr get-test-loglist1)
+                (do-search psr test-loglist1)
             )
         )
         :is
@@ -77,15 +79,15 @@
     )
     (:fact filter-all
         (let [
-                psr ({:eventRules 
-                        (list
+                psr {:eventRules 
+                        [
                             (fn [mes]
                                 (->>
                                     (re-find #"003" mes)
                                     nil?
                                     not
                                 )
-                            )
+                            ) 
                             (fn [mes]
                                 (->>
                                     (re-find #"1970" mes)
@@ -93,11 +95,11 @@
                                     not
                                 )
                             )
-                        )
-                    })
+                        ]
+                    }
             ]
             (count 
-                (do-search psr get-test-loglist1)
+                (do-search psr test-loglist1)
             )
         )
         :is
@@ -131,9 +133,10 @@
 
 (suite "check parser"
     (:fact parse-one-keycheck
-        (let [psr ({:parseRules test-parse-1})]
+        (let [psr ({:parseRules (list test-parse-1)})]
             (->> 
-                (do-search psr get-test-loglist1)
+                (do-search psr test-loglist1)
+                first
                 keys
                 sort
             )
@@ -145,9 +148,10 @@
         )
     )
     (:fact parse-one-valuecheck
-        (let [psr ({:parseRules test-parse-1})]
+        (let [psr ({:parseRules (list test-parse-1)})]
             (->> 
-                (do-search psr get-test-loglist1)
+                (do-search psr test-loglist1)
+                first
                 (#(get % "test-parse-1"))
             )
         )
@@ -162,7 +166,8 @@
                 )
             })]
             (->> 
-                (do-search psr get-test-loglist1)
+                (do-search psr test-loglist1)
+                first
                 keys
                 sort
             )
@@ -181,7 +186,8 @@
                 )
             })]
             (->> 
-                (do-search psr get-test-loglist1)
+                (do-search psr test-loglist1)
+                first
                 (#(get % "test-parse-2"))
             )
         )
@@ -196,7 +202,8 @@
                 )
             })]
             (->> 
-                (do-search psr get-test-loglist1)
+                (do-search psr test-loglist1)
+                first
                (#(get % "test-parse-1"))
             )
         )
@@ -205,7 +212,50 @@
     )
 )
 
-(comment suite "check-event-and-parse"
+(defn- get-testrule1 []
+    {:eventRules  
+        (list
+            (fn [mes]
+                (->>
+                    (re-find #"003" mes)
+                    nil?
+                )
+            )
+        ),
+        :parseRules
+        (list test-parse-1)
+    }
+)
+
+(comment suite "check-whole-rule1"
     (:fact 
+        (->>
+            (do-search get-testrule1 test-loglist1)
+            count
+        )
+        :is
+        1
+    )
+    (:fact 
+        (->>
+            (do-search get-testrule1 test-loglist1)
+            first
+            keys
+            sort
+        )
+        :is
+        (->>
+            (list :message "test-parse-1")
+            sort
+        )
+    )
+    (:fact
+        (->>
+            (do-search get-testrule1 test-loglist1)
+            first
+            (#(get % "test-parse-1"))
+        )
+        :is
+        "pr-1"
     )
 )
