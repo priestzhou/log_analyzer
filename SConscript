@@ -6,6 +6,7 @@ env.install(env.compileAndJar('log_collector.jar', 'log_collector',
             env.File('$BUILD_DIR/utilities.jar'),
             env.File('$BUILD_DIR/kfktools.jar'),
             env.File('$BUILD_DIR/argparser.jar'),
+            env.File('$BUILD_DIR/logging.jar'),
         ],
     standalone=True, manifest={'Main-Class': 'log_collector.main'}))
 env.install(env.compileAndJar('log_analyzer_unittest.jar', 'unittest',
