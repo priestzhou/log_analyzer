@@ -37,7 +37,6 @@
                                 (->>
                                     (re-find #"003" mes)
                                     nil?
-                                    not
                                 )
                             )
                         ]}
@@ -57,14 +56,12 @@
                                 (->>
                                     (re-find #"003" mes)
                                     nil?
-                                    not
                                 )
                             )
                             (fn [mes]
                                 (->>
                                     (re-find #"001" mes)
                                     nil?
-                                    not
                                 )
                             )
                         ]
@@ -85,14 +82,12 @@
                                 (->>
                                     (re-find #"003" mes)
                                     nil?
-                                    not
                                 )
                             ) 
                             (fn [mes]
                                 (->>
                                     (re-find #"1970" mes)
                                     nil?
-                                    not
                                 )
                             )
                         ]
