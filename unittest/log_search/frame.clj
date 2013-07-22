@@ -102,7 +102,7 @@
     )
 )
 
-(defn- test-parse-1 []
+(def ^:private test-parse-1 
     {:key "test-parse-1" :parser 
         (fn [mes]
             "pr-1"
@@ -110,7 +110,7 @@
     }
 )
 
-(defn- test-parse-2 []
+(def ^:private test-parse-2 
     {:key "test-parse-2" :parser 
         (fn [mes]
             "pr-2"
@@ -118,7 +118,7 @@
     }
 )
 
-(defn- test-parse-nil []
+(def ^:private test-parse-nil 
     {:key "test-parse-nil" :parser 
         (fn [mes]
             nil
@@ -128,22 +128,19 @@
 
 (suite "check parser"
     (:fact parse-one-keycheck
-        (let [psr ({:parseRules (list test-parse-1)})]
+        (let [psr {:parseRules [test-parse-1]}]
             (->> 
                 (do-search psr test-loglist1)
                 first
                 keys
-                sort
             )
         )
         :is
-        (->>
-            (list :message "test-parse-1")
-            sort
-        )
+        (list "test-parse-1" :message)
+        
     )
     (:fact parse-one-valuecheck
-        (let [psr ({:parseRules (list test-parse-1)})]
+        (let [psr {:parseRules [test-parse-1]}]
             (->> 
                 (do-search psr test-loglist1)
                 first
@@ -154,32 +151,29 @@
         "pr-1"
     )
     (:fact parse-two-keycheck
-        (let [psr ({:parseRules 
-                (list 
+        (let [psr {:parseRules 
+                [ 
                     test-parse-1
                     test-parse-2
-                )
-            })]
+                ]
+            }]
             (->> 
                 (do-search psr test-loglist1)
                 first
                 keys
-                sort
             )
         )
         :is
-        (->>
-            (list :message "test-parse-1" "test-parse-2")
-            sort
-        )
+        (list "test-parse-2" "test-parse-1" :message)
+
     )
     (:fact parse-two-valuecheck2
-        (let [psr ({:parseRules
-                (list 
+        (let [psr {:parseRules
+                [ 
                     test-parse-1
                     test-parse-2
-                )
-            })]
+                ]
+            }]
             (->> 
                 (do-search psr test-loglist1)
                 first
@@ -190,12 +184,12 @@
         "pr-2"
     )
     (:fact parse-two-valuecheck1
-        (let [psr ({:parseRules
-                (list 
+        (let [psr {:parseRules
+                [ 
                     test-parse-1
                     test-parse-2
-                )
-            })]
+                ]
+            }]
             (->> 
                 (do-search psr test-loglist1)
                 first
@@ -207,23 +201,24 @@
     )
 )
 
-(defn- get-testrule1 []
+(def ^:private get-testrule1
     {:eventRules  
-        (list
+        [
             (fn [mes]
                 (->>
                     (re-find #"003" mes)
                     nil?
+                    not
                 )
             )
-        ),
+        ],
         :parseRules
-        (list test-parse-1)
+        [test-parse-1]
     }
 )
 
-(comment suite "check-whole-rule1"
-    (:fact 
+(suite "check-whole-rule1"
+    (:fact check-whole-rule1-count
         (->>
             (do-search get-testrule1 test-loglist1)
             count
@@ -231,20 +226,17 @@
         :is
         1
     )
-    (:fact 
+    (:fact check-whole-rule1-key
         (->>
             (do-search get-testrule1 test-loglist1)
             first
             keys
-            sort
         )
         :is
-        (->>
-            (list :message "test-parse-1")
-            sort
-        )
+        (list "test-parse-1" :message)
+        
     )
-    (:fact
+    (:fact check-whole-rule1-value
         (->>
             (do-search get-testrule1 test-loglist1)
             first
