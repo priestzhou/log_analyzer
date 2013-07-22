@@ -8,13 +8,14 @@
 (defn- event-search [fitlers loglist]
     (filter  
         (fn [log]
-            (or
+            (reduce 
+                #(and %1 %2)
+                true
                 (map
                     #(% (get-message log))
                     fitlers
                 )
-
-            ) 
+            )
         )
         loglist
     )
@@ -60,8 +61,10 @@
 (defn do-search [searchrules loglist]
    (let [eventFilter (get searchrules :eventRules)
             logFilted (event-search eventFilter loglist)
+            parseRules (get searchrules :parseRules)
+            parseResult (apply-parse parseRules logFilted)
         ]
-        logFilted
+        parseResult
     )
 )
 
