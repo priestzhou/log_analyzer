@@ -8,7 +8,7 @@
 (defn- event-search [fitlers loglist]
     (filter  
         (fn [log]
-            (and
+            (or
                 (map
                     #(% (get-message log))
                     fitlers
@@ -44,14 +44,31 @@
     )
 )
 
-(defn do-search [searchrules loglist]
-   (let [eventFilter (get searchrules :eventRules)
-            logFilted (event-search eventFilter loglist)
-            parseRules (get searchrules :parseRule)
-        ]
+(defn- do-group [groupKeys loglist]
+    (group-by
+        (fn [log]
+            (reduce
+                #(assoc %1 %2 (get log %2))
+                {}
+                groupKeys
+            )
+        )
+        loglist
     )
 )
 
+(defn do-search [searchrules loglist]
+   (let [eventFilter (get searchrules :eventRules)
+            logFilted (event-search eventFilter loglist)
+        ]
+        logFilted
+    )
+)
+
+            (comment parseRules (get searchrules :parseRules)
+            parseResult (apply-parse parseRules logFilted)
+            groupKeys (get searchrules :groupKeys)
+            logGrouped (do-group groupKeys parseResult))
 
 
 
