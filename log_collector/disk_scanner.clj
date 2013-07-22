@@ -1,14 +1,23 @@
 (ns log-collector.disk-scanner
+    (:use
+        [logging.core :only [defloggers]]
+    )
+    (:require 
+        [utilities.shutil :as sh]
+    )
     (:import 
         [java.nio.file Files LinkOption]
     )
-    (:require [utilities.shutil :as sh])
 )
 
+(defloggers debug info warn error)
+
 (defn scan [sorter base pat]
-    (->> (Files/newDirectoryStream (sh/getPath base))
-        (filter #(Files/isRegularFile % (into-array LinkOption [])))
-        (filter #(re-find pat (str (.getFileName %))))
-        (sorter)
+    (let [logs (->> (Files/newDirectoryStream (sh/getPath base))
+            (filter #(Files/isRegularFile % (into-array LinkOption [])))
+            (filter #(re-find pat (str (.getFileName %))))
+        )]
+        (info "Scanned logs." :count (count logs))
+        (sorter logs)
     )
 )
