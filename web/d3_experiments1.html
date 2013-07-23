@@ -225,6 +225,7 @@ var fill = d3.scale.ordinal()
     var chord = d3.layout.chord();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     function loaddata( matrix){
 
 =======
@@ -232,6 +233,9 @@ var fill = d3.scale.ordinal()
     alert(matrix);
     alert(computername);
 >>>>>>> update text input
+=======
+    function loaddata( matrix,computername){//load the data and draw the circle 
+>>>>>>> delete alert
     chord.padding(.05)
             .matrix(matrix);
     svg.append("g").selectAll("path")
@@ -304,8 +308,12 @@ var ticks = svg.append("g").selectAll("g")
 
   
 
+<<<<<<< HEAD
 //.append("g").attr("class", "group")
 >>>>>>> update text input
+=======
+
+>>>>>>> delete alert
 
 ticks.append("line")
     .attr("x1", 1)
@@ -414,6 +422,7 @@ function fadethree(opacity) {
         .style("fill", function(d) { return fill(d.target.index); })
         .style("opacity", fadetwo(0));
 
+<<<<<<< HEAD
     
 
  // .domain().slice().reverse()
@@ -428,6 +437,8 @@ function fadethree(opacity) {
         
 */
 >>>>>>> update text input
+=======
+>>>>>>> delete alert
 
 =======
 =======
@@ -511,7 +522,6 @@ function fadethree(opacity) {
     
     // Returns an event handler for fading a given chord group.
     function fade(opacity) {
-      alert("112");
       return function(g, i) {
         svg.selectAll(".chord path")
             .filter(function(d) { return d.source.index != i && d.target.index != i; })
@@ -523,7 +533,6 @@ function fadethree(opacity) {
     //return d.source.index != i && d.target.index != i;
 
     function fadetwo(opacity) {
-      alert("113");
       return function(g, i) {
         svg.selectAll(".chord path")
             .filter(function(d) { return d.source.index==i && d.target.index==i; })
@@ -532,7 +541,6 @@ function fadethree(opacity) {
       };
     }
     function fadethree(opacity) {
-      alert("114");
       return function(g, i) {
         svg.selectAll(".chord path")
             .filter(function(d) { return d.source.index!=d.target.index;})
