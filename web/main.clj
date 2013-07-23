@@ -12,6 +12,10 @@
     (atom [])
 )
 
+(defn- get-json []
+    (reset! logdata (filter-by-time @logdata))
+    (gen-json @logdata)
+)
 
 (defn app
     [{:keys [uri]}]
@@ -23,8 +27,7 @@
                     "/web/d3_experiments1.html"
                 )
             )
-            (gen-json  @logdata)
-    
+            (get-json)            
         )
         
     }
@@ -35,9 +38,8 @@
     (consumer-from-kfk 
         "115.28.40.198:2181" 
         "hdfs.data-node" 
-        "data-consumer1"
+        "data-consumer24"
         logdata
     )
 )
 
-(comment wait-and-run logdata reload-from-file)

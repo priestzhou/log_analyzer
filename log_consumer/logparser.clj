@@ -107,13 +107,15 @@
 )
 (defn filter-by-time [loglist]
     (let [curtime (System/currentTimeMillis)
-            timeFrom (- curtime 10000)
+            timeFrom (- curtime 100000)
             timeTo (+ curtime 1000)
         ]
+        (println loglist)
+        (println curtime)
         (
             filter  
             #(and 
-                (nil? (get % "timestamp"))
+                (not (nil? (get % "timestamp")))
                 (> timeTo (get % "timestamp"))
                 (> (get % "timestamp") timeFrom)
             )
