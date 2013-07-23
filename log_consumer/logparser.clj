@@ -107,7 +107,7 @@
 )
 (defn filter-by-time [loglist]
     (let [curtime (System/currentTimeMillis)
-            timeFrom (- curtime 100000)
+            timeFrom (- curtime 30000)
             timeTo (+ curtime 1000)
         ]
         (println loglist)
