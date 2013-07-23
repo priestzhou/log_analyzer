@@ -36,6 +36,7 @@ env.install(env.compileAndJar('log_analyzer_web.jar', 'web',
 env.install(env.compileAndJar('log_analyzer_consumer.jar', 'log_consumer',
     libs=[env['CLOJURE'],
     env.File('$BUILD_DIR/utilities.jar'),
+    env.File('$EXTLIB/data.json-0.2.2.jar'),
     env.File('$BUILD_DIR/zktools.jar'),
     env.File('$BUILD_DIR/kfktools.jar')
     ],

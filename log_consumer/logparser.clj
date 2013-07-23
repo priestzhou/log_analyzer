@@ -122,9 +122,11 @@
     )
 )            
 
+(comment ["rule_filter",filter-userless-log,just-skip],)
+
 (def parse-rules 
     [
-        ["rule_filter",filter-userless-log,just-skip],
+        
         ["received_block",filter-receive-block,parse-receive-block ],
         ["get_hdfs_write",filter-HDFSWRITE,parse-hdfswrite],
         ["get_hdfs_read",filter-HDFSREAD,parse-hdfsread]
@@ -164,6 +166,20 @@
     ) 
 )
 
+
+(defn- psr-step [parser log]
+    (let [psr (parser (get log :message))]
+        (if (= [] psr)
+            []
+            (assoc 
+                psr
+                "timestamp" (get log :timestamp)
+            )
+        )
+    )
+)
+
+
 (defn parse-log-kfk [rules logs]
     (if (or (empty? rules) (empty? logs))
         []
@@ -182,10 +198,7 @@
             this-re (if (nil? t-logs) 
                     []
                     (map 
-                        #(assoc
-                            (f-parse (get % :message) )
-                            "timestamp" (get % :timestamp)
-                        )
+                        #(psr-step f-parse %)
                         (val t-logs)
                     )
                 )

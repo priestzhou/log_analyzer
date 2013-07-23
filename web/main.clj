@@ -23,7 +23,8 @@
                     "/web/d3_experiments1.html"
                 )
             )
-            (gen-json (filter-by-time @logdata))
+            (gen-json  @logdata)
+    
         )
         
     }
@@ -31,6 +32,12 @@
 
 (defn -main []
     (run-jetty #'app {:port 8085 :join? false})
-    (wait-and-run logdata reload-from-file)
+    (consumer-from-kfk 
+        "115.28.40.198:2181" 
+        "hdfs.data-node" 
+        "data-consumer1"
+        logdata
+    )
 )
 
+(comment wait-and-run logdata reload-from-file)

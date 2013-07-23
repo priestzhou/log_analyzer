@@ -2,12 +2,14 @@
     (:use log-consumer.logparser)
     (:require
         [kfktools.core :as kfk]
+        [clojure.data.json :as json]
     )
     (:import
         [java.util Properties ArrayList HashMap]
         [java.nio.file Path Files]
         [java.nio.file.attribute FileAttribute]
         [kfktools ConsumerWrapper]
+        java.nio.charset.Charset
     )
 )
 
@@ -36,19 +38,30 @@
     )
 )
 
+(defn- decode-kfk [message]
+    (-> message
+        (#(get % :message))
+        (String. (Charset/forName "UTF-8"))
+        (json/read-str :key-fn keyword)
+    )
+)
+
 (defn consumer-from-kfk [zkstr tpstr goupstr log-atom]
     (with-open [c (kfk/newConsumer
         :zookeeper.connect zkstr
         :group.id goupstr
-        :auto.offset.reset "largest")
+        :auto.offset.reset "smallest")
         ]
         (let [cseq (kfk/listenTo c tpstr)
-            pcseq (partition-all 100 cseq)
+            mapseq (map decode-kfk cseq)
+            pcseq (partition-all 10 mapseq)
+            
             ]
             (->>
                 pcseq
                 (map 
                     #(reset! 
+                        log-atom 
                         (concat
                             @log-atom
                             (parse-step-kfk %) 
