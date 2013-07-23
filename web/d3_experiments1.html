@@ -21,6 +21,9 @@
         padding: 4px;
         margin: 1px;
       }
+      .bar {
+       fill: steelblue;
+      }
     </style>
 <<<<<<< HEAD
 
@@ -184,23 +187,41 @@ var matrix = [
 
 
 
+<<<<<<< HEAD
 >>>>>>> chord demo
     var width = 960,
+=======
+    var width = 950,
+>>>>>>> update bar display
             height = 850,
             innerRadius = Math.min(width, height) * .28,
             outerRadius = innerRadius * 1.1;
+
+var color2=["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
+var dataset=[1,2,3,4,5,6,7];
 
 var fill = d3.scale.ordinal()
     .domain(d3.range(4))
     .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
 
-   // var fill =["#000000", "#FFDD89", "#957244", "#F26223"];//ÑÕÉ«Êý×é
+    var color =["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];//bar color
 
     var svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height)
             .append("g")
-            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+            .attr("transform", "translate(" + width / 2 + "," + 400 + ")");    //height / 2
+
+   svg.selectAll("rect")
+      .data(dataset)
+      .enter().append("rect")
+      .attr("x",width/2-18)
+      .attr("y",function(d,i){return -height / 4-i*20.5;})
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", function(d,i){return color[i];});
+
+
     var chord = d3.layout.chord();
 
 <<<<<<< HEAD
@@ -392,6 +413,13 @@ function fadethree(opacity) {
         
         .style("fill", function(d) { return fill(d.target.index); })
         .style("opacity", fadetwo(0));
+
+    
+
+ // .domain().slice().reverse()
+  
+
+
 /*
      svg.append("g").selectAll("path")
         .data(chord.groups)
@@ -440,6 +468,7 @@ function fadethree(opacity) {
       
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
     Ext.Ajax.request(requestConfig);   
 >>>>>>> chord demo
 =======
@@ -468,7 +497,17 @@ function fadethree(opacity) {
           label: i % 5 ? null : v / 1000 + "k"
         };
       });
+=======
+    var task = {
+    run: function(){
+        Ext.Ajax.request(requestConfig);
+    },
+        interval: 10000 //1 second
+>>>>>>> update bar display
     }
+    var runner = new Ext.util.TaskRunner();
+    runner.start(task);
+  
     
     // Returns an event handler for fading a given chord group.
     function fade(opacity) {
