@@ -37,11 +37,7 @@
                                     (take 2)
                                     (reverse)
                             )
-                            ln (->> f
-                                (.toFile)
-                                (io/reader)
-                                (llp/parse-log-raw)
-                            )
+                            ln (llp/parse-log-with-path f)
                             :let [not-cached-ln (llp/cache-log-line ln)]
                             :when not-cached-ln
                             :let [message 

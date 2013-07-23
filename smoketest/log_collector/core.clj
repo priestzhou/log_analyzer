@@ -70,7 +70,9 @@
                     )
                     lc (sh/newCloseableProcess 
                         (sh/popen 
-                            ["java" "-jar" "build/log_collector.jar" (str lccfg)]
+                            ["java" "-cp" ".:build/log_collector.jar" 
+                                "log_collector.main" (str lccfg)
+                            ]
                         )
                     )
                 ]

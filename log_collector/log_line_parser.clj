@@ -1,6 +1,7 @@
 (ns log-collector.log-line-parser
     (:require
         [clojure.string :as str]
+        [clojure.java.io :as io]
     )
     (:import 
         java.io.BufferedReader
@@ -71,6 +72,12 @@
 (defn parse-log-raw [rdr]
     (map parse-log-line 
         (rest (parse-log-raw' rdr nil))
+    )
+)
+
+(defn parse-log-with-path [p]
+    (with-open [rdr (io/reader (.toFile p))]
+        (doall (parse-log-raw rdr))
     )
 )
 
