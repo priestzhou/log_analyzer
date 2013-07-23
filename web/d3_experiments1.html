@@ -186,8 +186,8 @@ var matrix = [
 
 >>>>>>> chord demo
     var width = 960,
-            height = 500,
-            innerRadius = Math.min(width, height) * .41,
+            height = 850,
+            innerRadius = Math.min(width, height) * .28,
             outerRadius = innerRadius * 1.1;
 
 var fill = d3.scale.ordinal()
@@ -459,7 +459,16 @@ function fadethree(opacity) {
     //}
     //var runner = new Ext.util.TaskRunner();
     //runner.start(task);
-  
+    function groupTicks(d) {
+      alert("111");
+      var k = (d.endAngle - d.startAngle) / d.value;
+      return d3.range(0, d.value, 1000).map(function(v, i) {
+        return {
+          angle: v * k + d.startAngle,
+          label: i % 5 ? null : v / 1000 + "k"
+        };
+      });
+    }
     
     // Returns an event handler for fading a given chord group.
     function fade(opacity) {
