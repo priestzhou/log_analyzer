@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> update text input
 <html>
   <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8">
@@ -13,6 +9,7 @@
     <script type="text/javascript"
             src="http://docs.sencha.com/extjs/4.2.1/extjs-build/ext-all.js">
     </script>
+
     <style type="text/css">
       .box {
         background-color: skyblue;
@@ -25,105 +22,7 @@
        fill: steelblue;
       }
     </style>
-<<<<<<< HEAD
-
-  </head>
-  <body>
-      <script type="text/javascript">
-<<<<<<< HEAD
-  
-       var computer =[{
-=======
-
-//       var computer = "";
-
-              var computer =[{
->>>>>>> chord demo
-        "from_id": "0",
-        "to_id": "0",
-        "value":0
-    },
-{
-        "from_id": "0",
-        "to_id": "1",
-        "value":5871
-},
-{
-       "from_id": "0",
-        "to_id": "2",
-        "value":8916
-},
-{
-       "from_id": "0",
-        "to_id": "3",
-        "value":2868
-},
-{
-       "from_id": "1",
-        "to_id": "0",
-        "value":1951
-},
-{
-       "from_id": "1",
-        "to_id": "1",
-        "value":0
-},
-{
-       "from_id": "1",
-        "to_id": "2",
-        "value":200
-},
-{
-       "from_id": "1",
-        "to_id": "3",
-        "value":6171
-},
-{
-       "from_id": "2",
-        "to_id": "0",
-        "value":8010
-},
-{
-      "from_id": "2",
-        "to_id": "1",
-        "value":1614
-},
-{
-      "from_id": "2",
-        "to_id": "2",
-        "value":0
-},
-{
-      "from_id": "2",
-        "to_id": "3",
-        "value":8045
-},
-{
-      "from_id": "3",
-        "to_id": "0",
-        "value":1013
-},
-{
-      "from_id": "3",
-        "to_id": "1",
-        "value":990
-},
-{
-      "from_id": "3",
-        "to_id": "2",
-        "value":940
-},
-{
-      "from_id": "3",
-        "to_id": "3",
-        "value":0
-=======
-<!DOCTYPE html>
-<meta charset="utf-8">
-<style>
-=======
     <style>
->>>>>>> fix the js con't work problem
 
 body {
   font: 10px sans-serif;
@@ -133,14 +32,6 @@ body {
   fill-opacity: .67;
   stroke: #000;
   stroke-width: .5px;
-<<<<<<< HEAD
->>>>>>> interaction update version
-}
-
-</style>
-<body>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-=======
 }
 
 </style>
@@ -148,51 +39,17 @@ body {
   </head>
 
 <body>
->>>>>>> fix the js con't work problem
 <script>
 
 // From http://mkweb.bcgsc.ca/circos/guide/tables/
-var matrix = [
+var matrix11 = [
   [11975,  5871, 8916, 2868],
   [ 1951, 10048, 2060, 6171],
   [ 8010, 16145, 8090, 8045],
   [ 1013,   990,  940, 6907]
 ];
-<<<<<<< HEAD
-<<<<<<< HEAD
-      var computername=
-          [
-            {"name": "tt"},
-            {"name": "ss"},
-            {"name": "dd"},
-            {"name": "rr"}
-          ];
-      var matrix = new Array(4);
-      for (var i = 0; i < 4; i++) 
-      {
-          matrix[i] = new Array(); 
-          for(var j=0;j<4;j++)
-          {
-             matrix[i][j]=computer[i*4+j].value;
-          }
-      } 
-     var testvar=1;
-     var matrix = [
-        [11975,  5871, 8916, 2868],
-        [ 1951, 10048, 2060, 6171],
-        [ 8010, 16145, 8090, 8045],
-        [ 1013,   990,  940, 6907]
-    ];
-=======
 
-
-
-<<<<<<< HEAD
->>>>>>> chord demo
-    var width = 960,
-=======
     var width = 950,
->>>>>>> update bar display
             height = 850,
             innerRadius = Math.min(width, height) * .28,
             outerRadius = innerRadius * 1.1;
@@ -234,56 +91,11 @@ var fill2 = d3.scale.ordinal()
 
     var chord = d3.layout.chord();
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    function loaddata( matrix){
-
-=======
-    function loaddata( matrix,computername){//load the data and draw the circle and path
-=======
     function loaddata( matrix,computername,nodecolor,pathcolor){//load the data and draw the circle and path
->>>>>>> update color and data change
-    alert(matrix);
-    alert(computername);
->>>>>>> update text input
-=======
-    function loaddata( matrix,computername){//load the data and draw the circle 
->>>>>>> delete alert
     chord.padding(.05)
             .matrix(matrix);
-    svg.append("g").selectAll("path")
-<<<<<<< HEAD
-            .data(chord.groups)
-            .enter().append("path")
-            .style("fill", function(d) { return fill[d.index] })
-            .style("stroke", function(d) { return fill[d.index]; })
-            .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius));
-<<<<<<< HEAD
    
-   //alert(computername);
-=======
-
-var chord = d3.layout.chord()
-    .padding(.05)
-    .sortSubgroups(d3.descending)
-    .matrix(matrix);
-
-var width = 960,
-    height = 500,
-    innerRadius = Math.min(width, height) * .41,
-    outerRadius = innerRadius * 1.1;
-
-var fill = d3.scale.ordinal()
-    .domain(d3.range(4))
-    .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
-
-var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height)
-  .append("g")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-=======
+    svg.append("g").selectAll("path")
         .data(chord.groups)
       .enter().append("path")
         .style("fill", function(d) { return nodecolor[d.index]; })
@@ -291,30 +103,7 @@ var svg = d3.select("body").append("svg")
         .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
         .on("mouseover", fade(0))
         .on("mouseout", fadethree(1));
->>>>>>> update color and data change
 
-svg.append("g").selectAll("path")
-    .data(chord.groups)
-  .enter().append("path")
-    .style("fill", function(d) { return fill(d.index); })
-    .style("stroke", function(d) { return fill(d.index); })
-    .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
-    .on("mouseover", fade(0))
-    .on("mouseout", fadethree(1));
-
-<<<<<<< HEAD
-alert("11111111111");
-/*
-var ticks = svg.append("g").selectAll("g")
-    .data(chord.groups)
-  .enter().append("g").selectAll("g")
-    .data(groupTicks)
-  .enter().append("g")
-    .attr("transform", function(d) {
-      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
-          + "translate(" + outerRadius + ",0)";
-    });
-=======
       
      svg.append("g").selectAll("path")
         .data(chord.groups)
@@ -332,111 +121,9 @@ var ticks = svg.append("g").selectAll("g")
 
   
 
-<<<<<<< HEAD
 //.append("g").attr("class", "group")
->>>>>>> update text input
-=======
 
->>>>>>> delete alert
-
-ticks.append("line")
-    .attr("x1", 1)
-    .attr("y1", 0)
-    .attr("x2", 5)
-    .attr("y2", 0)
-    .style("stroke", "#000");
-
-ticks.append("text")
-    .attr("x", 8)
-    .attr("dy", ".35em")
-    .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
-    .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
-    .text(function(d) { return d.label; });
-*/
-//alert(d.souce.index);
-//alert(d.target.index);
-
-
-svg.append("g")
-    .attr("class", "chord")
-  .selectAll("path")
-    .data(chord.chords)
-  .enter().append("path")
-    .attr("d", d3.svg.chord().radius(innerRadius))
->>>>>>> interaction update version
-    
-    .style("fill", function(d) { return fill(d.target.index); })
-    .style("opacity", fadetwo(0));
-
-   //function(d,i){return (d.source.index==i && d.target.index==i)? 0:1;}
-/*
-// Returns an array of tick angles and labels, given a group.
-function groupTicks(d) {
-  var k = (d.endAngle - d.startAngle) / d.value;
-  return d3.range(0, d.value, 1000).map(function(v, i) {
-    return {
-      angle: v * k + d.startAngle,
-      label: i % 5 ? null : v / 1000 + "k"
-    };
-  });
-}
-*/
-// Returns an event handler for fading a given chord group.
-function fade(opacity) {
-  return function(g, i) {
-    svg.selectAll(".chord path")
-        .filter(function(d) { return d.source.index != i && d.target.index != i; })
-      .transition()
-        .style("opacity", opacity);
-  };
-}
-
-//return d.source.index != i && d.target.index != i;
-
-function fadetwo(opacity) {
-  return function(g, i) {
-    svg.selectAll(".chord path")
-        .filter(function(d) { return d.source.index==i && d.target.index==i; })
-      .transition()
-        .style("opacity", opacity);
-  };
-}
-function fadethree(opacity) {
-  return function(g, i) {
-    svg.selectAll(".chord path")
-        .filter(function(d) { return d.source.index!=d.target.index;})
-      .transition()
-        .style("opacity", opacity);
-  };
-}
-
-<<<<<<< HEAD
-    svg.append("g").selectAll("path")
-            .data(chord.groups)
-            .enter().append("text")
-            .attr("transform",function(d){return "translate("+d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius).centroid(d)+")";})
-            .attr("text-anchor","middle")
-            .text(function(d,i){return computername[i].name;});
-=======
->>>>>>> add time task
-            
     svg.append("g")
-<<<<<<< HEAD
-            .attr("class", "chord")
-            .selectAll("path")
-            .data(chord.chords)
-            .enter().append("path")
-            .attr("fill-opacity",.67)
-            .attr("stroke","#000")
-            .attr("stroke-width",.5)
-            .attr("d", d3.svg.chord().radius(innerRadius))
-            .style("fill", function(d) { return fill[d.target.index]; })
-            .style("opacity", 1);
-<<<<<<< HEAD
-
-   
-<<<<<<< HEAD
-=======
         .attr("class", "chord")
       .selectAll("path")
         .data(chord.chords)
@@ -446,7 +133,6 @@ function fadethree(opacity) {
         .style("fill", function(d) { return pathcolor[computername.length*d.source.index+d.target.index]; })//d.target.index
         .style("opacity", fadetwo(0));
 
-<<<<<<< HEAD
     
 
  // .domain().slice().reverse()
@@ -460,13 +146,7 @@ function fadethree(opacity) {
         .append("text")
         
 */
->>>>>>> update text input
-=======
->>>>>>> delete alert
 
-=======
-=======
->>>>>>> add time task
      }
        var requestConfig = {  //request data and decode
         url :'11.txt', 
@@ -499,18 +179,11 @@ function fadethree(opacity) {
         serverTo = dataflowlist[i].dest;
         var indexFrom = Ext.Array.indexOf(uniqueList,serverFrom,0);
         var indexTo = Ext.Array.indexOf(uniqueList,serverTo,0);
-        newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
+        //if(indexFrom!=indexTo){
+          
+          newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
+        //}
       }
-<<<<<<< HEAD
-      loaddata(newMatrix);
-      
-    }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    Ext.Ajax.request(requestConfig);   
->>>>>>> chord demo
-=======
-=======
 
       var uniListColor=new Array(serverCount);//node color list
       var listmatrix=new Array(serverCount);           //path color list
@@ -553,48 +226,16 @@ function fadethree(opacity) {
     }
     Ext.Ajax.request(requestConfig);
 /*
->>>>>>> update color and data change
     var task = {
     run: function(){
         Ext.Ajax.request(requestConfig);
-<<<<<<< HEAD
     },
         interval: 10000 //1 second
     }
 
     var runner = new Ext.util.TaskRunner();
     runner.start(task);
-<<<<<<< HEAD
->>>>>>> add time task
-=======
-    //},
-    //    interval: 10000 //1 second
-    //}
-    //var runner = new Ext.util.TaskRunner();
-    //runner.start(task);
-    function groupTicks(d) {
-      alert("111");
-      var k = (d.endAngle - d.startAngle) / d.value;
-      return d3.range(0, d.value, 1000).map(function(v, i) {
-        return {
-          angle: v * k + d.startAngle,
-          label: i % 5 ? null : v / 1000 + "k"
-        };
-      });
-=======
-    var task = {
-    run: function(){
-        Ext.Ajax.request(requestConfig);
-    },
-        interval: 10000 //1 second
->>>>>>> update bar display
-    }
-    var runner = new Ext.util.TaskRunner();
-    runner.start(task);
-  
-=======
  */ 
->>>>>>> update color and data change
     
     // Returns an event handler for fading a given chord group.
     function fade(opacity) {
@@ -625,11 +266,8 @@ function fadethree(opacity) {
       };
     }
 
->>>>>>> update text input
     </script>
 
   </body>
 </html>
-=======
-</script>
->>>>>>> interaction update version
+
