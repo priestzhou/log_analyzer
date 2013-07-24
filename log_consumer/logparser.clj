@@ -30,7 +30,6 @@
             "srcip" (str destip),"destip" (str srcip ),
             "filesize"  (read-string filesize), "tag" "received"
         }
-
     )    
 )
 
@@ -46,7 +45,6 @@
             "srcip" (str destip),"destip" (str srcip ),
             "filesize"  (read-string filesize), "tag" "write"
         }
-
     )
 )
 
@@ -62,7 +60,6 @@
             "srcip" (str srcip),"destip" (str destip),
             "filesize"  (read-string filesize), "tag" "read"
         }
-
     )
 )
 
@@ -162,7 +159,6 @@
     ) 
 )
 
-
 (defn- psr-step [parser log]
     (let [psr (parser (:message log))]
         (if (= [] psr)
@@ -174,7 +170,6 @@
         )
     )
 )
-
 
 (defn parse-log-kfk [rules logs]
     (if (or (empty? rules) (empty? logs))

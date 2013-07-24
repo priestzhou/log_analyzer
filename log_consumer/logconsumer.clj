@@ -39,7 +39,6 @@
         (let [cseq (kfk/listenTo c tpstr)
             mapseq (map decode-kfk cseq)
             pcseq (partition-all 10 mapseq)
-            
             ]
             (->>
                 pcseq
