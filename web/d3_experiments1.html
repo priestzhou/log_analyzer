@@ -197,14 +197,24 @@ var matrix = [
             innerRadius = Math.min(width, height) * .28,
             outerRadius = innerRadius * 1.1;
 
-var color2=["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
+//var color2=["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
+
 var dataset=[1,2,3,4,5,6,7];
 
+//d3.range(4)
+
 var fill = d3.scale.ordinal()
-    .domain(d3.range(4))
+    .domain([0,1,2,3])
     .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
 
-    var color =["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];//bar color
+
+
+var fill2 = d3.scale.ordinal()
+    .domain([0,1,2,3])
+    .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
+
+   // var color =["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];//bar color
+    var color=[d3.rgb(220,0,30), d3.rgb(190,0,60), d3.rgb(160,0,90), d3.rgb(130,0,120), d3.rgb(100,0,150), d3.rgb(70,0,180), d3.rgb(40,0,220)];
 
     var svg = d3.select("body").append("svg")
             .attr("width", width)
@@ -226,10 +236,14 @@ var fill = d3.scale.ordinal()
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     function loaddata( matrix){
 
 =======
     function loaddata( matrix,computername){//load the data and draw the circle and path
+=======
+    function loaddata( matrix,computername,nodecolor,pathcolor){//load the data and draw the circle and path
+>>>>>>> update color and data change
     alert(matrix);
     alert(computername);
 >>>>>>> update text input
@@ -239,6 +253,7 @@ var fill = d3.scale.ordinal()
     chord.padding(.05)
             .matrix(matrix);
     svg.append("g").selectAll("path")
+<<<<<<< HEAD
             .data(chord.groups)
             .enter().append("path")
             .style("fill", function(d) { return fill[d.index] })
@@ -268,6 +283,15 @@ var svg = d3.select("body").append("svg")
     .attr("height", height)
   .append("g")
     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+=======
+        .data(chord.groups)
+      .enter().append("path")
+        .style("fill", function(d) { return nodecolor[d.index]; })
+        .style("stroke", function(d) { return nodecolor[d.index]; })
+        .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+        .on("mouseover", fade(0))
+        .on("mouseout", fadethree(1));
+>>>>>>> update color and data change
 
 svg.append("g").selectAll("path")
     .data(chord.groups)
@@ -419,7 +443,7 @@ function fadethree(opacity) {
       .enter().append("path")
         .attr("d", d3.svg.chord().radius(innerRadius))
         
-        .style("fill", function(d) { return fill(d.target.index); })
+        .style("fill", function(d) { return pathcolor[computername.length*d.source.index+d.target.index]; })//d.target.index
         .style("opacity", fadetwo(0));
 
 <<<<<<< HEAD
@@ -468,6 +492,8 @@ function fadethree(opacity) {
           newMatrix[i][j]=0;
         }
       }
+      
+
       for(var i=0;i<dataflowlist.length;i++){
         serverFrom=dataflowlist[i].src;
         serverTo = dataflowlist[i].dest;
@@ -475,6 +501,7 @@ function fadethree(opacity) {
         var indexTo = Ext.Array.indexOf(uniqueList,serverTo,0);
         newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
       }
+<<<<<<< HEAD
       loaddata(newMatrix);
       
     }
@@ -483,6 +510,50 @@ function fadethree(opacity) {
     Ext.Ajax.request(requestConfig);   
 >>>>>>> chord demo
 =======
+=======
+
+      var uniListColor=new Array(serverCount);//node color list
+      var listmatrix=new Array(serverCount);           //path color list
+      var listmatrix1=new Array(serverCount);
+      var mmax=0;
+      var mmin=1000000;
+      for(var p=0;p<serverCount;p++)
+      {
+          var iterm=0;
+          for(var q=0;q<serverCount;q++)
+          {
+             if(mmax<newMatrix[p][q]) mmax=newMatrix[p][q];
+             if(mmin>newMatrix[p][q]) mmin=newMatrix[p][q];
+             iterm=iterm+newMatrix[p][q];
+             var xx=255*(mmax-newMatrix[p][q])/(mmax-mmin);
+             var zz=255-255*(mmax-newMatrix[p][q])/(mmax-mmin);
+             listmatrix[p*serverCount+q]=d3.rgb(xx,0,zz);
+          }
+          var xx1=255*(mmax-iterm)/(mmax-mmin);
+          var zz1=255-255*(mmax-iterm)/(mmax-mmin);
+          uniListColor[p]=d3.rgb(xx1,0,zz1);
+      }
+      for(var n=0;n<serverCount;n++)
+      {
+          for(var m=0;m<serverCount;m++)
+          {
+              var xx2=255*(mmax-newMatrix[m][n])/(mmax-mmin);
+              var zz2=255-255*(mmax-newMatrix[m][n])/(mmax-mmin);
+              listmatrix1[n*serverCount+m]=d3.rgb(xx,0,zz);
+          }
+      }
+
+      for(var l=0;l<serverCount;l++)
+      {
+          listmatrix[l]=(listmatrix[l]+listmatrix1[l])/2;
+      }
+
+      loaddata(newMatrix,uniqueList,uniListColor,listmatrix);
+      
+    }
+    Ext.Ajax.request(requestConfig);
+/*
+>>>>>>> update color and data change
     var task = {
     run: function(){
         Ext.Ajax.request(requestConfig);
@@ -490,8 +561,10 @@ function fadethree(opacity) {
     },
         interval: 10000 //1 second
     }
+
     var runner = new Ext.util.TaskRunner();
     runner.start(task);
+<<<<<<< HEAD
 >>>>>>> add time task
 =======
     //},
@@ -519,6 +592,9 @@ function fadethree(opacity) {
     var runner = new Ext.util.TaskRunner();
     runner.start(task);
   
+=======
+ */ 
+>>>>>>> update color and data change
     
     // Returns an event handler for fading a given chord group.
     function fade(opacity) {
