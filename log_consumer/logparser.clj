@@ -114,8 +114,7 @@
             filter  
             #(and 
                 (not (nil? (get % "timestamp")))
-                (> timeTo (get % "timestamp"))
-                (> (get % "timestamp") timeFrom)
+                (> timeTo (get % "timestamp") timeFrom)
             )
             loglist
         )
