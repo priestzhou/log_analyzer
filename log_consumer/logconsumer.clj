@@ -24,7 +24,7 @@
 
 (defn- decode-kfk [message]
     (-> message
-        (#(get % :message))
+        (#(:message %))
         (String. (Charset/forName "UTF-8"))
         (json/read-str :key-fn keyword)
     )

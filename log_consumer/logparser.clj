@@ -168,12 +168,12 @@
 
 
 (defn- psr-step [parser log]
-    (let [psr (parser (get log :message))]
+    (let [psr (parser (:message log))]
         (if (= [] psr)
             []
             (assoc 
                 psr
-                "timestamp" (get log :timestamp)
+                "timestamp" (:timestamp log)
             )
         )
     )
@@ -189,7 +189,7 @@
             log-group 
                 (group-by 
                     #(f-fitler 
-                        (get % :message)
+                        (:message %)
                     )
                     logs
                 )
