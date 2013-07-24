@@ -5,12 +5,11 @@
     (:use log-consumer.logconsumer)
     (:require
         [argparser.core :as arg]
+        [utilities.core :as util]
     )  
     (:gen-class)
 )
-  
-(def  logcahe (atom ["12","23"])
-)
+
 (def logdata 
     (atom [])
 )
@@ -59,22 +58,20 @@
                 }
             opts-with-default (merge default-args opts)
         ]
-        (when (:help opts)
+        (when (:help opts-with-default)
             (println (arg/default-doc arg-spec))
             (System/exit 0)            
         )
-        (when (not (:zkp opts))
-            (println "please input the zookeeper info")
-            (println (arg/default-doc arg-spec))
-            (System/exit 0)            
-        )     
+        (util/throw-if-not (:zkp opts-with-default)
+            IllegalArgumentException. 
+            "the zookeeper info is needed"
+        )  
         (run-jetty #'app {:port 8085 :join? false})
         (consumer-from-kfk 
             (first (:zkp opts-with-default))
             (first (:topic opts-with-default))
             (first (:group opts-with-default))
             logdata
-    )
+        )
     )
 )
-
