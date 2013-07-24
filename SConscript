@@ -40,8 +40,7 @@ env.install(env.compileAndJar('log_analyzer_consumer.jar', 'log_consumer',
     env.File('$EXTLIB/data.json-0.2.2.jar'),
     env.File('$BUILD_DIR/zktools.jar'),
     env.File('$BUILD_DIR/kfktools.jar')
-    ],
-    standalone=True, manifest={'Main-Class': 'log_consumer.main'}))
+    ]))
 env.install(env.compileAndJar('log_analyzer_hadoop_adapt.jar', 'hadoop_adapt',
     libs=[env['CLOJURE'],
     env.File('$EXTLIB/hadoop-core-1.1.2.jar'),
