@@ -7,7 +7,7 @@
     )
 )
 
-(defn- filter-userless-log [instr]
+(defn- filter-useless-log [instr]
     (and
         (not (common-filter #"clienttrace" instr))
         (not (common-filter #"Received block" instr))
@@ -120,13 +120,10 @@
             loglist
         )
     )
-)            
-
-(comment ["rule_filter",filter-userless-log,just-skip],)
-
+)
 (def parse-rules 
     [
-        
+        ["rule_filter",filter-useless-log,just-skip],        
         ["received_block",filter-receive-block,parse-receive-block ],
         ["get_hdfs_write",filter-HDFSWRITE,parse-hdfswrite],
         ["get_hdfs_read",filter-HDFSREAD,parse-hdfsread]
