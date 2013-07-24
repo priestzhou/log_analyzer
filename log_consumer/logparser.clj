@@ -110,8 +110,6 @@
             timeFrom (- curtime 30000)
             timeTo (+ curtime 1000)
         ]
-        (println loglist)
-        (println curtime)
         (
             filter  
             #(and 
