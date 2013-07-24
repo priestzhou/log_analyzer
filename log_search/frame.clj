@@ -46,15 +46,40 @@
 )
 
 (defn- do-group [groupKeys loglist]
- 
     (if (nil? groupKeys)
         loglist
-        (group-by
+        (let [groupMap (group-by
+                    (fn [log]
+                        (reduce
+                            #(assoc %1 %2 (get log %2))
+                            {}
+                            groupKeys
+                        )
+                    )
+                    loglist
+                )
+                gKeys (keys groupMap)
+            ]
+            (map
+                (fn [k] {:gKeys k,:gVal (get groupMap k)})
+                gKeys
+            )
+        )
+    )
+)
+
+(defn- do-statistic [statRules loglist]
+    (if (nil? statRules)
+        loglist
+        (map
             (fn [log]
                 (reduce
-                    #(assoc %1 %2 (get log %2))
-                    {}
-                    groupKeys
+                    #(assoc %1 
+                        (get %2 :statKey)
+                        ((get %2 :statFun) log)
+                    )
+                    log
+                    statRules
                 )
             )
             loglist
@@ -69,8 +94,10 @@
             parseResult (apply-parse parseRules logFilted)
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys parseResult)
+            statRules (get searchrules :statRules)
+            statResult (do-statistic statRules logGrouped)
         ]
-        logGrouped
+        statResult
     )
 )
 

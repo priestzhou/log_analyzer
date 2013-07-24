@@ -243,8 +243,8 @@
     (:fact check-goup1-key
         (->>
             (do-search testrule-group test-loglist1)
-            keys
             first
+            (#(get % :gKeys))
         )
         :is
         {"test-parse-1" "pr-1","test-parse-2" "pr-2"}
@@ -252,8 +252,8 @@
     (:fact check-goup1-val-count
         (->>
             (do-search testrule-group test-loglist1)
-            vals
             first
+            (#(get % :gVal))
             count
         )
         :is
