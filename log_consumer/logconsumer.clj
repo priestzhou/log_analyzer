@@ -43,11 +43,13 @@
             (->>
                 pcseq
                 (map 
-                    #(reset! 
+                    #(swap! 
                         log-atom 
-                        (concat
-                            @log-atom
-                            (parse-step-kfk %) 
+                        (fn [log]
+                            (concat
+                                log
+                                (parse-step-kfk %) 
+                            )
                         )
                     )
                 )

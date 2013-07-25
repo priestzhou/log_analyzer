@@ -15,7 +15,7 @@
 )
 
 (defn- get-json []
-    (reset! logdata (filter-by-time @logdata))
+    (swap! logdata filter-by-time )
     (gen-json @logdata)
 )
 
