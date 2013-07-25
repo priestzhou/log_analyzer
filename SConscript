@@ -33,7 +33,8 @@ env.install(env.compileAndJar('log_analyzer_web.jar', 'web',
     env.File('$BUILD_DIR/argparser.jar'),
     env.File('$BUILD_DIR/log_analyzer_consumer.jar'),
     env.File('$BUILD_DIR/zktools.jar'),
-    env.File('$BUILD_DIR/kfktools.jar')
+    env.File('$BUILD_DIR/kfktools.jar'),
+    env.File('$BUILD_DIR/logging.jar')
     ],
     standalone=True, manifest={'Main-Class': 'web.main'}))
 env.install(env.compileAndJar('log_analyzer_consumer.jar', 'log_consumer',
@@ -41,7 +42,8 @@ env.install(env.compileAndJar('log_analyzer_consumer.jar', 'log_consumer',
     env.File('$BUILD_DIR/utilities.jar'),
     env.File('$EXTLIB/data.json-0.2.2.jar'),
     env.File('$BUILD_DIR/zktools.jar'),
-    env.File('$BUILD_DIR/kfktools.jar')
+    env.File('$BUILD_DIR/kfktools.jar'),
+    env.File('$BUILD_DIR/logging.jar'),
     ]))
 env.install(env.compileAndJar('log_analyzer_hadoop_adapt.jar', 'hadoop_adapt',
     libs=[env['CLOJURE'],

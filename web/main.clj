@@ -1,22 +1,28 @@
 (ns web.main
-    (:use ring.adapter.jetty)
-    (:use clojure.java.io)
-    (:use log-consumer.logparser)
-    (:use log-consumer.logconsumer)
+    (:use 
+        [ring.adapter.jetty]
+        [clojure.java.io]
+        [logging.core :only [defloggers]]
+    )
     (:require
         [argparser.core :as arg]
         [utilities.core :as util]
+        [log-consumer.logparser :as lp]
+        [log-consumer.logconsumer :as lc]
     )  
     (:gen-class)
 )
+
+(defloggers debug info warn error)
 
 (def logdata 
     (atom [])
 )
 
 (defn- get-json []
-    (swap! logdata filter-by-time )
-    (gen-json @logdata)
+    (swap! logdata lp/filter-by-time )
+    (info "time filter output log " :count (count @logdata))
+    (lp/gen-json @logdata)
 )
 
 (defn app
@@ -67,7 +73,7 @@
             "the zookeeper info is needed"
         )  
         (run-jetty #'app {:port 8085 :join? false})
-        (consumer-from-kfk 
+        (lc/consumer-from-kfk 
             (first (:zkp opts-with-default))
             (first (:topic opts-with-default))
             (first (:group opts-with-default))

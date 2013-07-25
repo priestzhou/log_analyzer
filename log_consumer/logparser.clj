@@ -1,4 +1,10 @@
-(ns log-consumer.logparser)
+(ns log-consumer.logparser
+    (:use 
+        [logging.core :only [defloggers]]
+    )
+)
+
+(defloggers debug info warn error)
 
 (defn- common-filter [pstr,instr]
     (if (re-find pstr instr)
@@ -107,6 +113,7 @@
             timeFrom (- curtime 30000)
             timeTo (+ curtime 1000)
         ]
+        (info "time filter input log count " :count (count loglist))
         (
             filter  
             #(and 
@@ -118,8 +125,7 @@
     )
 )
 (def parse-rules 
-    [
-        ["rule_filter",filter-useless-log,just-skip],        
+    [        
         ["received_block",filter-receive-block,parse-receive-block ],
         ["get_hdfs_write",filter-HDFSWRITE,parse-hdfswrite],
         ["get_hdfs_read",filter-HDFSREAD,parse-hdfsread]
