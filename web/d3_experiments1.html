@@ -73,6 +73,21 @@ var fill2 = d3.scale.ordinal()
    // var color =["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];//bar color
     var color=[d3.rgb(220,0,30), d3.rgb(190,0,60), d3.rgb(160,0,90), d3.rgb(130,0,120), d3.rgb(100,0,150), d3.rgb(70,0,180), d3.rgb(40,0,220)];
 
+
+      /*
+    var myPath =svg.append("g").selectAll("path")
+        .data(chord.groups)
+      .enter().append("path")
+
+    var myText = svg.append("g").selectAll("path")
+        .data(chord.groups)
+      .enter()
+        .append("text")
+*/
+
+    var chord = d3.layout.chord();
+
+    function loaddata( matrix,computername,nodecolor,pathcolor){//load the data and draw the circle and path
     var svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height)
@@ -87,15 +102,10 @@ var fill2 = d3.scale.ordinal()
       .attr("width", 18)
       .attr("height", 18)
       .style("fill", function(d,i){return color[i];});
-
-
-    var chord = d3.layout.chord();
-
-    function loaddata( matrix,computername,nodecolor,pathcolor){//load the data and draw the circle and path
     chord.padding(.05)
             .matrix(matrix);
-   
-    svg.append("g").selectAll("path")
+  
+      svg.append("g").selectAll("path")
         .data(chord.groups)
       .enter().append("path")
         .style("fill", function(d) { return nodecolor[d.index]; })
@@ -103,9 +113,8 @@ var fill2 = d3.scale.ordinal()
         .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
         .on("mouseover", fade(0))
         .on("mouseout", fadethree(1));
-
       
-     svg.append("g").selectAll("path")
+      svg.append("g").selectAll("path")
         .data(chord.groups)
       .enter()
         .append("text")
@@ -225,22 +234,32 @@ var fill2 = d3.scale.ordinal()
       
     }
     Ext.Ajax.request(requestConfig);
-/*
+    var requestConfigRenew = {  //request data and decode
+        url :'11.txt', 
+        callback : function(options,success,response){
+            var msg = ["is:" ,success,"/n",  
+                        "return:",response.responseText];  
+            var jsondata = Ext.JSON.decode(response.responseText);
+            
+            d3.select("svg")
+              .remove();
+            getMatrix(jsondata.info)           
+        }  
+    }
     var task = {
     run: function(){
-        Ext.Ajax.request(requestConfig);
+        Ext.Ajax.request(requestConfigRenew);
     },
         interval: 10000 //1 second
     }
 
     var runner = new Ext.util.TaskRunner();
     runner.start(task);
- */ 
-    
+
     // Returns an event handler for fading a given chord group.
     function fade(opacity) {
       return function(g, i) {
-        svg.selectAll(".chord path")
+        d3.select("svg").selectAll(".chord path")
             .filter(function(d) { return d.source.index != i && d.target.index != i; })
           .transition()
             .style("opacity", opacity);
@@ -251,7 +270,7 @@ var fill2 = d3.scale.ordinal()
 
     function fadetwo(opacity) {
       return function(g, i) {
-        svg.selectAll(".chord path")
+        d3.select("svg").selectAll(".chord path")
             .filter(function(d) { return d.source.index==i && d.target.index==i; })
           .transition()
             .style("opacity", opacity);
@@ -259,7 +278,7 @@ var fill2 = d3.scale.ordinal()
     }
     function fadethree(opacity) {
       return function(g, i) {
-        svg.selectAll(".chord path")
+        d3.select("svg").selectAll(".chord path")
             .filter(function(d) { return d.source.index!=d.target.index;})
           .transition()
             .style("opacity", opacity);
