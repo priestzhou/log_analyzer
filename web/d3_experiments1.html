@@ -1,0 +1,292 @@
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <title>d3 experiment1</title>
+    <script type="text/javascript"
+            src="https://raw.github.com/mbostock/d3/master/d3.js">
+    </script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script type="text/javascript"
+            src="http://docs.sencha.com/extjs/4.2.1/extjs-build/ext-all.js">
+    </script>
+
+    <style type="text/css">
+      .box {
+        background-color: skyblue;
+        width: 24px;
+        height: 18px;
+        padding: 4px;
+        margin: 1px;
+      }
+      .bar {
+       fill: steelblue;
+      }
+    </style>
+    <style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.chord path {
+  fill-opacity: .67;
+  stroke: #000;
+  stroke-width: .5px;
+}
+
+</style>
+
+  </head>
+
+<body>
+<script>
+
+// From http://mkweb.bcgsc.ca/circos/guide/tables/
+var matrix11 = [
+  [11975,  5871, 8916, 2868],
+  [ 1951, 10048, 2060, 6171],
+  [ 8010, 16145, 8090, 8045],
+  [ 1013,   990,  940, 6907]
+];
+
+    var width = 950,
+            height = 850,
+            innerRadius = Math.min(width, height) * .28,
+            outerRadius = innerRadius * 1.1;
+
+//var color2=["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
+
+var dataset=[1,2,3,4,5,6,7];
+
+//d3.range(4)
+
+var fill = d3.scale.ordinal()
+    .domain([0,1,2,3])
+    .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
+
+
+
+var fill2 = d3.scale.ordinal()
+    .domain([0,1,2,3])
+    .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
+
+   // var color =["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];//bar color
+    var color=[d3.rgb(220,0,30), d3.rgb(190,0,60), d3.rgb(160,0,90), d3.rgb(130,0,120), d3.rgb(100,0,150), d3.rgb(70,0,180), d3.rgb(40,0,220)];
+
+
+      /*
+    var myPath =svg.append("g").selectAll("path")
+        .data(chord.groups)
+      .enter().append("path")
+
+    var myText = svg.append("g").selectAll("path")
+        .data(chord.groups)
+      .enter()
+        .append("text")
+*/
+
+    var chord = d3.layout.chord();
+
+    function loaddata( matrix,computername,nodecolor,pathcolor){//load the data and draw the circle and path
+    var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(" + width / 2 + "," + 400 + ")");    //height / 2
+
+   svg.selectAll("rect")
+      .data(dataset)
+      .enter().append("rect")
+      .attr("x",width/2-18)
+      .attr("y",function(d,i){return -height / 4-i*20.5;})
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", function(d,i){return color[i];});
+    chord.padding(.05)
+            .matrix(matrix);
+  
+      svg.append("g").selectAll("path")
+        .data(chord.groups)
+      .enter().append("path")
+        .style("fill", function(d) { return nodecolor[d.index]; })
+        .style("stroke", function(d) { return nodecolor[d.index]; })
+        .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+        .on("mouseover", fade(0))
+        .on("mouseout", fadethree(1));
+      
+      svg.append("g").selectAll("path")
+        .data(chord.groups)
+      .enter()
+        .append("text")
+        .each(function(d) { d.angle = (d.startAngle + d.endAngle) / 2; })
+        .attr("dy", ".35em")
+        .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+        .attr("transform", function(d) {
+          return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+              + "translate(" + (innerRadius + 26) + ")"
+              + (d.angle > Math.PI ? "rotate(180)" : "");
+          })
+        .text(function(d) { return computername[d.index]; })
+
+  
+
+//.append("g").attr("class", "group")
+
+    svg.append("g")
+        .attr("class", "chord")
+      .selectAll("path")
+        .data(chord.chords)
+      .enter().append("path")
+        .attr("d", d3.svg.chord().radius(innerRadius))
+        
+        .style("fill", function(d) { return pathcolor[computername.length*d.source.index+d.target.index]; })//d.target.index
+        .style("opacity", fadetwo(0));
+
+    
+
+ // .domain().slice().reverse()
+  
+
+
+/*
+     svg.append("g").selectAll("path")
+        .data(chord.groups)
+        .enter().append("path")
+        .append("text")
+        
+*/
+
+     }
+       var requestConfig = {  //request data and decode
+        url :'11.txt', 
+        callback : function(options,success,response){
+            var msg = ["is:" ,success,"/n",  
+                        "return:",response.responseText];  
+            var jsondata = Ext.JSON.decode(response.responseText);
+            getMatrix(jsondata.info) 
+        }  
+    }
+    function getMatrix(dataflowlist){//from source data to matrix and draw
+      var serverList=new Array();
+      for(var i=0;i<dataflowlist.length;i++){
+        serverList.push(dataflowlist[i].src);
+        serverList.push(dataflowlist[i].dest);
+      }
+      var uniqueList = Ext.Array.unique(serverList); 
+      var serverCount = uniqueList.length
+      var newMatrix = new Array();
+      for(var i=0;i<serverCount;i++){
+        newMatrix.push(new Array());
+        for(var j=0;j<serverCount;j++){
+          newMatrix[i][j]=0;
+        }
+      }
+      
+
+      for(var i=0;i<dataflowlist.length;i++){
+        serverFrom=dataflowlist[i].src;
+        serverTo = dataflowlist[i].dest;
+        var indexFrom = Ext.Array.indexOf(uniqueList,serverFrom,0);
+        var indexTo = Ext.Array.indexOf(uniqueList,serverTo,0);
+        //if(indexFrom!=indexTo){
+          
+          newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
+        //}
+      }
+
+      var uniListColor=new Array(serverCount);//node color list
+      var listmatrix=new Array(serverCount);           //path color list
+      var listmatrix1=new Array(serverCount);
+      var mmax=0;
+      var mmin=1000000;
+      for(var p=0;p<serverCount;p++)
+      {
+          var iterm=0;
+          for(var q=0;q<serverCount;q++)
+          {
+             if(mmax<newMatrix[p][q]) mmax=newMatrix[p][q];
+             if(mmin>newMatrix[p][q]) mmin=newMatrix[p][q];
+             iterm=iterm+newMatrix[p][q];
+             var xx=255*(mmax-newMatrix[p][q])/(mmax-mmin);
+             var zz=255-255*(mmax-newMatrix[p][q])/(mmax-mmin);
+             listmatrix[p*serverCount+q]=d3.rgb(xx,0,zz);
+          }
+          var xx1=255*(mmax-iterm)/(mmax-mmin);
+          var zz1=255-255*(mmax-iterm)/(mmax-mmin);
+          uniListColor[p]=d3.rgb(xx1,0,zz1);
+      }
+      for(var n=0;n<serverCount;n++)
+      {
+          for(var m=0;m<serverCount;m++)
+          {
+              var xx2=255*(mmax-newMatrix[m][n])/(mmax-mmin);
+              var zz2=255-255*(mmax-newMatrix[m][n])/(mmax-mmin);
+              listmatrix1[n*serverCount+m]=d3.rgb(xx,0,zz);
+          }
+      }
+
+      for(var l=0;l<serverCount;l++)
+      {
+          listmatrix[l]=(listmatrix[l]+listmatrix1[l])/2;
+      }
+
+      loaddata(newMatrix,uniqueList,uniListColor,listmatrix);
+      
+    }
+    Ext.Ajax.request(requestConfig);
+    var requestConfigRenew = {  //request data and decode
+        url :'11.txt', 
+        callback : function(options,success,response){
+            var msg = ["is:" ,success,"/n",  
+                        "return:",response.responseText];  
+            var jsondata = Ext.JSON.decode(response.responseText);
+            
+            d3.select("svg")
+              .remove();
+            getMatrix(jsondata.info)           
+        }  
+    }
+    var task = {
+    run: function(){
+        Ext.Ajax.request(requestConfigRenew);
+    },
+        interval: 10000 //1 second
+    }
+
+    var runner = new Ext.util.TaskRunner();
+    runner.start(task);
+
+    // Returns an event handler for fading a given chord group.
+    function fade(opacity) {
+      return function(g, i) {
+        d3.select("svg").selectAll(".chord path")
+            .filter(function(d) { return d.source.index != i && d.target.index != i; })
+          .transition()
+            .style("opacity", opacity);
+      };
+    }
+
+    //return d.source.index != i && d.target.index != i;
+
+    function fadetwo(opacity) {
+      return function(g, i) {
+        d3.select("svg").selectAll(".chord path")
+            .filter(function(d) { return d.source.index==i && d.target.index==i; })
+          .transition()
+            .style("opacity", opacity);
+      };
+    }
+    function fadethree(opacity) {
+      return function(g, i) {
+        d3.select("svg").selectAll(".chord path")
+            .filter(function(d) { return d.source.index!=d.target.index;})
+          .transition()
+            .style("opacity", opacity);
+      };
+    }
+
+    </script>
+
+  </body>
+</html>
+
