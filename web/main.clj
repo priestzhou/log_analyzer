@@ -35,8 +35,7 @@
                     "/web/d3_experiments1.html"
                 )
             )
-            (get-json)            
-            (gen-json @logdata)
+            (get-json)         
         )
     }
 )
