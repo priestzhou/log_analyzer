@@ -52,8 +52,11 @@
                     (doall)
                 )]
                 (info "Find new logs" :count (count logs))
-                (kfk/produce producer logs)
-                (info "Sent new logs. Wait for 5 secs." :count (count logs))
+                (doseq [plogs (partition-all 10000 logs)]
+                    (kfk/produce producer plogs)
+                    (info "Sent logs" :count (count plogs))
+                )
+                (info "Sent all new logs. Wait for 5 secs.")
             )
         (catch IOException ex
             (error "IO error. Wait for 5 secs." :exception ex)
