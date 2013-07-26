@@ -25,6 +25,25 @@
     (lp/gen-json @logdata)
 )
 
+(def ^:pravite max-log 2000)
+(def ^:pravite new-log 1000)
+
+(defn- max-log-watch [watch-key log-atom old-data new-data]
+    (let [logcount (count new-data)]
+        (if (> max-log logcount)
+            (debug "logcount don't over the threshold" 
+                :threshold max-log :log-count logcount
+            )
+            (do
+                (info "the logcount over the threshold"
+                    :threshold max-log :log-count logcount
+                )
+                (swap! log-atom #(take-last new-log %))
+            )
+        )
+    )
+)
+
 (defn app
     [{:keys [uri]}]
     {:body
@@ -73,6 +92,7 @@
             "the zookeeper info is needed"
         )  
         (run-jetty #'app {:port 8085 :join? false})
+        (add-watch logdata :max-log-watch max-log-watch)
         (lc/consumer-from-kfk 
             (first (:zkp opts-with-default))
             (first (:topic opts-with-default))
