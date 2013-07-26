@@ -26,3 +26,8 @@ env.install(env.compileAndJar('log_analyzer_smoketest.jar', 'smoketest',
         env.File('$BUILD_DIR/kfktools.jar'),
     ],
     standalone=True, manifest={'Main-Class': 'smoketest.main'}))
+env.install(env.compileAndJar('java_parser.jar', 'java_parser',
+    libs=[env['CLOJURE'], 
+        env.File('$BUILD_DIR/utilities.jar'),
+    ],
+    standalone=True, manifest={'Main-Class': 'java_parser.main'}))
