@@ -25,8 +25,8 @@
     (lp/gen-json @logdata)
 )
 
-(def ^:pravite max-log 2000)
-(def ^:pravite new-log 1000)
+(def ^:pravite max-log 1000)
+(def ^:pravite new-log 500)
 
 (defn- max-log-watch [watch-key log-atom old-data new-data]
     (let [logcount (count new-data)]
