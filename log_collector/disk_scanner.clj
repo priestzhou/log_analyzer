@@ -13,11 +13,14 @@
 (defloggers debug info warn error)
 
 (defn scan [sorter base pat]
-    (let [logs (->> (Files/newDirectoryStream (sh/getPath base))
-            (filter #(Files/isRegularFile % (into-array LinkOption [])))
-            (filter #(re-find pat (str (.getFileName %))))
-        )]
-        (info "Scanned logs." :count (count logs))
-        (sorter logs)
+    (with-open [files (Files/newDirectoryStream (sh/getPath base))]
+        (let [logs (->> files
+                (filter #(Files/isRegularFile % (into-array LinkOption [])))
+                (filter #(re-find pat (str (.getFileName %))))
+                (sorter)
+            )]
+            (info "Scanned logs." :count (count logs))
+            logs
+        )
     )
 )
