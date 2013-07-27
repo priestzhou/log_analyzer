@@ -52,9 +52,10 @@
                     (doall)
                 )]
                 (info "Find new logs" :count (count logs))
-                (doseq [plogs (partition-all 10000 logs)]
+                (doseq [plogs (partition-all 1000 logs)]
                     (kfk/produce producer plogs)
                     (info "Sent logs" :count (count plogs))
+                    (Thread/sleep 500)
                 )
                 (info "Sent all new logs. Wait for 5 secs.")
             )
