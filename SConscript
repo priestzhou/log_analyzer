@@ -57,5 +57,9 @@ env.install(env.compileAndJar('log_analyzer_hadoop_adapt.jar', 'hadoop_adapt',
     ],
     standalone=True, manifest={'Main-Class': 'hadoop_adapt.jobtracker'}))
 env.install(env.compileAndJar('log_search.jar', 'log_search',
-    libs=[env['CLOJURE']
-    ]))
+    libs=[env['CLOJURE'],
+    env.File('$EXTLIB/ring-1.1.8.jar'),
+    env.File('$EXTLIB/ring-jetty-adapter-1.1.8.jar'),
+    env.File('$EXTLIB/compojure-1.1.5.jar')    
+    ],
+    standalone=True, manifest={'Main-Class': 'log_search.webserver'}))
