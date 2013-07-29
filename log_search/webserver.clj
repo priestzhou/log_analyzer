@@ -47,21 +47,25 @@
 )
 
 (defn- delete-future [fMap qid]
-    (future-cancel (get-in @fMap [qid :future]))
-    (dissoc @fMap qid)
+    (println qid)
+    (println @fMap)
+    (comment future-cancel (get-in @fMap [qid :future]))
+    (swap! fMap #(dissoc % qid))
 )
 
 (defn- check-query [fMap]
     (println @fMap)
     (let [curtime (System/currentTimeMillis)
-            lastTime (curtime - 30000)
-            query-List (keys fMap)
+            lastTime (- curtime  30000)
+            query-List (keys @fMap)
         ]
         (->>
-            (filter #(< lastTime (get-in @fMap [% :time])) query-List)
-            (map  
-                (partial delete-future @fMap)
-            )
+            (filter #(> lastTime (get-in @fMap [% :time])) query-List)
+            (#(map  
+                (partial delete-future fMap)
+                %
+            ))
+            doall
         )
     )
     (Thread/sleep 5000)
