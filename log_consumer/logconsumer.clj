@@ -38,7 +38,7 @@
     (with-open [c (kfk/newConsumer
         :zookeeper.connect zkstr
         :group.id goupstr
-        :auto.offset.reset "smallest")
+        :auto.offset.reset "largest")
         ]
         (let [cseq (kfk/listenTo c tpstr)
             mapseq (map decode-kfk cseq)

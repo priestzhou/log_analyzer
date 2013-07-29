@@ -79,7 +79,7 @@
             default-args 
                 {
                     :topic ["hdfs.data-node"]
-                    :group ["data-node-consumer"]
+                    :group ["data.node-consumer"]
                 }
             opts-with-default (merge default-args opts)
         ]
