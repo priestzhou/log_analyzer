@@ -110,7 +110,7 @@
 )
 (defn filter-by-time [loglist]
     (let [curtime (System/currentTimeMillis)
-            timeFrom (- curtime 60000)
+            timeFrom (- curtime 30000)
             timeTo (+ curtime 1000)
         ]
         (info "time filter input log count " :count (count loglist))
