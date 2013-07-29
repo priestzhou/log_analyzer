@@ -140,13 +140,29 @@
         )
         :throws InvalidSyntaxException
     )
-    (:fact literal-decimal-single-zero
+    (:fact literal-decimal-single-0
         (
             (jliteral-int)
             (positional-stream "0")
         )
         :is
         [[[:eof 1 1 2]] [:literal-int 0]]
+    )
+    (:fact literal-decimal-single-1
+        (
+            (jliteral-int)
+            (positional-stream "1")
+        )
+        :is
+        [[[:eof 1 1 2]] [:literal-int 1]]
+    )
+    (:fact literal-decimal-single-9
+        (
+            (jliteral-int)
+            (positional-stream "9")
+        )
+        :is
+        [[[:eof 1 1 2]] [:literal-int 9]]
     )
     (:fact literal-decimal-no-leading-zeros
         (fn []
@@ -187,6 +203,83 @@
             (
                 (jliteral-int)
                 (positional-stream "1_")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+)
+
+(suite "hexadecimal literal"
+    (:fact literal-hexadecimal-0
+        (
+            (jliteral-int)
+            (positional-stream "0x0")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-int 0]]
+    )
+    (:fact literal-hexadecimal-9
+        (
+            (jliteral-int)
+            (positional-stream "0x9")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-int 9]]
+    )
+    (:fact literal-hexadecimal-a
+        (
+            (jliteral-int)
+            (positional-stream "0xa")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-int 10]]
+    )
+    (:fact literal-hexadecimal-A
+        (
+            (jliteral-int)
+            (positional-stream "0xA")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-int 10]]
+    )
+    (:fact literal-hexadecimal-f
+        (
+            (jliteral-int)
+            (positional-stream "0xf")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-int 15]]
+    )
+    (:fact literal-hexadecimal-F
+        (
+            (jliteral-int)
+            (positional-stream "0xF")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-int 15]]
+    )
+    (:fact literal-hexadecimal-separated-by-underscores
+        (
+            (jliteral-int)
+            (positional-stream "0x1__0")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-int 16]]
+    )
+    (:fact literal-hexadecimal-no-leading-underscores
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "0x_1")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+    (:fact literal-hexadecimal-no-tailing-underscores
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "0x1_")
             )
         )
         :throws InvalidSyntaxException

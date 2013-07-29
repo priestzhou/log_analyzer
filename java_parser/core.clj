@@ -136,6 +136,31 @@
 )
 
 
+(defn- parse-digits-and-underscores' [stream parsers last-stream last-parsed]
+    (if (empty? parsers)
+        [stream last-stream last-parsed]
+        (let [[p & ps] parsers
+                [strm prsd] (p stream)
+            ]
+            (recur strm ps stream prsd)
+        )
+    )
+)
+
+(defn- parse-digits-and-underscores [stream err-msg & parsers]
+    (try
+        (let [[strm last-strm prsd] 
+                    (parse-digits-and-underscores' stream parsers nil nil)
+                len (- (second (last prsd)) (ffirst prsd))
+                bufs (for [[x] (take len last-strm)] x)
+            ]
+            [strm len bufs]
+        )
+    (catch InvalidSyntaxException _
+        (throw (ups/gen-ISE stream err-msg))
+    ))
+)
+
 (defn- digit-or-underscore [ch]
     (#{\0 \1 \2 \3 \4 \5 \6 \7 \8 \9 \_} ch)
 )
@@ -150,16 +175,9 @@
 )
 
 (defn- jliteral-int-dec-parser [stream]
-    (let [[strm prsd] (try
-                (
-                    (ups/many1 (ups/expect-char-if digit-or-underscore))
-                    stream
-                )
-            (catch InvalidSyntaxException _
-                (throw (ups/gen-ISE stream "expect decimal"))
-            ))
-            len (- (second (last prsd)) (ffirst prsd))
-            bufs (for [[x] (take len stream)] x)
+    (let [[strm len bufs] (parse-digits-and-underscores stream "expect decimal" 
+                (ups/many1 (ups/expect-char-if digit-or-underscore))
+            )
         ]
         (cond
             (and (> (count bufs) 1) (= (first bufs) \0)) (throw
@@ -176,12 +194,45 @@
     )
 )
 
-(defn- jliteral-int-dec []
-    (partial jliteral-int-dec-parser)
+(defn- hexdigit-or-underscore [ch]
+    (#{\0 \1 \2 \3 \4 \5 \6 \7 \8 \9 
+        \a \b \c \d \e \f 
+        \A \B \C \D \E \F
+        \_} 
+    ch)
+)
+
+(defn- hex-str->int [s len]
+    (let [sb (StringBuilder. (+ 2 len))]
+        (.append sb "0x")
+        (doseq [x (for [y s :when (not= y \_)] y)]
+            (.append sb x)
+        )
+        (read-string (str sb))
+    )
+)
+
+(defn- jliteral-int-hex-parser [stream]
+    (let [[strm len bufs] (parse-digits-and-underscores stream "expect decimal" 
+                (ups/choice (ups/expect-string "0x") (ups/expect-string "0X"))
+                (ups/many1 (ups/expect-char-if hexdigit-or-underscore))
+            )
+        ]
+        (cond
+            (= (first bufs) \_) (throw
+                (ups/gen-ISE stream "hexadecimal cannot be led by '_'")
+            )
+            (= (last bufs) \_) (throw
+                (ups/gen-ISE stream "hexadecimal cannot be followed by '_'")
+            )
+            :else [strm [:literal-int (hex-str->int bufs len)]]
+        )
+    )
 )
 
 (defn jliteral-int []
     (ups/choice
-        (jliteral-int-dec)
+        (partial jliteral-int-hex-parser)
+        (partial jliteral-int-dec-parser)
     )
 )
