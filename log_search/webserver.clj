@@ -38,6 +38,36 @@
     )
 )
 
+(defn- get-query-result [query-id]
+    (swap! 
+        futurMap 
+        #(update-in % [query-id :time] (fn [a] (System/currentTimeMillis)))
+    )    
+    @(get-in @futurMap [query-id :output])
+)
+
+(defn- delete-future [fMap qid]
+    (future-cancel (get-in @fMap [qid :future]))
+    (dissoc @fMap qid)
+)
+
+(defn- check-query [fMap]
+    (println @fMap)
+    (let [curtime (System/currentTimeMillis)
+            lastTime (curtime - 30000)
+            query-List (keys fMap)
+        ]
+        (->>
+            (filter #(< lastTime (get-in @fMap [% :time])) query-List)
+            (map  
+                (partial delete-future @fMap)
+            )
+        )
+    )
+    (Thread/sleep 5000)
+    (recur fMap)
+)
+
 (defn- create-query [qStr]
     (if  
         (> maxQueryCount (count (keys @futurMap)))
@@ -65,7 +95,9 @@
     (cp/ANY "/query/create/:qStr" [qStr]
         (create-query qStr)
     )
-    (cp/GET "/query/get/:query-id" [query-id] )
+    (cp/GET "/query/get/:query-id" [query-id] 
+        (get-query-result query-id)
+    )
     (route/resources "/")
     (route/not-found "Not Found")
 )
@@ -76,5 +108,6 @@
 
 (defn -main [& args]
     (rj/run-jetty #'app {:port 8085 :join? false})
+    (check-query futurMap)
 )
 
