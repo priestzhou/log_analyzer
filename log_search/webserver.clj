@@ -47,14 +47,14 @@
 )
 
 (defn- delete-future [fMap qid]
-    (println qid)
-    (println @fMap)
-    (comment future-cancel (get-in @fMap [qid :future]))
-    (swap! fMap #(dissoc % qid))
+    (let [ft (get-in @fMap [qid :future])]
+        (swap! fMap #(dissoc % qid))
+        (future-cancel ft)
+    )
+    
 )
 
 (defn- check-query [fMap]
-    (println @fMap)
     (let [curtime (System/currentTimeMillis)
             lastTime (- curtime  30000)
             query-List (keys @fMap)
@@ -73,9 +73,7 @@
 )
 
 (defn- create-query [qStr]
-    (if  
-        (> maxQueryCount (count (keys @futurMap)))
-        
+    (if  (> maxQueryCount (count (keys @futurMap)))
         (let [query-id (gen-query-id)
                 output (atom [])
             ] 
