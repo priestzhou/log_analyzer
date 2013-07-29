@@ -129,3 +129,66 @@
         [[[:eof 3 1 4]] [:identifier-abs "a.b"]]
     )
 )
+
+(suite "decimal literal"
+    (:fact literal-decimal-empty
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+    (:fact literal-decimal-single-zero
+        (
+            (jliteral-int)
+            (positional-stream "0")
+        )
+        :is
+        [[[:eof 1 1 2]] [:literal-int 0]]
+    )
+    (:fact literal-decimal-no-leading-zeros
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "00")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+    (:fact literal-decimal-leading-nonzero
+        (
+            (jliteral-int)
+            (positional-stream "10")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-int 10]]
+    )
+    (:fact literal-decimal-separated-by-underscores
+        (
+            (jliteral-int)
+            (positional-stream "1__0")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-int 10]]
+    )
+    (:fact literal-decimal-no-leading-underscores
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "_1")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+    (:fact literal-decimal-no-tailing-underscores
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "1_")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+)
