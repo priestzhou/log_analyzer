@@ -6,32 +6,25 @@
 )
 
 (defn jblank [stream]
-    (-> stream
-        ((ups/expect-char-if #{\space \newline \tab}))
-        (dissoc :parsed)
-    )
+    ((ups/expect-char-if #{\space \newline \tab}) stream)
 )
 
 (defn many-jblank [stream]
-    (-> stream
-        ((ups/many jblank))
-        (dissoc :parsed)
-    )
+    ((ups/many jblank) stream)
 )
 
 (defn many1-jblank [stream]
-    (-> stream
-        ((ups/many1 jblank))
-        (dissoc :parsed)
-    )
+    ((ups/many1 jblank) stream)
 )
 
 (defn jclass [stream]
     (
         (ups/chain
             many-jblank
-            (ups/optional (ups/expect-string "public"))
-            many1-jblank
+            (ups/optional (ups/chain
+                (ups/expect-string "public")
+                many1-jblank
+            ))
             (ups/expect-string "class")
             many1-jblank
             (ups/expect-string "HelloWorld")
@@ -85,7 +78,7 @@
         (slurp)
         (ups/positional-stream)
         (jclass)
-        (:parsed)
+        (second)
         (prn)
     )
 )

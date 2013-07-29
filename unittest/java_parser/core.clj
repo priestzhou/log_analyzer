@@ -11,24 +11,12 @@
 
 (suite "white space"
     (:fact whitespace-space
-        (jwhitespace (positional-stream " "))
+        (
+            (jwhitespaces)
+            (positional-stream " \t\f\n")
+        )
         :is
-        [nil \space]
-    )
-    (:fact whitespace-tab
-        (jwhitespace (positional-stream "\t"))
-        :is
-        [nil \tab]
-    )
-    (:fact whitespace-formfeed
-        (jwhitespace (positional-stream "\f"))
-        :is
-        [nil \formfeed]
-    )
-    (:fact whitespace-newline
-        (jwhitespace (positional-stream "\n"))
-        :is
-        [nil \newline]
+        [[[:eof 4 2 1]] [0 4]]
     )
 )
 
@@ -48,9 +36,39 @@
     )
     (:fact whitespace-not-whitespace
         (fn [s]
-            (jwhitespace (positional-stream s))
+            (
+                (jwhitespaces)
+                (positional-stream s)
+            )
         )
         :throws
         InvalidSyntaxException
+    )
+)
+
+(suite "comments"
+    (:fact traditional-comment
+        (
+            (jcomment)
+            (positional-stream "/*abc*/d")
+        )
+        :is
+        [[[\d 7 1 8] [:eof 8 1 9]] [:tranditional-comment 2 5]]
+    )
+    (:fact eol-comment
+        (
+            (jcomment)
+            (positional-stream "//abc\nd")
+        )
+        :is
+        [[[\d 6 2 1] [:eof 7 2 2]] [:eol-comment 2 5]]
+    )
+    (:fact eol-comment-eof
+        (
+            (jcomment)
+            (positional-stream "//abc")
+        )
+        :is
+        [[[:eof 5 1 6]] [:eol-comment 2 5]]
     )
 )

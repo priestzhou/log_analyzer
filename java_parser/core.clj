@@ -4,8 +4,83 @@
     )
 )
 
-(defn jwhitespace [stream]
-    (->> stream
-        ((ups/expect-char-if #{\space \tab \formfeed \newline}))
+(defn- jwhitespaces-parser [stream]
+    (let [[strm parsed] (
+                (ups/many1 (ups/expect-char-if #{\space \tab \formfeed \newline}))
+                stream
+            )
+        ]
+        [strm [(ffirst parsed) (second (last parsed))]]
     )
 )
+
+(defn jwhitespaces []
+    (partial jwhitespaces-parser)
+)
+
+(defn- jcomment-eol-parser [stream]
+    (let [[strm [[start _] _ [end _]]] (
+                (ups/chain
+                    (ups/expect-string "//")
+                    (ups/many (ups/expect-char-if #(not (#{\newline :eof} %))))
+                    (ups/choice
+                        (ups/expect-char \newline)
+                        (ups/foresee (ups/expect-eof))
+                    )
+                )
+                stream
+            )
+        ]
+        [strm [:eol-comment (+ start 2) end]]
+    )
+)
+
+(defn- jcomment-eol []
+    (partial jcomment-eol-parser)
+)
+
+(defn- jcomment-tranditional-parser [stream]
+    (let [
+            [strm [[start _] [_ end]]] (
+                (ups/between 
+                    (ups/expect-string "/*")
+                    (ups/expect-string "*/")
+                    (ups/expect-no-eof)
+                )
+                stream
+            )
+        ]
+        [strm [:tranditional-comment (+ start 2) (- end 2)]]
+    )
+)
+
+(defn- jcomment-tranditional []
+    (partial jcomment-tranditional-parser)
+)
+
+(defn jcomment []
+    (ups/choice
+        (jcomment-eol)
+        (jcomment-tranditional)
+    )
+)
+
+(defn jblank []
+    (ups/choice
+        (jcomment)
+        (jwhitespaces)
+    )
+)
+
+(defn jblank-many []
+    (ups/many
+        (jblank)
+    )
+)
+
+(defn jblank-many1 []
+    (ups/many1
+        (jblank)
+    )
+)
+
