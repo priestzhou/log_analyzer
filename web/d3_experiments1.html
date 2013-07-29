@@ -56,7 +56,7 @@ var matrix11 = [
 
 //var color2=["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
 
-var dataset=[1,2,3,4,5,6,7];
+//var dataset=[1,2,3,4,5,6,7];
 
 //d3.range(4)
 
@@ -87,7 +87,7 @@ var fill2 = d3.scale.ordinal()
 
     var chord = d3.layout.chord();
 
-    function loaddata( matrix,computername,nodecolor,pathcolor){//load the data and draw the circle and path
+    function loaddata( matrix,computername,nodecolor,pathcolor,dataset){//load the data and draw the circle and path
     var svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height)
@@ -102,6 +102,17 @@ var fill2 = d3.scale.ordinal()
       .attr("width", 18)
       .attr("height", 18)
       .style("fill", function(d,i){return color[i];});
+
+   svg.selectAll("text")
+      .data(dataset)
+      .enter().append("text")
+      .attr("x", width/2-30)
+      .attr("y", function(d,i){return -height / 4-i*20.5+9;})
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text(function(d) { return d; });
+
+  
     chord.padding(.05)
             .matrix(matrix);
   
@@ -229,8 +240,11 @@ var fill2 = d3.scale.ordinal()
       {
           listmatrix[l]=(listmatrix[l]+listmatrix1[l])/2;
       }
+       
+      var interint=(mmax-mmin)/6;
+      var colortextset=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
 
-      loaddata(newMatrix,uniqueList,uniListColor,listmatrix);
+      loaddata(newMatrix,uniqueList,uniListColor,listmatrix,colortextset);
       
     }
     Ext.Ajax.request(requestConfig);
