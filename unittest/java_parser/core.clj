@@ -53,7 +53,7 @@
             (positional-stream "/*abc*/d")
         )
         :is
-        [[[\d 7 1 8] [:eof 8 1 9]] [:tranditional-comment 2 5]]
+        [[[\d 7 1 8] [:eof 8 1 9]] [:comment-traditional 2 5]]
     )
     (:fact eol-comment
         (
@@ -61,7 +61,7 @@
             (positional-stream "//abc\nd")
         )
         :is
-        [[[\d 6 2 1] [:eof 7 2 2]] [:eol-comment 2 5]]
+        [[[\d 6 2 1] [:eof 7 2 2]] [:comment-eol 2 5]]
     )
     (:fact eol-comment-eof
         (
@@ -69,7 +69,7 @@
             (positional-stream "//abc")
         )
         :is
-        [[[:eof 5 1 6]] [:eol-comment 2 5]]
+        [[[:eof 5 1 6]] [:comment-eol 2 5]]
     )
 )
 
@@ -91,6 +91,15 @@
         )
         :throws InvalidSyntaxException
     )
+    (:fact identifier-star
+        (fn []
+            (
+                (jidentifier)
+                (positional-stream "*")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
     (:fact identifier-eof
         (fn []
             (
@@ -99,5 +108,24 @@
             )
         )
         :throws InvalidSyntaxException
+    )
+)
+
+(suite "identifier-abs"
+    (:fact identifier-abs-single
+        (
+            (jidentifier-abs)
+            (positional-stream "a")
+        )
+        :is
+        [[[:eof 1 1 2]] [:identifier-abs "a"]]
+    )
+    (:fact identifier-abs-multi
+        (
+            (jidentifier-abs)
+            (positional-stream "a.b")
+        )
+        :is
+        [[[:eof 3 1 4]] [:identifier-abs "a.b"]]
     )
 )

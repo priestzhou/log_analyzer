@@ -1,5 +1,6 @@
 (ns java-parser.core
     (:require
+        [clojure.string :as str]
         [utilities.parse :as ups]
     )
 )
@@ -31,7 +32,7 @@
                 stream
             )
         ]
-        [strm [:eol-comment (+ start 2) end]]
+        [strm [:comment-eol (+ start 2) end]]
     )
 )
 
@@ -39,7 +40,7 @@
     (partial jcomment-eol-parser)
 )
 
-(defn- jcomment-tranditional-parser [stream]
+(defn- jcomment-traditional-parser [stream]
     (let [
             [strm [[start _] [_ end]]] (
                 (ups/between 
@@ -50,18 +51,18 @@
                 stream
             )
         ]
-        [strm [:tranditional-comment (+ start 2) (- end 2)]]
+        [strm [:comment-traditional (+ start 2) (- end 2)]]
     )
 )
 
-(defn- jcomment-tranditional []
-    (partial jcomment-tranditional-parser)
+(defn- jcomment-traditional []
+    (partial jcomment-traditional-parser)
 )
 
 (defn jcomment []
     (ups/choice
         (jcomment-eol)
-        (jcomment-tranditional)
+        (jcomment-traditional)
     )
 )
 
@@ -113,4 +114,20 @@
 
 (defn jidentifier []
     (partial jidentifier-parser)
+)
+
+(defn- jidentifier-abs-parser [stream]
+    (let [[strm1 prsd1] ((jidentifier) stream)
+            [strm2 prsd2] (
+                (ups/many (ups/chain (ups/expect-char \.) (jidentifier)))
+                strm1
+            )
+            segs (for [[_ [_ x]] prsd2] x)
+        ]
+        [strm2 [:identifier-abs (str/join "." (cons (second prsd1) segs))]]
+    )
+)
+
+(defn jidentifier-abs []
+    (partial jidentifier-abs-parser)
 )
