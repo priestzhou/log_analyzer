@@ -21,7 +21,13 @@
     (atom [])
 )
 
-(defn- test-query []
+(defn- test-query [qStr log-atom query-atom]
+    (reset! 
+        query-atom
+        (str (System/currentTimeMillis) "=" qStr "=" @log-atom) 
+    )
+    (Thread/sleep 2000)
+    (recur qStr log-atom query-atom)
 )
 
 (defn- gen-query-id []
@@ -33,28 +39,33 @@
 )
 
 (defn- create-query [qStr]
-    (if (< maxQueryCount (count (keys futurMap)))
-        (str "the max query count is " maxQueryCount)
+    (if  
+        (> maxQueryCount (count (keys @futurMap)))
+        
         (let [query-id (gen-query-id)
+                output (atom [])
             ] 
             (swap! futurMap
                 #(assoc % query-id 
                     {
-                        :futur (futur (demo-fun qStr))
+                        :future (future (test-query qStr logdata output))
                         :time (System/currentTimeMillis)
+                        :output output
                     }
                 )
             )
             (str "{query-id:" query-id "}")
         )
+        (str "the max query count is " maxQueryCount)
     )
 )
 
 (cp/defroutes app-routes
     (cp/GET "/" [uri params] (format "You requested %s with query %s" uri params))
-    (cp/ANY "/user/:qStr" [qStr]
+    (cp/ANY "/query/create/:qStr" [qStr]
         (create-query qStr)
     )
+    (cp/GET "/query/get/:query-id" [query-id] )
     (route/resources "/")
     (route/not-found "Not Found")
 )
