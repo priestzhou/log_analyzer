@@ -84,3 +84,33 @@
     )
 )
 
+(defn- jidentifier-parser [stream]
+    (let [[strm [[start _] id-part]] (
+                (ups/chain
+                    (ups/expect-char-if #(and 
+                        (instance? Character %) 
+                        (Character/isJavaIdentifierStart %)
+                    ))
+                    (ups/many (ups/expect-char-if #(and
+                        (instance? Character %)
+                        (Character/isJavaIdentifierPart %)
+                    )))
+                )
+                stream
+            )
+            end (if (empty? id-part)
+                (inc start)
+                (second (last id-part))
+            )
+            sb (doto (StringBuilder. (- end start)))
+        ]
+        (doseq [[x] (take (- end start) stream)]
+            (.append sb x)
+        )
+        [strm [:identifier (str sb)]]
+    )
+)
+
+(defn jidentifier []
+    (partial jidentifier-parser)
+)

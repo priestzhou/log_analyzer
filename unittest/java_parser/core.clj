@@ -72,3 +72,32 @@
         [[[:eof 5 1 6]] [:eol-comment 2 5]]
     )
 )
+
+(suite "identifier"
+    (:fact identifier-match
+        (
+            (jidentifier)
+            (positional-stream "a10_")
+        )
+        :is
+        [[[:eof 4 1 5]] [:identifier "a10_"]]
+    )
+    (:fact identifier-unmatch
+        (fn []
+            (
+                (jidentifier)
+                (positional-stream "1a0_")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+    (:fact identifier-eof
+        (fn []
+            (
+                (jidentifier)
+                (positional-stream "")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+)
