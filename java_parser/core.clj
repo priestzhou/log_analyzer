@@ -482,3 +482,33 @@
 (defn jliteral-char []
     (partial jliteral-char-parser)
 )
+
+
+(defn- jliteral-string-parser' [sb stream]
+    (let [[[ch] & strm1] stream]
+        (cond
+            (= ch :eof) (throw (ups/gen-ISE stream "open quoted string"))
+            (= ch \") [strm1]
+            :else (let [[strm2 [_ ch]] (parse-char stream)]
+                (.append sb ch)
+                (recur sb strm2)
+            )
+        )
+    )
+)
+
+(defn- jliteral-string-parser [stream]
+    (let [[strm1] (
+                (ups/expect-char \")
+                stream
+            )
+            sb (StringBuilder.)
+            [strm2] (jliteral-string-parser' sb strm1)
+        ]
+        [strm2 [:literal-string (str sb)]]
+    )
+)
+
+(defn jliteral-string []
+    (partial jliteral-string-parser)
+)

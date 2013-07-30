@@ -755,3 +755,30 @@
         [[[:eof 8 1 9]] [:literal-char \A]]
     )
 )
+
+(suite "literal string"
+    (:fact literal-string-empty
+        (
+            (jliteral-string)
+            (positional-stream "\"\"")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-string ""]]
+    )
+    (:fact literal-string-normal
+        (
+            (jliteral-string)
+            (positional-stream "\"a\"")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-string "a"]]
+    )
+    (:fact literal-string-escaped
+        (
+            (jliteral-string)
+            (positional-stream "\"\\60\"")
+        )
+        :is
+        [[[:eof 5 1 6]] [:literal-string "0"]]
+    )
+)
