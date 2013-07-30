@@ -27,11 +27,10 @@
         1
     )
     (:fact searchparser-event-checkkey
-        (let [psr (sparser "1970 | par \":00,* INFO\" as test-parse-1")]
+        (let [psr (sparser "1970 | parse \":00,* INFO\" as test-parse-1")]
             (println psr)
             (->> 
                 (do-search psr test-loglist1)
-                println
                 first
                 keys
             )

@@ -9,9 +9,11 @@
     (cs/split sStr #"\|")
 )
 
+
+
 (defn- event-func [eStr]
     #(->>
-        (re-find (re-pattern (cs/lower-case eStr)) (cs/lower-case %))
+        (re-find (re-pattern (cs/lower-case (cs/trim eStr) )) (cs/lower-case %))
         nil?
         not
     )
@@ -49,9 +51,7 @@
             tailSeq (rest sSeq)
             plist (:parseRules pMap)
         ]
-        (println (not (nil? pStr)))
-        (println (re-find #"parse" pStr))
-        (if (and (not (nil? pStr)) (re-find #"parse" pStr))
+        (if (and (not (nil? pStr)) (re-find #"^[\s]*parse" pStr))
             (build-parse 
                 tailSeq 
                 (merge pMap 
