@@ -93,7 +93,9 @@
 )
 
 (cp/defroutes app-routes
-    (cp/GET "/" [uri params] (format "You requested %s with query %s" uri params))
+    (cp/GET "/test" {params :params} 
+        (format "You requested with query %s" params)
+    )
     (cp/ANY "/query/create/:qStr" [qStr]
         (create-query qStr)
     )
