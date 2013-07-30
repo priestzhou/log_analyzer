@@ -111,25 +111,6 @@
     )
 )
 
-(suite "identifier-abs"
-    (:fact identifier-abs-single
-        (
-            (jidentifier-abs)
-            (positional-stream "a")
-        )
-        :is
-        [[[:eof 1 1 2]] [:identifier-abs "a"]]
-    )
-    (:fact identifier-abs-multi
-        (
-            (jidentifier-abs)
-            (positional-stream "a.b")
-        )
-        :is
-        [[[:eof 3 1 4]] [:identifier-abs "a.b"]]
-    )
-)
-
 (suite "decimal literal"
     (:fact literal-decimal-single-0
         (

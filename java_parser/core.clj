@@ -119,22 +119,6 @@
     (partial jidentifier-parser)
 )
 
-(defn- jidentifier-abs-parser [stream]
-    (let [[strm1 prsd1] ((jidentifier) stream)
-            [strm2 prsd2] (
-                (ups/many (ups/chain (ups/expect-char \.) (jidentifier)))
-                strm1
-            )
-            segs (for [[_ [_ x]] prsd2] x)
-        ]
-        [strm2 [:identifier-abs (str/join "." (cons (second prsd1) segs))]]
-    )
-)
-
-(defn jidentifier-abs []
-    (partial jidentifier-abs-parser)
-)
-
 
 (defn- str->int [prefix s]
     (let [sb (StringBuilder.)]
