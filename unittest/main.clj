@@ -2,6 +2,7 @@
     (:require 
         unittest.log-collector.log-line-parser
         unittest.log-search.frame
+        unittest.log-search.searchparser
     )
     (:use testing.core)
     (:gen-class)
@@ -12,6 +13,7 @@
         (load-cases 
             'unittest.log-collector.log-line-parser 
             'unittest.log-search.frame
+            'unittest.log-search.searchparser
         )
         (main args)
     )

@@ -1,6 +1,7 @@
 (ns unittest.log-search.frame
     (:use testing.core
-        log-search.frame 
+        log-search.frame
+        log-search.searchparser 
     )
 )
 
@@ -16,6 +17,30 @@
             "1970-01-01 08:00:00,004 INFO Class.func: hello world!"}
     ]
 )
+
+(suite "check with searchparser"
+    (:fact searchparser-event-checkcount
+        (count
+            (do-search (sparser "003") test-loglist1)
+        )
+        :is
+        1
+    )
+    (:fact searchparser-event-checkkey
+        (let [psr (sparser "1970 | par \":00,* INFO\" as test-parse-1")]
+            (println psr)
+            (->> 
+                (do-search psr test-loglist1)
+                println
+                first
+                keys
+            )
+        )
+        :is
+        (list "test-parse-1" :message)        
+    )
+)
+
 
 (suite "check event filter "
     (:fact parse-null
