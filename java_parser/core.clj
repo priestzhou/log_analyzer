@@ -181,7 +181,6 @@
                 digit-or-underscore
             )
         ]
-        (prn strm len bufs)
         (cond
             (empty? bufs) (throw
                 (ups/gen-ISE stream "expect integer literal")
@@ -211,11 +210,14 @@
 )
 
 (defn- jliteral-int-hex-parser [stream]
-    (let [[strm len bufs] (parse-digits-and-underscores stream "expect decimal" 
+    (let [[strm len bufs] (parse-digits-and-underscores stream "expect hexadecimal" 
                 hexdigit-or-underscore
             )
         ]
         (cond
+            (empty? bufs) (throw
+                (ups/gen-ISE stream "expect hexadecimal")
+            )
             (= (first bufs) \_) (throw
                 (ups/gen-ISE stream "hexadecimal cannot be led by '_'")
             )
@@ -227,10 +229,61 @@
     )
 )
 
+(defn- bin-str->int [s len]
+    (let [sb (StringBuilder. len)]
+        (.append sb "2r")
+        (doseq [x (for [y s :when (not= y \_)] y)]
+            (.append sb x)
+        )
+        (read-string (str sb))
+    )
+)
+
 (defn- jliteral-int-bin-parser [stream]
+    (let [[strm len bufs] (parse-digits-and-underscores stream "expect binary" 
+                #{\0 \1 \_}
+            )
+        ]
+        (cond
+            (empty? bufs) (throw
+                (ups/gen-ISE stream "expect binary")
+            )
+            (= (first bufs) \_) (throw
+                (ups/gen-ISE stream "binary cannot be led by '_'")
+            )
+            (= (last bufs) \_) (throw
+                (ups/gen-ISE stream "binary cannot be followed by '_'")
+            )
+            :else [strm [:literal-int (bin-str->int bufs len)]]
+        )
+    )
+)
+
+(defn- oct-str->int [s len]
+    (let [sb (StringBuilder. len)]
+        (.append sb \0)
+        (doseq [x (for [y s :when (not= y \_)] y)]
+            (.append sb x)
+        )
+        (read-string (str sb))
+    )
 )
 
 (defn- jliteral-int-oct-parser [stream]
+    (let [[strm len bufs] (parse-digits-and-underscores stream "expect octal" 
+                #{\0 \1 \2 \3 \4 \5 \6 \7 \_}
+            )
+        ]
+        (cond
+            (empty? bufs) (throw
+                (ups/gen-ISE stream "expect octal")
+            )
+            (= (last bufs) \_) (throw
+                (ups/gen-ISE stream "octal cannot be followed by '_'")
+            )
+            :else [strm [:literal-int (oct-str->int bufs len)]]
+        )
+    )
 )
 
 (defn- jliteral-int-parser [stream]
@@ -242,7 +295,7 @@
                     (= ch :eof) [strm1 [:literal-int 0]]
                     (#{\x \X} ch) (jliteral-int-hex-parser strm2)
                     (#{\b \B} ch) (jliteral-int-bin-parser strm2)
-                    :else (jliteral-int-oct-parser strm2)
+                    :else (jliteral-int-oct-parser strm1)
                 )
             )
         )
