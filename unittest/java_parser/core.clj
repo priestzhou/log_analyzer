@@ -469,3 +469,182 @@
         [[[:eof 2 1 3]] [:literal-int 1]]
     )
 )
+
+(suite "float-point literal"
+    (:fact literal-float-decimal-0
+        (
+            (jliteral-float)
+            (positional-stream "1.0")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-float "1.0"]]
+    )
+    (:fact literal-float-decimal-1
+        (
+            (jliteral-float)
+            (positional-stream "1.0E1")
+        )
+        :is
+        [[[:eof 5 1 6]] [:literal-float "1.0E1"]]
+    )
+    (:fact literal-float-decimal-2
+        (
+            (jliteral-float)
+            (positional-stream "1.0E+1")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-float "1.0E+1"]]
+    )
+    (:fact literal-float-decimal-3
+        (
+            (jliteral-float)
+            (positional-stream "10E-1")
+        )
+        :is
+        [[[:eof 5 1 6]] [:literal-float "10E-1"]]
+    )
+    (:fact literal-float-decimal-4
+        (
+            (jliteral-float)
+            (positional-stream ".1E1")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-float ".1E1"]]
+    )
+    (:fact literal-float-decimal-5
+        (
+            (jliteral-float)
+            (positional-stream "1f")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-float "1f"]]
+    )
+    (:fact literal-float-decimal-6
+        (
+            (jliteral-float)
+            (positional-stream "1F")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-float "1F"]]
+    )
+    (:fact literal-float-decimal-7
+        (
+            (jliteral-float)
+            (positional-stream "1d")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-float "1d"]]
+    )
+    (:fact literal-float-decimal-8
+        (
+            (jliteral-float)
+            (positional-stream "1D")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-float "1D"]]
+    )
+    (:fact literal-float-decimal-9
+        (
+            (jliteral-float)
+            (positional-stream "1E1")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-float "1E1"]]
+    )
+    (:fact literal-float-decimal-9
+        (
+            (jliteral-float)
+            (positional-stream "1.E1")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-float "1.E1"]]
+    )
+    (:fact literal-float-hexidecimal-0
+        (
+            (jliteral-float)
+            (positional-stream "0x1P1")
+        )
+        :is
+        [[[:eof 5 1 6]] [:literal-float "0x1P1"]]
+    )
+    (:fact literal-float-hexidecimal-1
+        (
+            (jliteral-float)
+            (positional-stream "0x1p1")
+        )
+        :is
+        [[[:eof 5 1 6]] [:literal-float "0x1p1"]]
+    )
+    (:fact literal-float-hexidecimal-2
+        (
+            (jliteral-float)
+            (positional-stream "0x1.P1")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-float "0x1.P1"]]
+    )
+    (:fact literal-float-hexidecimal-3
+        (
+            (jliteral-float)
+            (positional-stream "0x1.aP1")
+        )
+        :is
+        [[[:eof 7 1 8]] [:literal-float "0x1.aP1"]]
+    )
+    (:fact literal-float-hexidecimal-4
+        (
+            (jliteral-float)
+            (positional-stream "0x.aP1")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-float "0x.aP1"]]
+    )
+    (:fact literal-float-hexidecimal-5
+        (
+            (jliteral-float)
+            (positional-stream "0x1P+1")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-float "0x1P+1"]]
+    )
+    (:fact literal-float-hexidecimal-6
+        (
+            (jliteral-float)
+            (positional-stream "0x1P-1")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-float "0x1P-1"]]
+    )
+    (:fact literal-float-hexidecimal-7
+        (
+            (jliteral-float)
+            (positional-stream "0x1P1f")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-float "0x1P1f"]]
+    )
+    (:fact literal-float-hexidecimal-8
+        (
+            (jliteral-float)
+            (positional-stream "0x1P1F")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-float "0x1P1F"]]
+    )
+    (:fact literal-float-hexidecimal-9
+        (
+            (jliteral-float)
+            (positional-stream "0x1P1d")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-float "0x1P1d"]]
+    )
+    (:fact literal-float-hexidecimal-10
+        (
+            (jliteral-float)
+            (positional-stream "0x1P1D")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-float "0x1P1D"]]
+    )
+)

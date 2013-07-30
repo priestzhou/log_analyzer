@@ -285,3 +285,96 @@
 (defn jliteral-int []
     (partial jliteral-int-parser)
 )
+
+
+(defn- jliteral-float-exp-part []
+    (ups/chain
+        (ups/expect-char-if #{\e \E})
+        (ups/optional (ups/expect-char-if #{\+ \-}))
+        (ups/many1 (ups/expect-char-if ups/digit))
+    )
+)
+
+(defn- jliteral-float-suffix []
+    (ups/expect-char-if #{\f \F \d \D})
+)
+
+(defn- jliteral-float-decimal-parser [stream]
+    (try
+        (let [[strm] (
+                    (ups/choice
+                        (ups/chain
+                            (ups/many1 (ups/expect-char-if ups/digit))
+                            (ups/expect-char \.)
+                            (ups/many (ups/expect-char-if ups/digit))
+                            (ups/optional (jliteral-float-exp-part))
+                            (ups/optional (jliteral-float-suffix))
+                        )
+                        (ups/chain
+                            (ups/expect-char \.)
+                            (ups/many (ups/expect-char-if ups/digit))
+                            (ups/optional (jliteral-float-exp-part))
+                            (ups/optional (jliteral-float-suffix))
+                        )
+                        (ups/chain
+                            (ups/many1 (ups/expect-char-if ups/digit))
+                            (jliteral-float-exp-part)
+                            (ups/optional (jliteral-float-suffix))
+                        )
+                        (ups/chain
+                            (ups/many1 (ups/expect-char-if ups/digit))
+                            (ups/optional (jliteral-float-exp-part))
+                            (jliteral-float-suffix)
+                        )
+                    )
+                    stream
+                )
+                s (ups/extract-string-between stream strm)
+            ]
+            [strm [:literal-float s]]
+        )
+    (catch InvalidSyntaxException _
+        (throw (ups/gen-ISE stream "expect float-point number"))
+    ))
+)
+
+(defn- jliteral-float-hexadecimal-parser [stream]
+    (try
+        (let [[strm] (
+                    (ups/chain
+                        (ups/choice (ups/expect-string "0x") (ups/expect-string "0X"))
+                        (ups/choice 
+                            (ups/chain 
+                                (ups/many1 (ups/expect-char-if ups/hexdigit))
+                                (ups/expect-char \.)
+                                (ups/many (ups/expect-char-if ups/hexdigit))
+                            )
+                            (ups/chain
+                                (ups/many (ups/expect-char-if ups/hexdigit))
+                                (ups/expect-char \.)
+                                (ups/many1 (ups/expect-char-if ups/hexdigit))
+                            )
+                            (ups/many1 (ups/expect-char-if ups/hexdigit))
+                        )
+                        (ups/expect-char-if #{\p \P})
+                        (ups/optional (ups/expect-char-if #{\+ \-}))
+                        (ups/many1 (ups/expect-char-if ups/digit))
+                        (ups/optional (jliteral-float-suffix))
+                    )
+                    stream
+                )
+                s (ups/extract-string-between stream strm)
+            ]
+            [strm [:literal-float s]]
+        )
+    (catch InvalidSyntaxException _
+        (throw (ups/gen-ISE stream "expect float-point number"))
+    ))
+)
+
+(defn jliteral-float []
+    (ups/choice
+        (partial jliteral-float-decimal-parser)
+        (partial jliteral-float-hexadecimal-parser)
+    )
+)
