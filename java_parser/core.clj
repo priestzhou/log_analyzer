@@ -1,4 +1,7 @@
 (ns java-parser.core
+    (:use
+        clojure.set
+    )
     (:require
         [clojure.string :as str]
         [utilities.parse :as ups]
@@ -136,33 +139,32 @@
 )
 
 
-(defn- parse-digits-and-underscores' [stream parsers last-stream last-parsed]
-    (if (empty? parsers)
-        [stream last-stream last-parsed]
-        (let [[p & ps] parsers
-                [strm prsd] (p stream)
-            ]
-            (recur strm ps stream prsd)
-        )
-    )
-)
-
-(defn- parse-digits-and-underscores [stream err-msg & parsers]
+(defn- parse-digits-and-underscores [stream err-msg pred]
     (try
-        (let [[strm last-strm prsd] 
-                    (parse-digits-and-underscores' stream parsers nil nil)
-                len (- (second (last prsd)) (ffirst prsd))
-                bufs (for [[x] (take len last-strm)] x)
+        (let [[strm prsd] (
+                    (ups/many (ups/expect-char-if pred))
+                    stream
+                )
             ]
-            [strm len bufs]
+            (if (empty? prsd)
+                (throw (InvalidSyntaxException. ""))
+                (let [len (- (second (last prsd)) (ffirst prsd))
+                        bufs (for [[x] (take len stream)] x)
+                    ]
+                    [strm len bufs]
+                )
+            )
         )
     (catch InvalidSyntaxException _
         (throw (ups/gen-ISE stream err-msg))
     ))
 )
 
-(defn- digit-or-underscore [ch]
-    (#{\0 \1 \2 \3 \4 \5 \6 \7 \8 \9 \_} ch)
+(def ^:private digit #{\0 \1 \2 \3 \4 \5 \6 \7 \8 \9})
+(def ^:private digit-or-underscore (union #{\_} digit))
+(def ^:private hexdigit-or-underscore 
+    (union digit-or-underscore #{\a \b \c \d \e \f 
+        \A \B \C \D \E \F})
 )
 
 (defn- dec-str->int [s len]
@@ -176,10 +178,14 @@
 
 (defn- jliteral-int-dec-parser [stream]
     (let [[strm len bufs] (parse-digits-and-underscores stream "expect decimal" 
-                (ups/many1 (ups/expect-char-if digit-or-underscore))
+                digit-or-underscore
             )
         ]
+        (prn strm len bufs)
         (cond
+            (empty? bufs) (throw
+                (ups/gen-ISE stream "expect integer literal")
+            )
             (and (> (count bufs) 1) (= (first bufs) \0)) (throw
                 (ups/gen-ISE stream "expect decimal")
             )
@@ -194,14 +200,6 @@
     )
 )
 
-(defn- hexdigit-or-underscore [ch]
-    (#{\0 \1 \2 \3 \4 \5 \6 \7 \8 \9 
-        \a \b \c \d \e \f 
-        \A \B \C \D \E \F
-        \_} 
-    ch)
-)
-
 (defn- hex-str->int [s len]
     (let [sb (StringBuilder. (+ 2 len))]
         (.append sb "0x")
@@ -214,8 +212,7 @@
 
 (defn- jliteral-int-hex-parser [stream]
     (let [[strm len bufs] (parse-digits-and-underscores stream "expect decimal" 
-                (ups/choice (ups/expect-string "0x") (ups/expect-string "0X"))
-                (ups/many1 (ups/expect-char-if hexdigit-or-underscore))
+                hexdigit-or-underscore
             )
         ]
         (cond
@@ -230,9 +227,28 @@
     )
 )
 
-(defn jliteral-int []
-    (ups/choice
-        (partial jliteral-int-hex-parser)
-        (partial jliteral-int-dec-parser)
+(defn- jliteral-int-bin-parser [stream]
+)
+
+(defn- jliteral-int-oct-parser [stream]
+)
+
+(defn- jliteral-int-parser [stream]
+    (let [[[ch] & strm1] stream]
+        (if (not= ch \0)
+            (jliteral-int-dec-parser stream)
+            (let [[[ch] & strm2] strm1]
+                (cond
+                    (= ch :eof) [strm1 [:literal-int 0]]
+                    (#{\x \X} ch) (jliteral-int-hex-parser strm2)
+                    (#{\b \B} ch) (jliteral-int-bin-parser strm2)
+                    :else (jliteral-int-oct-parser strm2)
+                )
+            )
+        )
     )
+)
+
+(defn jliteral-int []
+    (partial jliteral-int-parser)
 )

@@ -131,15 +131,6 @@
 )
 
 (suite "decimal literal"
-    (:fact literal-decimal-empty
-        (fn []
-            (
-                (jliteral-int)
-                (positional-stream "")
-            )
-        )
-        :throws InvalidSyntaxException
-    )
     (:fact literal-decimal-single-0
         (
             (jliteral-int)
@@ -163,15 +154,6 @@
         )
         :is
         [[[:eof 1 1 2]] [:literal-int 9]]
-    )
-    (:fact literal-decimal-no-leading-zeros
-        (fn []
-            (
-                (jliteral-int)
-                (positional-stream "00")
-            )
-        )
-        :throws InvalidSyntaxException
     )
     (:fact literal-decimal-leading-nonzero
         (
@@ -214,6 +196,14 @@
         (
             (jliteral-int)
             (positional-stream "0x0")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-int 0]]
+    )
+    (:fact literal-hexadecimal-big-X
+        (
+            (jliteral-int)
+            (positional-stream "0X0")
         )
         :is
         [[[:eof 3 1 4]] [:literal-int 0]]
@@ -280,6 +270,18 @@
             (
                 (jliteral-int)
                 (positional-stream "0x1_")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+)
+
+(suite "int literal"
+    (:fact literal-decimal-empty
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "")
             )
         )
         :throws InvalidSyntaxException
