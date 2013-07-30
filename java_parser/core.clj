@@ -227,10 +227,10 @@
     )
 )
 
-(defn- jliteral-int-parser [stream]
+(defn- jliteral-int-parser' [stream]
     (try
         (let [[strm [start end]] (
-                    (ups/expect-string-while (union #{\_} ups/hexdigit))
+                    (ups/expect-string-while (union #{\_ \x \X \b \B} ups/hexdigit))
                     stream
                 )
                 s (ups/extract-string stream (- end start))
@@ -239,13 +239,13 @@
                 (throw (InvalidSyntaxException. ""))
                 (let [[x & xs] s]
                     (cond
-                        (not= x \0) [strm [:literal-int (parse-int-dec s)]]
-                        (empty? xs) [strm [:literal-int 0]]
+                        (not= x \0) [strm (parse-int-dec s)]
+                        (empty? xs) [strm 0]
                         :else (let [[y & ys] xs]
                             (cond
-                                (#{\x \X} y) [strm [:literal-int (parse-int-hex ys)]]
-                                (#{\b \B} y) [strm [:literal-int (parse-int-bin ys)]]
-                                :else [strm [:literal-int (parse-int-oct xs)]]
+                                (#{\x \X} y) [strm (parse-int-hex ys)]
+                                (#{\b \B} y) [strm (parse-int-bin ys)]
+                                :else [strm (parse-int-oct xs)]
                             )
                         )
                     )
@@ -255,6 +255,31 @@
     (catch InvalidSyntaxException _
         (throw (ups/gen-ISE stream "expect integer"))
     ))
+)
+
+(defn- jliteral-int-parser-sign [stream]
+    (let [[[ch] & strm] stream]
+        (cond
+            (= ch \+) [strm false]
+            (= ch \-) [strm true]
+            :else [stream false]
+        )
+    )
+)
+
+(defn- jliteral-int-parser [stream]
+    (let [[strm1 neg] (jliteral-int-parser-sign stream)
+            [strm2 int-value] (jliteral-int-parser' strm1)
+            [strm3] (
+                (ups/optional (ups/expect-char-if #{\l \L}))
+                strm2
+            )
+        ]
+        (if neg
+            [strm3 [:literal-int (- int-value)]]
+            [strm3 [:literal-int int-value]]
+        )
+    )
 )
 
 (defn jliteral-int []

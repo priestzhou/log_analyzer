@@ -436,4 +436,36 @@
         )
         :throws InvalidSyntaxException
     )
+    (:fact literal-int-negative
+        (
+            (jliteral-int)
+            (positional-stream "-1")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-int -1]]
+    )
+    (:fact literal-int-positive
+        (
+            (jliteral-int)
+            (positional-stream "+1")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-int 1]]
+    )
+    (:fact literal-int-long
+        (
+            (jliteral-int)
+            (positional-stream "1l")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-int 1]]
+    )
+    (:fact literal-int-Long
+        (
+            (jliteral-int)
+            (positional-stream "1L")
+        )
+        :is
+        [[[:eof 2 1 3]] [:literal-int 1]]
+    )
 )
