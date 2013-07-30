@@ -648,3 +648,110 @@
         [[[:eof 6 1 7]] [:literal-float "0x1P1D"]]
     )
 )
+
+(suite "literal char"
+    (:fact literal-char-normal
+        (
+            (jliteral-char)
+            (positional-stream "'a'")
+        )
+        :is
+        [[[:eof 3 1 4]] [:literal-char \a]]
+    )
+    (:fact literal-char-escape-sequence-backspace
+        (
+            (jliteral-char)
+            (positional-stream "'\\b'")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-char \backspace]]
+    )
+    (:fact literal-char-escape-sequence-tab
+        (
+            (jliteral-char)
+            (positional-stream "'\\t'")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-char \tab]]
+    )
+    (:fact literal-char-escape-sequence-newline
+        (
+            (jliteral-char)
+            (positional-stream "'\\n'")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-char \newline]]
+    )
+    (:fact literal-char-escape-sequence-formfeed
+        (
+            (jliteral-char)
+            (positional-stream "'\\f'")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-char \formfeed]]
+    )
+    (:fact literal-char-escape-sequence-return
+        (
+            (jliteral-char)
+            (positional-stream "'\\r'")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-char \return]]
+    )
+    (:fact literal-char-escape-sequence-double-quote
+        (
+            (jliteral-char)
+            (positional-stream "'\\\"'")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-char \"]]
+    )
+    (:fact literal-char-escape-sequence-single-quote
+        (
+            (jliteral-char)
+            (positional-stream "'\\''")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-char \']]
+    )
+    (:fact literal-char-escape-sequence-backslash
+        (
+            (jliteral-char)
+            (positional-stream "'\\\\'")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-char \\]]
+    )
+    (:fact literal-char-escape-sequence-octal-A
+        (
+            (jliteral-char)
+            (positional-stream "'\\101'")
+        )
+        :is
+        [[[:eof 6 1 7]] [:literal-char \A]]
+    )
+    (:fact literal-char-escape-sequence-octal-0
+        (
+            (jliteral-char)
+            (positional-stream "'\\60'")
+        )
+        :is
+        [[[:eof 5 1 6]] [:literal-char \0]]
+    )
+    (:fact literal-char-escape-sequence-octal-bel
+        (
+            (jliteral-char)
+            (positional-stream "'\\7'")
+        )
+        :is
+        [[[:eof 4 1 5]] [:literal-char \u0007]]
+    )
+    (:fact literal-char-escape-sequence-unicode
+        (
+            (jliteral-char)
+            (positional-stream "'\\u0041'")
+        )
+        :is
+        [[[:eof 8 1 9]] [:literal-char \A]]
+    )
+)

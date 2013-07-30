@@ -378,3 +378,107 @@
         (partial jliteral-float-hexadecimal-parser)
     )
 )
+
+(defn- parse-octal-escape' [stream]
+    (try 
+        (
+            (ups/choice
+                (ups/chain
+                    (ups/expect-char-if #{\0 \1 \2 \3})
+                    (ups/expect-char-if #{\0 \1 \2 \3 \4 \5 \6 \7})
+                    (ups/expect-char-if #{\0 \1 \2 \3 \4 \5 \6 \7})
+                )
+                (ups/chain
+                    (ups/expect-char-if #{\0 \1 \2 \3 \4 \5 \6 \7})
+                    (ups/expect-char-if #{\0 \1 \2 \3 \4 \5 \6 \7})
+                )
+                (ups/expect-char-if #{\0 \1 \2 \3 \4 \5 \6 \7})
+            )
+            stream
+        )
+    (catch InvalidSyntaxException _
+        (throw (ups/gen-ISE stream "expect octal escaped char"))
+    ))
+)
+
+(defn- parse-octal-escape [stream]
+    (let [[strm] (parse-octal-escape' stream)
+            s (ups/extract-string-between stream strm)
+        ]
+        [strm [:literal-char (char (oct-str->int s))]]
+    )
+)
+
+(defn- parse-unicode-char' [stream]
+    (try (
+            (ups/chain
+                (ups/expect-char-if ups/hexdigit)
+                (ups/expect-char-if ups/hexdigit)
+                (ups/expect-char-if ups/hexdigit)
+                (ups/expect-char-if ups/hexdigit)
+            )
+            stream
+        )
+    (catch InvalidSyntaxException _
+        (throw (ups/gen-ISE stream "expect unicode char"))
+    ))
+)
+
+(defn- parse-unicode-char [stream]
+    (let [[strm] (parse-unicode-char' stream)
+            s (ups/extract-string-between stream strm)
+        ]
+        [strm [:literal-char (char (hex-str->int s))]]
+    )
+)
+
+(defn- parse-escaped-char [stream]
+    (let [[[ch] & strm] stream]
+        (cond
+            (= ch :eof) (throw
+                (ups/gen-ISE stream "expect escaped char")
+            )
+            (= ch \b) [strm [:literal-char \backspace]]
+            (= ch \t) [strm [:literal-char \tab]]
+            (= ch \n) [strm [:literal-char \newline]]
+            (= ch \f) [strm [:literal-char \formfeed]]
+            (= ch \r) [strm [:literal-char \return]]
+            (= ch \") [strm [:literal-char \"]]
+            (= ch \') [strm [:literal-char \']]
+            (= ch \\) [strm [:literal-char \\]]
+            (= ch \u) (parse-unicode-char strm)
+            :else (parse-octal-escape stream)
+        )
+    )
+)
+
+(defn- parse-char [stream]
+    (let [[[ch] & rest-stream] stream]
+        (cond
+            (= ch :eof) (throw
+                (ups/gen-ISE stream "expect char")
+            )
+            (= ch \\) (parse-escaped-char rest-stream)
+            :else [rest-stream [:literal-char ch]]
+        )
+    )
+)
+
+(defn- jliteral-char-parser [stream]
+    (let [[strm1] (
+                (ups/expect-char \')
+                stream
+            )
+            [strm2 ch] (parse-char strm1)
+            [strm3] (
+                (ups/expect-char \')
+                strm2
+            )
+        ]
+        [strm3 ch]
+    )
+)
+
+(defn jliteral-char []
+    (partial jliteral-char-parser)
+)
