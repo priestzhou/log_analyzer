@@ -372,15 +372,6 @@
         :is
         [[[:eof 2 1 3]] [:literal-int 7]]
     )
-    (:fact literal-octal-8
-        (fn []
-            (
-                (jliteral-int)
-                (positional-stream "08")
-            )
-        )
-        :throws InvalidSyntaxException
-    )
     (:fact literal-octal-separated-by-underscores
         (
             (jliteral-int)
@@ -392,16 +383,16 @@
     (:fact literal-octal-leading-underscores
         (
             (jliteral-int)
-            (positional-stream "0__10")
+            (positional-stream "0_10")
         )
         :is
-        [[[:eof 5 1 6]] [:literal-int 8]]
+        [[[:eof 4 1 5]] [:literal-int 8]]
     )
     (:fact literal-octal-no-tailing-underscores
         (fn []
             (
                 (jliteral-int)
-                (positional-stream "01__")
+                (positional-stream "01_")
             )
         )
         :throws InvalidSyntaxException
@@ -409,11 +400,38 @@
 )
 
 (suite "int literal"
-    (:fact literal-decimal-empty
+    (:fact literal-int-empty
         (fn []
             (
                 (jliteral-int)
                 (positional-stream "")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+    (:fact literal-int-invalid-decimal
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "1a")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+    (:fact literal-int-invalid-binary
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "0b012")
+            )
+        )
+        :throws InvalidSyntaxException
+    )
+    (:fact literal-int-invalid-octal
+        (fn []
+            (
+                (jliteral-int)
+                (positional-stream "018")
             )
         )
         :throws InvalidSyntaxException

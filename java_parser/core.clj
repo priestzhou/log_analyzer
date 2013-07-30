@@ -1,6 +1,7 @@
 (ns java-parser.core
     (:use
         clojure.set
+        utilities.core
     )
     (:require
         [clojure.string :as str]
@@ -13,7 +14,7 @@
 
 (defn- jwhitespaces-parser [stream]
     (let [[strm parsed] (
-                (ups/many1 (ups/expect-char-if #{\space \tab \formfeed \newline}))
+                (ups/many1 (ups/expect-char-if ups/whitespace))
                 stream
             )
         ]
@@ -109,12 +110,8 @@
                 (inc start)
                 (second (last id-part))
             )
-            sb (doto (StringBuilder. (- end start)))
         ]
-        (doseq [[x] (take (- end start) stream)]
-            (.append sb x)
-        )
-        [strm [:identifier (str sb)]]
+        [strm [:identifier (ups/extract-string stream (- end start))]]
     )
 )
 
@@ -139,167 +136,125 @@
 )
 
 
-(defn- parse-digits-and-underscores [stream err-msg pred]
-    (try
-        (let [[strm prsd] (
-                    (ups/many (ups/expect-char-if pred))
-                    stream
-                )
-            ]
-            (if (empty? prsd)
-                (throw (InvalidSyntaxException. ""))
-                (let [len (- (second (last prsd)) (ffirst prsd))
-                        bufs (for [[x] (take len stream)] x)
-                    ]
-                    [strm len bufs]
-                )
-            )
-        )
-    (catch InvalidSyntaxException _
-        (throw (ups/gen-ISE stream err-msg))
-    ))
-)
-
-(def ^:private digit #{\0 \1 \2 \3 \4 \5 \6 \7 \8 \9})
-(def ^:private digit-or-underscore (union #{\_} digit))
-(def ^:private hexdigit-or-underscore 
-    (union digit-or-underscore #{\a \b \c \d \e \f 
-        \A \B \C \D \E \F})
-)
-
-(defn- dec-str->int [s len]
-    (let [sb (StringBuilder. len)]
-        (doseq [x (for [y s :when (not= y \_)] y)]
-            (.append sb x)
+(defn- str->int [prefix s]
+    (let [sb (StringBuilder.)]
+        (.append sb prefix)
+        (doseq [ch s :when (not= ch \_)]
+            (.append sb ch)
         )
         (read-string (str sb))
     )
 )
 
-(defn- jliteral-int-dec-parser [stream]
-    (let [[strm len bufs] (parse-digits-and-underscores stream "expect decimal" 
-                digit-or-underscore
-            )
-        ]
-        (cond
-            (empty? bufs) (throw
-                (ups/gen-ISE stream "expect integer literal")
-            )
-            (and (> (count bufs) 1) (= (first bufs) \0)) (throw
-                (ups/gen-ISE stream "expect decimal")
-            )
-            (= (first bufs) \_) (throw
-                (ups/gen-ISE stream "decimal cannot be led by '_'")
-            )
-            (= (last bufs) \_) (throw
-                (ups/gen-ISE stream "decimal cannot be followed by '_'")
-            )
-            :else [strm [:literal-int (dec-str->int bufs len)]]
+(defn- dec-str->int [s]
+    (str->int "" s)
+)
+
+(defn- hex-str->int [s]
+    (str->int "0x" s)
+)
+
+(defn- bin-str->int [s]
+    (str->int "2r" s)
+)
+
+(defn- oct-str->int [s]
+    (str->int "0" s)
+)
+
+(defn- parse-int-dec [s]
+    (throw-if-not (reduce #(and %1 %2) true (map (union #{\_} ups/digit) s))
+        InvalidSyntaxException. ""
+    )
+    (cond
+        (empty? s) (throw (InvalidSyntaxException. "expect integer literal"))
+        (= (first s) \_) (throw 
+            (InvalidSyntaxException. "decimal cannot be led by '_'")
         )
+        (= (last s) \_) (throw 
+            (InvalidSyntaxException. "decimal cannot be followed by '_'")
+        )
+        :else (dec-str->int s)
     )
 )
 
-(defn- hex-str->int [s len]
-    (let [sb (StringBuilder. (+ 2 len))]
-        (.append sb "0x")
-        (doseq [x (for [y s :when (not= y \_)] y)]
-            (.append sb x)
+(defn- parse-int-hex [s]
+    (throw-if-not (reduce #(and %1 %2) true (map (union #{\_} ups/hexdigit) s))
+        InvalidSyntaxException. ""
+    )
+    (cond
+        (empty? s) (throw (InvalidSyntaxException. "expect hexadecimal"))
+        (= (first s) \_) (throw 
+            (InvalidSyntaxException. "hexadecimal cannot be led by '_'")
         )
-        (read-string (str sb))
+        (= (last s) \_) (throw
+            (InvalidSyntaxException. "hexadecimal cannot be followed by '_'")
+        )
+        :else (hex-str->int s)
     )
 )
 
-(defn- jliteral-int-hex-parser [stream]
-    (let [[strm len bufs] (parse-digits-and-underscores stream "expect hexadecimal" 
-                hexdigit-or-underscore
-            )
-        ]
-        (cond
-            (empty? bufs) (throw
-                (ups/gen-ISE stream "expect hexadecimal")
-            )
-            (= (first bufs) \_) (throw
-                (ups/gen-ISE stream "hexadecimal cannot be led by '_'")
-            )
-            (= (last bufs) \_) (throw
-                (ups/gen-ISE stream "hexadecimal cannot be followed by '_'")
-            )
-            :else [strm [:literal-int (hex-str->int bufs len)]]
+(defn- parse-int-bin [s]
+    (throw-if-not (reduce #(and %1 %2) true (map #{\_ \0 \1} s))
+        InvalidSyntaxException. ""
+    )
+    (cond
+        (empty? s) (throw
+            (InvalidSyntaxException. "expect binary")
         )
+        (= (first s) \_) (throw
+            (InvalidSyntaxException. "binary cannot be led by '_'")
+        )
+        (= (last s) \_) (throw
+            (InvalidSyntaxException. "binary cannot be followed by '_'")
+        )
+        :else (bin-str->int s)
     )
 )
 
-(defn- bin-str->int [s len]
-    (let [sb (StringBuilder. len)]
-        (.append sb "2r")
-        (doseq [x (for [y s :when (not= y \_)] y)]
-            (.append sb x)
-        )
-        (read-string (str sb))
+(defn- parse-int-oct [s]
+    (throw-if-not (reduce #(and %1 %2) true (map #{\_ \0 \1 \2 \3 \4 \5 \6 \7} s))
+        InvalidSyntaxException. ""
     )
-)
-
-(defn- jliteral-int-bin-parser [stream]
-    (let [[strm len bufs] (parse-digits-and-underscores stream "expect binary" 
-                #{\0 \1 \_}
-            )
-        ]
-        (cond
-            (empty? bufs) (throw
-                (ups/gen-ISE stream "expect binary")
-            )
-            (= (first bufs) \_) (throw
-                (ups/gen-ISE stream "binary cannot be led by '_'")
-            )
-            (= (last bufs) \_) (throw
-                (ups/gen-ISE stream "binary cannot be followed by '_'")
-            )
-            :else [strm [:literal-int (bin-str->int bufs len)]]
+    (cond
+        (empty? s) (throw
+            (InvalidSyntaxException. "expect octal")
         )
-    )
-)
-
-(defn- oct-str->int [s len]
-    (let [sb (StringBuilder. len)]
-        (.append sb \0)
-        (doseq [x (for [y s :when (not= y \_)] y)]
-            (.append sb x)
+        (= (last s) \_) (throw
+            (InvalidSyntaxException. "octal cannot be followed by '_'")
         )
-        (read-string (str sb))
-    )
-)
-
-(defn- jliteral-int-oct-parser [stream]
-    (let [[strm len bufs] (parse-digits-and-underscores stream "expect octal" 
-                #{\0 \1 \2 \3 \4 \5 \6 \7 \_}
-            )
-        ]
-        (cond
-            (empty? bufs) (throw
-                (ups/gen-ISE stream "expect octal")
-            )
-            (= (last bufs) \_) (throw
-                (ups/gen-ISE stream "octal cannot be followed by '_'")
-            )
-            :else [strm [:literal-int (oct-str->int bufs len)]]
-        )
+        :else (oct-str->int s)
     )
 )
 
 (defn- jliteral-int-parser [stream]
-    (let [[[ch] & strm1] stream]
-        (if (not= ch \0)
-            (jliteral-int-dec-parser stream)
-            (let [[[ch] & strm2] strm1]
-                (cond
-                    (= ch :eof) [strm1 [:literal-int 0]]
-                    (#{\x \X} ch) (jliteral-int-hex-parser strm2)
-                    (#{\b \B} ch) (jliteral-int-bin-parser strm2)
-                    :else (jliteral-int-oct-parser strm1)
+    (try
+        (let [[strm [start end]] (
+                    (ups/expect-string-while (union #{\_} ups/hexdigit))
+                    stream
+                )
+                s (ups/extract-string stream (- end start))
+            ]
+            (if (empty? s)
+                (throw (InvalidSyntaxException. ""))
+                (let [[x & xs] s]
+                    (cond
+                        (not= x \0) [strm [:literal-int (parse-int-dec s)]]
+                        (empty? xs) [strm [:literal-int 0]]
+                        :else (let [[y & ys] xs]
+                            (cond
+                                (#{\x \X} y) [strm [:literal-int (parse-int-hex ys)]]
+                                (#{\b \B} y) [strm [:literal-int (parse-int-bin ys)]]
+                                :else [strm [:literal-int (parse-int-oct xs)]]
+                            )
+                        )
+                    )
                 )
             )
         )
-    )
+    (catch InvalidSyntaxException _
+        (throw (ups/gen-ISE stream "expect integer"))
+    ))
 )
 
 (defn jliteral-int []
