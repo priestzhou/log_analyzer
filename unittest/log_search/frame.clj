@@ -79,5 +79,23 @@
         :is
         {"parse-1" "001","parse-2" "world!"}
     )
+    (:fact searchparser-count-check
+        (let [psr (sparser "1970 | parse \":00,* INFO\" as parse-1
+                | parse \"hello *\" as parse-2|count by parse-2")]
+            (->> 
+                (assoc psr :statRules 
+                    [{:statOutKey "count-1",:statFun #(+ %1 (read-string %2))
+                        :statInKey "parse-1"
+                    }]
+                )
+                (#(do-search % test-loglist1))
+                :grouptable
+                first
+                (#(get % "count-1"))
+            )
+        )
+        :is
+        10
+    )    
 )
 

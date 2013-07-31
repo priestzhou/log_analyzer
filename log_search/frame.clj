@@ -68,6 +68,19 @@
     )
 )
 
+(defn- static-fun [stRule log]
+    (let [logVal (:gVal log)
+            inKey (:statInKey stRule)
+            statFun (:statFun stRule)
+        ]
+        (->>
+            logVal
+            (map #(get % inKey) )
+            (reduce statFun 0 )
+        )
+    )
+)
+
 (defn- do-statistic [statRules loglist]
     (if (nil? statRules)
         loglist
@@ -75,8 +88,8 @@
             (fn [log]
                 (reduce
                     #(assoc %1 
-                        (get %2 :statKey)
-                        ((get %2 :statFun) log)
+                        (:statOutKey %2)
+                        (static-fun %2 log)
                     )
                     log
                     statRules

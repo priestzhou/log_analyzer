@@ -37,8 +37,7 @@
                         (cs/replace 
                             secStr 
                             #"\*"
-                            ")[\\\\
-                            S]*(?="    
+                            ")[\\\\S]*(?="    
                         )
                         ")"
                     )
@@ -83,7 +82,6 @@
 
 (defn- get-groupkey [gStr]
     (let [gSeq (cs/split gStr #" by ")]
-        
         (if (< 1 (count gSeq))
             (->>
                 gSeq
@@ -102,7 +100,6 @@
             lastStr (last sSeq)
             gKeys (get-groupkey lastStr)
         ]
-        (println gKeys)
         (if (empty? gKeys)
             log-parser  
             (assoc log-parser :groupKeys gKeys) 
