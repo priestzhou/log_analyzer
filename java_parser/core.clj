@@ -519,12 +519,141 @@
     )
 )
 
+(declare jtype)
+
+(defn- jtype-var-parser [stream]
+    (let [[strm1 prsd1] ((ups/optional (ups/expect-char \?)) stream)
+            [strm2 prsd2] ((ups/optional (jidentifier)) stream)
+        ]
+        (cond 
+            prsd1 [strm1 "?"]
+            prsd2 [strm2 (second prsd2)]
+            :else (throw (ups/gen-ISE stream "expect type var or wildcard here"))
+        )
+    )
+)
+
+(defn- jtype-var-bound-parser [stream]
+    (let [[strm1 prsd1] ((ups/optional (ups/expect-string "extends")) stream)
+            [strm2 prsd2] ((ups/optional (ups/expect-string "super")) stream)
+        ]
+        (cond
+            prsd1 [strm1 :extends]
+            prsd2 [strm2 :super]
+            :else (throw (ups/gen-ISE stream "expect \"extends\" or \"super\""))
+        )
+    )
+)
+
+(defn- jtype-parameter-bound-parser [stream]
+    (let [[strm [type-var _ bound _ type]] (
+                (ups/chain
+                    (partial jtype-var-parser)
+                    (jblank-many1)
+                    (partial jtype-var-bound-parser)
+                    (jblank-many1)
+                    (jtype)
+                )
+                stream
+            )
+        ]
+        [strm [:type-var type-var bound type]]
+    )
+)
+
+(defn- jtype-parameter-bound []
+    (partial jtype-parameter-bound-parser)
+)
+
+(defn- jtype-parameter-wildcard-parser [stream]
+    (let [[strm1 prsd1] ((ups/expect-char \?) stream)]
+        [strm1 [:type-var "?"]]
+    )
+)
+
+(defn- jtype-parameter-wildcard []
+    (partial jtype-parameter-wildcard-parser)
+)
+
+(defn- jtype-single-argument-parser [stream]
+    (let [[strm1 prsd1] (
+                (ups/choice
+                    (jtype-parameter-bound)
+                    (jtype-parameter-wildcard)
+                    (jtype)
+                )
+                stream
+            )
+        ]
+        [strm1 prsd1]
+    )
+)
+
+(defn- jtype-arguments-list-parser [result stream]
+    (let [[strm1 prsd1] (jtype-single-argument-parser stream)
+            [strm2 prsd2] (
+                (ups/optional
+                    (ups/chain
+                        (jblank-many)
+                        (ups/expect-char \,)
+                        (jblank-many)
+                    )
+                )
+                strm1
+            )
+            [strm3 prsd3] (
+                (ups/optional
+                    (ups/chain
+                        (jblank-many)
+                        (ups/expect-char \>)
+                        (jblank-many)
+                    )
+                )
+                strm1
+            )
+        ]
+        (cond
+            prsd2 (recur (conj result prsd1) strm2)
+            prsd3 [strm3 (conj result prsd1)]
+            :else (throw (ups/gen-ISE strm1 
+                    "expect ',' to separate type parameters or '>' to end type parameters"
+                )
+            )
+        )
+    )
+)
+
+(defn- jtype-arguments-parser [father-type stream]
+    (let [[strm1 prsd1] (
+                (ups/optional
+                    (ups/chain
+                        (jblank-many)
+                        (ups/expect-char \<)
+                        (jblank-many)
+                    )
+                )
+                stream
+            )
+        ]
+        (if-not prsd1
+            [stream nil]
+            (let [
+                    [strm2 prsd2] (jtype-arguments-list-parser [] strm1)
+                ]
+                [strm2 [:type-parameterized father-type :parameters prsd2]]
+            )
+        )
+    )
+)
+
 (defn- jtype-specifier-parser' [father-type stream]
     (let [
             [strm1 prsd1] (jtype-inner-parser father-type stream)
+            [strm2 prsd2] (jtype-arguments-parser father-type stream)
         ]
         (cond
             prsd1 (recur prsd1 strm1)
+            prsd2 (recur prsd2 strm2)
             :else [stream father-type]
         )
     )

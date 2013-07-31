@@ -803,7 +803,7 @@
             (positional-stream "A<B>")
         )
         :is
-        [[[:eof 4 1 5]] [:type-parameterized "A" :parameters [[:type "B"]]]]
+        [[[:eof 4 1 5]] [:type-parameterized [:type "A"] :parameters [[:type "B"]]]]
     )
     (:fact type-parameterized-inner-class
         (
@@ -811,8 +811,8 @@
             (positional-stream "A<B>.C")
         )
         :is
-        [[[:eof 4 1 5]] [:type-inner "C" 
-                {:father [:type-parameterized "A" :parameters [[:type "B"]]]}
+        [[[:eof 6 1 7]] [:type-inner "C" 
+            [:type-parameterized [:type "A"] :parameters [[:type "B"]]]
         ]]
     )
     (:fact type-parameterized-multi
@@ -821,7 +821,7 @@
             (positional-stream "A<B,C>")
         )
         :is
-        [[[:eof 6 1 7]] [:type-parameterized "A" 
+        [[[:eof 6 1 7]] [:type-parameterized [:type "A"] 
             :parameters [[:type "B"] [:type "C"]]
         ]]
     )
@@ -831,7 +831,7 @@
             (positional-stream "A<?>")
         )
         :is
-        [[[:eof 4 1 5]] [:type-parameterized "A" 
+        [[[:eof 4 1 5]] [:type-parameterized [:type "A"]
             :parameters [[:type-var "?"]]
         ]]
     )
@@ -841,9 +841,9 @@
             (positional-stream "A<? extends B, C extends B>")
         )
         :is
-        [[[:eof 10 1 11]] [:type-parameterized "A"
-            :parameters [[:type-var "?" :extends "B"]
-                [:type-var "C" :extends "B"]
+        [[[:eof 27 1 28]] [:type-parameterized [:type "A"]
+            :parameters [[:type-var "?" :extends [:type "B"]]
+                [:type-var "C" :extends [:type "B"]]
             ]
         ]]
     )
@@ -853,9 +853,9 @@
             (positional-stream "A<? super B, C super B>")
         )
         :is
-        [[[:eof 10 1 11]] [:type-parameterized "A"
-            :parameters [[:type-var "?" :super "B"]
-                [:type-var "C" :super "B"]
+        [[[:eof 23 1 24]] [:type-parameterized [:type "A"]
+            :parameters [[:type-var "?" :super [:type "B"]]
+                [:type-var "C" :super [:type "B"]]
             ]
         ]]
     )
@@ -866,9 +866,9 @@
         )
         :is
         [[[:eof 7 1 8]]
-            [:type-parameterized "A"
+            [:type-parameterized [:type "A"]
                 :parameters [
-                    [:type-parameterized "B"
+                    [:type-parameterized [:type "B"]
                         :parameters [
                             [:type "C"]
                         ]
