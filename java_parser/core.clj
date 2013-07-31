@@ -496,3 +496,78 @@
 (defn jliteral-string []
     (partial jliteral-string-parser)
 )
+
+
+(defn- jtype-inner-parser [father-type stream]
+    (let [[strm1 prsd1] (
+                (ups/optional
+                    (ups/chain
+                        (jblank-many)
+                        (ups/expect-char \.)
+                        (jblank-many)
+                    )
+                )
+                stream
+            )
+        ]
+        (if-not prsd1
+            [stream nil]
+            (let [[strm2 [_ id]] ((jidentifier) strm1)]
+                [strm2 [:type-inner id father-type]]
+            )
+        )
+    )
+)
+
+(defn- jtype-specifier-parser' [father-type stream]
+    (let [
+            [strm1 prsd1] (jtype-inner-parser father-type stream)
+        ]
+        (cond
+            prsd1 (recur prsd1 strm1)
+            :else [stream father-type]
+        )
+    )
+)
+
+(defn- jtype-specifier-parser [stream]
+    (let [[strm1 [_ id1]] ((jidentifier) stream)
+            this-type [:type id1]
+        ]
+        (jtype-specifier-parser' this-type strm1)
+    )
+)
+
+(defn- gen-array-structure [base depth]
+    {
+        :pre [
+            (not (neg? depth))
+        ]
+    }
+    (if (zero? depth)
+        base
+        (recur [:type-array base] (dec depth))
+    )
+)
+
+(defn- jtype-parser [stream]
+    (let [[strm1 prsd1] (jtype-specifier-parser stream)
+            [strm2 prsd2] (
+                (ups/many
+                    (ups/chain
+                        (jblank-many)
+                        (ups/expect-char \[)
+                        (jblank-many)
+                        (ups/expect-char \])
+                    )
+                )
+                strm1
+            )
+        ]
+        [strm2 (gen-array-structure prsd1 (count prsd2))]
+    )
+)
+
+(defn jtype []
+    (partial jtype-parser)
+)

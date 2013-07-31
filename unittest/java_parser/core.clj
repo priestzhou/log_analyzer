@@ -763,3 +763,118 @@
         [[[:eof 5 1 6]] [:literal-string "0"]]
     )
 )
+
+(suite "type"
+    (:fact type-name
+        (
+            (jtype)
+            (positional-stream "A")
+        )
+        :is
+        [[[:eof 1 1 2]] [:type "A"]]
+    )
+    (:fact type-name-dotted
+        (
+            (jtype)
+            (positional-stream "a.B")
+        )
+        :is
+        [[[:eof 3 1 4]] [:type-inner "B" [:type "a"]]]
+    )
+    (:fact type-array
+        (
+            (jtype)
+            (positional-stream "a[]")
+        )
+        :is
+        [[[:eof 3 1 4]] [:type-array [:type "a"]]]
+    )
+    (:fact type-array-multi-dimension
+        (
+            (jtype)
+            (positional-stream "a[][]")
+        )
+        :is
+        [[[:eof 5 1 6]] [:type-array [:type-array [:type "a"]]]]
+    )
+    (:fact type-parameterized
+        (
+            (jtype)
+            (positional-stream "A<B>")
+        )
+        :is
+        [[[:eof 4 1 5]] [:type-parameterized "A" :parameters [[:type "B"]]]]
+    )
+    (:fact type-parameterized-inner-class
+        (
+            (jtype)
+            (positional-stream "A<B>.C")
+        )
+        :is
+        [[[:eof 4 1 5]] [:type-inner "C" 
+                {:father [:type-parameterized "A" :parameters [[:type "B"]]]}
+        ]]
+    )
+    (:fact type-parameterized-multi
+        (
+            (jtype)
+            (positional-stream "A<B,C>")
+        )
+        :is
+        [[[:eof 6 1 7]] [:type-parameterized "A" 
+            :parameters [[:type "B"] [:type "C"]]
+        ]]
+    )
+    (:fact type-parameterized-wildcard
+        (
+            (jtype)
+            (positional-stream "A<?>")
+        )
+        :is
+        [[[:eof 4 1 5]] [:type-parameterized "A" 
+            :parameters [[:type-var "?"]]
+        ]]
+    )
+    (:fact type-parameterized-subtype
+        (
+            (jtype)
+            (positional-stream "A<? extends B, C extends B>")
+        )
+        :is
+        [[[:eof 10 1 11]] [:type-parameterized "A"
+            :parameters [[:type-var "?" :extends "B"]
+                [:type-var "C" :extends "B"]
+            ]
+        ]]
+    )
+    (:fact type-parameterized-supertype
+        (
+            (jtype)
+            (positional-stream "A<? super B, C super B>")
+        )
+        :is
+        [[[:eof 10 1 11]] [:type-parameterized "A"
+            :parameters [[:type-var "?" :super "B"]
+                [:type-var "C" :super "B"]
+            ]
+        ]]
+    )
+    (:fact type-parameterized-nested
+        (
+            (jtype)
+            (positional-stream "A<B<C>>")
+        )
+        :is
+        [[[:eof 7 1 8]]
+            [:type-parameterized "A"
+                :parameters [
+                    [:type-parameterized "B"
+                        :parameters [
+                            [:type "C"]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    )
+)
