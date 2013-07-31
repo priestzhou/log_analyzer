@@ -93,7 +93,7 @@
 )
 
 (defn- jidentifier-parser [stream]
-    (let [[strm [[start _] id-part]] (
+    (let [[strm] (
                 (ups/chain
                     (ups/expect-char-if #(and 
                         (instance? Character %) 
@@ -106,12 +106,8 @@
                 )
                 stream
             )
-            end (if (empty? id-part)
-                (inc start)
-                (second (last id-part))
-            )
         ]
-        [strm [:identifier (ups/extract-string stream (- end start))]]
+        [strm [:identifier (ups/extract-string-between stream strm)]]
     )
 )
 
@@ -213,11 +209,11 @@
 
 (defn- jliteral-int-parser' [stream]
     (try
-        (let [[strm [start end]] (
+        (let [[strm] (
                     (ups/expect-string-while (union #{\_ \x \X \b \B} ups/hexdigit))
                     stream
                 )
-                s (ups/extract-string stream (- end start))
+                s (ups/extract-string-between stream strm)
             ]
             (if (empty? s)
                 (throw (InvalidSyntaxException. ""))
