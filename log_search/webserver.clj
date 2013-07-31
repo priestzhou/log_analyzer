@@ -141,7 +141,7 @@
                     (arg/opt :group
                         "-group <group>" "the consumer group")
                     (arg/opt :webport
-                        "-webport <group>" "jetty web port")
+                        "-webport <webport>" "jetty web port")
                     ]
             }
             opts (arg/transform->map (arg/parse arg-spec args))
