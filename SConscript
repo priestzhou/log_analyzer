@@ -60,6 +60,11 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
     libs=[env['CLOJURE'],
     env.File('$EXTLIB/ring-1.1.8.jar'),
     env.File('$EXTLIB/ring-jetty-adapter-1.1.8.jar'),
-    env.File('$EXTLIB/compojure-1.1.5.jar')    
+    env.File('$EXTLIB/compojure-1.1.5.jar'),
+    env.File('$BUILD_DIR/zktools.jar'),
+    env.File('$BUILD_DIR/kfktools.jar'),
+    env.File('$BUILD_DIR/argparser.jar'),
+    env.File('$EXTLIB/data.json-0.2.2.jar'),
+    env.File('$BUILD_DIR/logging.jar')    
     ],
     standalone=True, manifest={'Main-Class': 'log_search.webserver'}))

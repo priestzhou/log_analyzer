@@ -7,6 +7,11 @@
         [compojure.core :as cp]        
         [compojure.handler :as handler]
         [compojure.route :as route]
+        [log-search.consumer :as lc]
+        [log-search.frame :as fr]
+        [log-search.searchparser :as sp]
+        [argparser.core :as arg]
+        [utilities.core :as util]
     )
     (:gen-class)
 )
@@ -28,6 +33,15 @@
     )
     (Thread/sleep 2000)
     (recur qStr log-atom query-atom)
+)
+
+(defn- run-query [psr log-atom query-atom]
+    (reset! 
+        query-atom
+        (fr/do-search psr @log-atom) 
+    )
+    (Thread/sleep 5000)
+    (recur psr log-atom query-atom)
 )
 
 (defn- gen-query-id []
@@ -80,7 +94,10 @@
             (swap! futurMap
                 #(assoc % query-id 
                     {
-                        :future (future (test-query qStr logdata output))
+                        :future 
+                            (future 
+                                (run-query (sp/sparser qStr) logdata output)
+                            )
                         :time (System/currentTimeMillis)
                         :output output
                     }
@@ -111,7 +128,49 @@
 )
 
 (defn -main [& args]
-    (rj/run-jetty #'app {:port 8085 :join? false})
-    (check-query futurMap)
+    (let [arg-spec 
+            {
+                :usage "Usage: zookeeper [topic] [group] exejar"
+                :args [
+                    (arg/opt :help
+                        "-h|--help" "show this help")
+                    (arg/opt :zkp 
+                        "-zkp <ip:port>" "the zookeeper ip & port")
+                    (arg/opt :topic
+                        "-topic <topic>" "the kafka topic")
+                    (arg/opt :group
+                        "-group <group>" "the consumer group")
+                    (arg/opt :webport
+                        "-webport <group>" "jetty web port")
+                    ]
+            }
+            opts (arg/transform->map (arg/parse arg-spec args))
+            default-args 
+                {
+                    :topic ["hdfs.data-node"]
+                    :group ["log_search"]
+                    :webport ["8086"]
+                }
+            opts-with-default (merge default-args opts)
+        ]
+        (when (:help opts-with-default)
+            (println (arg/default-doc arg-spec))
+            (System/exit 0)            
+        )
+        (util/throw-if-not (:zkp opts-with-default)
+            IllegalArgumentException. 
+            "the zookeeper info is needed"
+        )  
+        (rj/run-jetty #'app 
+            {:port (first (:webport opts-with-default)) :join? false}
+        )
+        (future (check-query futurMap))
+        (lc/consumer-from-kfk 
+            (first (:zkp opts-with-default))
+            (first (:topic opts-with-default))
+            (first (:group opts-with-default))
+            logdata
+        )
+    )
 )
 
