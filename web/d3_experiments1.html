@@ -106,8 +106,8 @@ var fill2 = d3.scale.ordinal()
    svg.selectAll("text")
       .data(dataset)
       .enter().append("text")
-      .attr("x", width/2-30)
-      .attr("y", function(d,i){return -height / 4-i*20.5+9;})
+      .attr("x", width/2-26)
+      .attr("y", function(d,i){return -height / 4-i*20.5+3;})
       .attr("dy", ".35em")
       .style("text-anchor", "end")
       .text(function(d) { return d; });
@@ -216,7 +216,7 @@ var fill2 = d3.scale.ordinal()
           for(var q=0;q<serverCount;q++)
           {
              if(mmax<newMatrix[p][q]) mmax=newMatrix[p][q];
-             if(mmin>newMatrix[p][q]) mmin=newMatrix[p][q];
+             if(mmin>newMatrix[p][q] && newMatrix[p][q]>0) mmin=newMatrix[p][q];
              iterm=iterm+newMatrix[p][q];
              var xx=255*(mmax-newMatrix[p][q])/(mmax-mmin);
              var zz=255-255*(mmax-newMatrix[p][q])/(mmax-mmin);
@@ -232,7 +232,7 @@ var fill2 = d3.scale.ordinal()
           {
               var xx2=255*(mmax-newMatrix[m][n])/(mmax-mmin);
               var zz2=255-255*(mmax-newMatrix[m][n])/(mmax-mmin);
-              listmatrix1[n*serverCount+m]=d3.rgb(xx,0,zz);
+              listmatrix1[n*serverCount+m]=d3.rgb(xx2,0,zz2);
           }
       }
 
@@ -242,6 +242,40 @@ var fill2 = d3.scale.ordinal()
       }
        
       var interint=(mmax-mmin)/6;
+
+/*
+      var colorsets=new Array(7);
+      var colortextsets=new Array(7);
+     // var colortexts=new Array();
+      for(var ii=0;ii<7;ii++)
+      {
+          colorsets[ii]=mmin+ii*interint;
+          var whilecolor=colorsets[ii];
+          var datacopy=new Array();
+          datacopy.push(whilecolor);
+          while(whilecolor>1000)
+          {
+             
+             whilecolor=whilecolor%1000;
+             datacopy.push(whilecolor);
+          }
+       var datass=new Array(datacopy.length);
+          for(var jj=datacopy.length;jj>0;jj--)
+          {
+             datass[datacopy.length-jj]=datacopy[jj]-Math.pow(1000,datacopy.length-jj);
+          }
+        var setitem=datass[0];
+          for(var kk=1;kk<datass.length;kk++)
+          {
+             if(datass.length>1){
+                 setitem=setitem+","+datass[kk];
+             }
+            
+          }
+          colortextsets[ii]=setitem;
+          
+      }
+ */     
       var colortextset=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
 
       loaddata(newMatrix,uniqueList,uniListColor,listmatrix,colortextset);
