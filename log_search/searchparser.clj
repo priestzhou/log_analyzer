@@ -34,9 +34,11 @@
                 (re-pattern 
                     (str 
                         "(?<="
-                        (first secSeq)
-                        ")[\\S]*(?="
-                        (last secSeq)
+                        (cs/replace 
+                            secStr 
+                            #"\*"
+                            ")[\\\\S]*(?="    
+                        )
                         ")"
                     )
                 ) 
@@ -45,6 +47,14 @@
         }
     )
 )
+
+                    (comment str 
+                        "(?<="
+                        (first secSeq)
+                        ")[\\S]*(?="
+                        (last secSeq)
+                        ")"
+                    )
 
 (defn- build-parse [sSeq pMap]
     (let [pStr (first sSeq)
