@@ -94,15 +94,69 @@
     )
 )
 
+(def ^:private static-rules
+    {
+        "sum"
+        (fn [l] 
+            (reduce #(+ %1 (read-string %2)) 0 l)
+        )
+        "count"
+        (fn [l] 
+            (reduce (fn [a b] (+ a 1)) 0 l)
+        )
+    }
+)
+
+(defn- get-pSeq [sItem]
+    (->>
+        sItem
+        (#(cs/split % #" "))
+        (filter #(not (empty? %)) )
+    )
+)
+
+(defn- static-one [pSeq]
+    (let [c1 (count pSeq)
+            funcStr (cs/lower-case (first pSeq))
+            keyStr (last pSeq)
+            statFun (get static-rules funcStr)
+        ]
+        (if (and (= c1 2) (not (nil? statFun)) )
+            {
+                :statInKey keyStr,
+                :statFun statFun,
+                :statOutKey (str funcStr "_" keyStr)
+            }
+            (println "the input format can't parse as static")
+        )
+    )
+)
+
+(defn- parse-static [gStr]
+    (let [gSeq (cs/split gStr #" by ")
+            sStr (first gSeq)
+            sSeq (cs/split sStr #",")
+            pSeqs (map get-pSeq sSeq)
+        ]
+        (map 
+            static-one
+            pSeqs
+        )
+    )
+
+)
+
 (defn sparser [sStr]
     (let [log-parser (log-table-parser sStr)
             sSeq (splitStr sStr)
             lastStr (last sSeq)
             gKeys (get-groupkey lastStr)
+            statRules (parse-static lastStr)
         ]
+        (println statRules)
         (if (empty? gKeys)
             log-parser  
-            (assoc log-parser :groupKeys gKeys) 
+            (assoc log-parser :groupKeys gKeys :statRules statRules) 
         )
     )
 )

@@ -55,7 +55,7 @@
     )
     (:fact searchparser-group-checkkey
         (let [psr (sparser "1970 | parse \":00,* INFO\" as parse-1
-                | parse \"hello *\" as parse-2|count by parse-1")]
+                | parse \"hello *\" as parse-2|count b by parse-1")]
             (->> 
                 (do-search psr test-loglist1)
                 :grouptable
@@ -68,7 +68,7 @@
     )
     (:fact searchparser-group-checkkey2
         (let [psr (sparser "1970 | parse \":00,* INFO\" as parse-1
-                | parse \"hello *\" as parse-2|count by parse-1,parse-2")]
+                | parse \"hello *\" as parse-2|count a by parse-1,parse-2")]
             (->> 
                 (do-search psr test-loglist1)
                 :grouptable
@@ -79,7 +79,7 @@
         :is
         {"parse-1" "001","parse-2" "world!"}
     )
-    (:fact searchparser-count-check
+    (:fact searchparser-count-check-1
         (let [psr (sparser "1970 | parse \":00,* INFO\" as parse-1
                 | parse \"hello *\" as parse-2|count by parse-2")]
             (->> 
@@ -99,6 +99,19 @@
         )
         :is
         10
-    )    
+    )
+    (:fact searchparser-count-check-2
+        (let [psr (sparser "1970 | parse \":00,* INFO\" as parse-1
+                | parse \"hello *\" as parse-2|sum parse-1 by parse-2")]
+            (->> 
+                (do-search psr test-loglist1)
+                :grouptable
+                first
+                (#(get % "sum_parse-1"))
+            )
+        )
+        :is
+        10
+    ) 
 )
 
