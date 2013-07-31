@@ -76,7 +76,7 @@
         (->>
             logVal
             (map #(get % inKey) )
-            (reduce statFun 0 )
+            statFun
         )
     )
 )

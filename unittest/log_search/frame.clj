@@ -84,7 +84,10 @@
                 | parse \"hello *\" as parse-2|count by parse-2")]
             (->> 
                 (assoc psr :statRules 
-                    [{:statOutKey "count-1",:statFun #(+ %1 (read-string %2))
+                    [{:statOutKey "count-1",
+                    :statFun (fn [l] 
+                                (reduce #(+ %1 (read-string %2)) 0 l)
+                            )                        
                         :statInKey "parse-1"
                     }]
                 )
