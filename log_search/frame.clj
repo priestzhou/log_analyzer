@@ -97,7 +97,7 @@
             statRules (get searchrules :statRules)
             statResult (do-statistic statRules logGrouped)
         ]
-        statResult
+        {:logtable parseResult,:grouptable statResult}
     )
 )
 

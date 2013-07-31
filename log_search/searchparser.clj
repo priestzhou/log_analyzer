@@ -22,12 +22,10 @@
 (defn- parser-one [pStr]
     (let [pSeq (cs/split pStr #"\"" ) ;"
             secStr (second pSeq)
+            secSeq (cs/split secStr #"\*")
             lastStr (last pSeq)
             tKey (re-find #"(?<= as )[\S]+" lastStr)
         ]
-        (println secStr)
-        (println lastStr)
-        (println tKey)
         {   
             :key
             tKey
@@ -36,7 +34,9 @@
                 (re-pattern 
                     (str 
                         "(?<="
-                        (cs/replace secStr #"\*" ")[.]*(?=")
+                        (first secSeq)
+                        ")[\\S]*(?="
+                        (last secSeq)
                         ")"
                     )
                 ) 
@@ -63,7 +63,7 @@
     )
 )
 
-(defn sparser [sStr]
+(defn- log-table-parser [sStr]
     (let [sSeq (splitStr sStr)
             eStr (first sSeq)
             tailSeq (rest sSeq)
@@ -74,6 +74,35 @@
                 tailSeq  
                 (assoc {:eventRules [(event-func eStr)]} :parseRules []) 
             )
+        )
+    )
+)
+
+(defn- get-groupkey [gStr]
+    (let [gSeq (cs/split gStr #" by ")]
+        (println gSeq)
+        (if (< 1 (count gSeq))
+            (->>
+                gSeq
+                last
+                (#(cs/split % #","))
+                (map cs/trim )
+            )
+            []
+        )
+    )
+)
+
+(defn sparser [sStr]
+    (let [log-parser (log-table-parser sStr)
+            sSeq (splitStr sStr)
+            lastStr (last sSeq)
+            gKeys (get-groupkey lastStr)
+        ]
+        (println gKeys)
+        (if (empty? gKeys)
+            log-parser  
+            (assoc log-parser :groupKeys gKeys) 
         )
     )
 )
