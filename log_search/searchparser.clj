@@ -37,7 +37,8 @@
                         (cs/replace 
                             secStr 
                             #"\*"
-                            ")[\\\\S]*(?="    
+                            ")[\\\\
+                            S]*(?="    
                         )
                         ")"
                     )
@@ -47,14 +48,6 @@
         }
     )
 )
-
-                    (comment str 
-                        "(?<="
-                        (first secSeq)
-                        ")[\\S]*(?="
-                        (last secSeq)
-                        ")"
-                    )
 
 (defn- build-parse [sSeq pMap]
     (let [pStr (first sSeq)
@@ -90,7 +83,7 @@
 
 (defn- get-groupkey [gStr]
     (let [gSeq (cs/split gStr #" by ")]
-        (println gSeq)
+        
         (if (< 1 (count gSeq))
             (->>
                 gSeq
