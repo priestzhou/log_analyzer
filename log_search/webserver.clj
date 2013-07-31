@@ -1,6 +1,7 @@
 (ns log-search.webserver
     (:use 
         [ring.middleware.params :only (wrap-params)]
+        [logging.core :only [defloggers]]
     )
     (:require
         [ring.adapter.jetty :as rj]
@@ -15,6 +16,8 @@
     )
     (:gen-class)
 )
+
+(defloggers debug info warn error)
 
 (def ^:private futurMap 
     (atom {})
@@ -119,12 +122,31 @@
     (cp/GET "/query/get/:query-id" [query-id] 
         (get-query-result query-id)
     )
-    (route/resources "/")
+    (route/files "/" {:root "public"})
     (route/not-found "Not Found")
 )
 
 (def ^:private app
     (handler/site app-routes)
+)
+
+(def ^:pravite max-log 1000)
+(def ^:pravite new-log 500)
+
+(defn- max-log-watch [watch-key log-atom old-data new-data]
+    (let [logcount (count new-data)]
+        (if (> max-log logcount)
+            (debug "logcount don't over the threshold" 
+                :threshold max-log :log-count logcount
+            )
+            (do
+                (info "the logcount over the threshold"
+                    :threshold max-log :log-count logcount
+                )
+                (swap! log-atom #(take-last new-log %))
+            )
+        )
+    )
 )
 
 (defn -main [& args]
@@ -157,15 +179,20 @@
             (println (arg/default-doc arg-spec))
             (System/exit 0)            
         )
-        (util/throw-if-not (:zkp opts-with-default)
+        (comment util/throw-if-not (:zkp opts-with-default)
             IllegalArgumentException. 
             "the zookeeper info is needed"
         )  
         (rj/run-jetty #'app 
-            {:port (first (:webport opts-with-default)) :join? false}
+            {
+                :port 
+                (read-string (first (:webport opts-with-default))) 
+                :join? false
+            }
         )
+        (add-watch logdata :max-log-watch max-log-watch)
         (future (check-query futurMap))
-        (lc/consumer-from-kfk 
+        (comment lc/consumer-from-kfk 
             (first (:zkp opts-with-default))
             (first (:topic opts-with-default))
             (first (:group opts-with-default))
