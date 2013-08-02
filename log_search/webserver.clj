@@ -179,7 +179,7 @@
             (println (arg/default-doc arg-spec))
             (System/exit 0)            
         )
-        (comment util/throw-if-not (:zkp opts-with-default)
+        (util/throw-if-not (:zkp opts-with-default)
             IllegalArgumentException. 
             "the zookeeper info is needed"
         )  
@@ -192,7 +192,7 @@
         )
         (add-watch logdata :max-log-watch max-log-watch)
         (future (check-query futurMap))
-        (comment lc/consumer-from-kfk 
+        (lc/consumer-from-kfk 
             (first (:zkp opts-with-default))
             (first (:topic opts-with-default))
             (first (:group opts-with-default))
