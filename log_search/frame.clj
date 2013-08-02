@@ -45,6 +45,15 @@
     )
 )
 
+(defn- filter-parse [loglist]
+    (fitlers 
+        #(empty?
+            (fitlers nil? (vals %))
+        )
+        loglist
+    )
+)
+
 (defn- do-group [groupKeys loglist]
     (if (nil? groupKeys)
         loglist
@@ -104,7 +113,9 @@
    (let [eventFilter (get searchrules :eventRules)
             logFilted (event-search eventFilter loglist)
             parseRules (get searchrules :parseRules)
-            parseResult (apply-parse parseRules logFilted)
+            parseResult (filter-parse 
+                    (apply-parse parseRules logFilted)
+                )
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys parseResult)
             statRules (get searchrules :statRules)
@@ -113,7 +124,4 @@
         {:logtable parseResult,:grouptable statResult}
     )
 )
-
-
-
 
