@@ -13,6 +13,7 @@
         [log-search.searchparser :as sp]
         [argparser.core :as arg]
         [utilities.core :as util]
+        [clojure.data.json :as js]
     )
     (:gen-class)
 )
@@ -59,8 +60,9 @@
     (swap! 
         futurMap 
         #(update-in % [query-id :time] (fn [a] (System/currentTimeMillis)))
-    )    
-    @(get-in @futurMap [query-id :output])
+    )
+    (println @(get-in @futurMap [query-id :output]) )
+    (js/write-str @(get-in @futurMap [query-id :output]) )
 )
 
 (defn- delete-future [fMap qid]
