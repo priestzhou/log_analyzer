@@ -5,7 +5,6 @@
     (:require
         [kfktools.core :as kfk]
         [clojure.data.json :as json]
-        [log-consumer.logparser :as lp]
     )
     (:import
         [java.util Properties ArrayList HashMap]
@@ -17,14 +16,6 @@
 )
 
 (defloggers debug info warn error)
-
-(defn- parse-step-kfk [logstep]
-    (->>
-        logstep
-        (lp/parse-log-kfk lp/parse-rules)
-        lp/after-parse
-    )
-)
 
 (defn- decode-kfk [message]
     (-> message
@@ -51,11 +42,10 @@
                         log-atom 
                         (fn [log]
                             (debug "get new log " :count-input (count %) 
-                                :count-parsed (count (parse-step-kfk %))
                             )
                             (concat
                                 log
-                                (parse-step-kfk %) 
+                                % 
                             )
                         )
                     )
