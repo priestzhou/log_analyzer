@@ -114,19 +114,54 @@
     )
 )
 
+(defn- create-query-t [qStr timewindow]
+    (if  (> maxQueryCount (count (keys @futurMap)))
+        (let [query-id (gen-query-id)
+                output (atom [])
+            ] 
+            (swap! futurMap
+                #(assoc % query-id 
+                    {
+                        :future 
+                            (future 
+                                (run-query 
+                                    (sp/sparser qStr timewindow) 
+                                    logdata 
+                                    output
+                                )
+                            )
+                        :time (System/currentTimeMillis)
+                        :output output
+                    }
+                )
+            )
+            (str "{query-id:" query-id "}")
+        )
+        (str "the max query count is " maxQueryCount)
+    )
+)
+
 (cp/defroutes app-routes
     (cp/GET "/test" {params :params} 
         (format "You requested with query %s" params)
     )
-    (cp/ANY "/query/create/:qStr" [qStr]
-        (create-query qStr)
+    (cp/ANY "/query/create" {params :params}
+        (create-query (get params "querystring") (get params "timewindow"))
     )
-    (cp/GET "/query/get/:query-id" [query-id] 
-        (get-query-result query-id)
-    )
+    (cp/ANY "/query/get" {params :params} 
+        (get-query-result (get params "query-id"))
+    )    
     (route/files "/" {:root "public"})
     (route/not-found "Not Found")
 )
+
+    (comment cp/GET "/query/create/:qStr" [qStr]
+        (create-query qStr)
+    )
+
+    (comment cp/GET "/query/getdes/:query-id" [query-id] 
+        (get-query-result query-id)
+    )
 
 (def ^:private app
     (handler/site app-routes)

@@ -146,6 +146,24 @@
 
 )
 
+(defn- get-group-time [timeStep timeValue]
+    (let [modTime (mod timeValue timeStep)
+            groupTime (- timeValue modTime)
+        ]
+        (.format 
+            (java.text.SimpleDateFormat. "MM/dd/yyyy HH:mm:ss") 
+            groupTime
+        )
+    )
+)
+
+(def ^:private timeMap
+    {
+        "1" {:tw 60000,:tf #(get-group-time 5000 %)},
+        "5" {:tw 300000,:tf #(get-group-time 10000 %)}
+    }
+)
+
 (defn sparser 
     ([sStr]
         (let [log-parser (log-table-parser sStr)
@@ -157,12 +175,16 @@
             (println statRules)
             (if (empty? gKeys)
                 log-parser  
-                (assoc log-parser :groupKeys gKeys :statRules statRules) 
+                (assoc log-parser :groupKeys gKeys :statRules statRules
+                ) 
             )
         )
     )
    ([sStr timeWindow]
-        (let [psr (sparser sStr)]
+        (let [psr (sparser sStr)
+                timeRule (get timeMap timeWindow)
+            ]
+            (assoc psr :timeRule timeRule)
         )
     )
 )

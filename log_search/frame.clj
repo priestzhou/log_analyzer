@@ -77,14 +77,18 @@
     )
 )
 
-(defn- do-group-with-time [groupKeys loglist getime]
+(defn- do-group-with-time [groupKeys loglist timeRule]
     (if (nil? groupKeys)
         loglist
         (let [groupMap (group-by
                     (fn [log]
                         (reduce
                             #(assoc %1 %2 (get log %2))
-                            {:gTime (getime log)}
+                            ;;{:gTime (getime log)}
+                            (
+                                (:tf timeRule)
+                                (:timestamp log)
+                            )
                             groupKeys
                         )
                     )
@@ -143,12 +147,17 @@
                 )
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys parseResult)
-            logGroupWithTime (do-group-with-time groupKeys parseResult)
+            timeRule (:timeRule searchrules)
+            logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
             statRules (get searchrules :statRules)
             statResult (do-statistic statRules logGrouped)
             statWithTimeResult (do-statistic statRules logGroupWithTime)
         ]
-        {:logtable parseResult,:grouptable statResult}
+        {
+            :logtable parseResult,
+            :grouptable statWithTimeResult,
+            :groupall statRules
+        }
     )
 )
 
