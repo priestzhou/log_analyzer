@@ -54,12 +54,6 @@ var matrix11 = [
             innerRadius = Math.min(width, height) * .28,
             outerRadius = innerRadius * 1.1;
 
-//var color2=["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
-
-//var dataset=[1,2,3,4,5,6,7];
-
-//d3.range(4)
-
 var fill = d3.scale.ordinal()
     .domain([0,1,2,3])
     .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
@@ -70,20 +64,9 @@ var fill2 = d3.scale.ordinal()
     .domain([0,1,2,3])
     .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
 
-   // var color =["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];//bar color
+   // var color =["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "test", "#ff8c00"];//bar color
     var color=[d3.rgb(220,0,30), d3.rgb(190,0,60), d3.rgb(160,0,90), d3.rgb(130,0,120), d3.rgb(100,0,150), d3.rgb(70,0,180), d3.rgb(40,0,220)];
 
-
-      /*
-    var myPath =svg.append("g").selectAll("path")
-        .data(chord.groups)
-      .enter().append("path")
-
-    var myText = svg.append("g").selectAll("path")
-        .data(chord.groups)
-      .enter()
-        .append("text")
-*/
 
     var chord = d3.layout.chord();
 
@@ -156,16 +139,6 @@ var fill2 = d3.scale.ordinal()
     
 
  // .domain().slice().reverse()
-  
-
-
-/*
-     svg.append("g").selectAll("path")
-        .data(chord.groups)
-        .enter().append("path")
-        .append("text")
-        
-*/
 
      }
        var requestConfig = {  //request data and decode
@@ -244,37 +217,6 @@ var fill2 = d3.scale.ordinal()
       var interint=(mmax-mmin)/6;
 
 /*
-      var colorsets=new Array(7);
-      var colortextsets=new Array(7);
-     // var colortexts=new Array();
-      for(var ii=0;ii<7;ii++)
-      {
-          colorsets[ii]=mmin+ii*interint;
-          var whilecolor=colorsets[ii];
-          var datacopy=new Array();
-          datacopy.push(whilecolor);
-          while(whilecolor>1000)
-          {
-             
-             whilecolor=whilecolor%1000;
-             datacopy.push(whilecolor);
-          }
-       var datass=new Array(datacopy.length);
-          for(var jj=datacopy.length;jj>0;jj--)
-          {
-             datass[datacopy.length-jj]=datacopy[jj]-Math.pow(1000,datacopy.length-jj);
-          }
-        var setitem=datass[0];
-          for(var kk=1;kk<datass.length;kk++)
-          {
-             if(datass.length>1){
-                 setitem=setitem+","+datass[kk];
-             }
-            
-          }
-          colortextsets[ii]=setitem;
-          
-      }
  */     
       var colortextset=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
 
