@@ -200,6 +200,7 @@
                     )
                 )
             ]
+            (debug "loginfo" :loginfo t-logs)
             (concat [this-re]
                 (if (nil? f-logs) 
                     []
