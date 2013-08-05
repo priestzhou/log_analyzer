@@ -146,17 +146,23 @@
 
 )
 
-(defn sparser [sStr]
-    (let [log-parser (log-table-parser sStr)
-            sSeq (splitStr sStr)
-            lastStr (last sSeq)
-            gKeys (get-groupkey lastStr)
-            statRules (parse-static lastStr)
-        ]
-        (println statRules)
-        (if (empty? gKeys)
-            log-parser  
-            (assoc log-parser :groupKeys gKeys :statRules statRules) 
+(defn sparser 
+    ([sStr]
+        (let [log-parser (log-table-parser sStr)
+                sSeq (splitStr sStr)
+                lastStr (last sSeq)
+                gKeys (get-groupkey lastStr)
+                statRules (parse-static lastStr)
+            ]
+            (println statRules)
+            (if (empty? gKeys)
+                log-parser  
+                (assoc log-parser :groupKeys gKeys :statRules statRules) 
+            )
+        )
+    )
+   ([sStr timeWindow]
+        (let [psr (sparser sStr)]
         )
     )
 )

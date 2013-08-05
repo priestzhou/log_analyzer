@@ -46,9 +46,9 @@
 )
 
 (defn- filter-parse [loglist]
-    (fitlers 
+    (filter 
         #(empty?
-            (fitlers nil? (vals %))
+            (filter nil? (vals %))
         )
         loglist
     )
@@ -62,6 +62,29 @@
                         (reduce
                             #(assoc %1 %2 (get log %2))
                             {}
+                            groupKeys
+                        )
+                    )
+                    loglist
+                )
+                gKeys (keys groupMap)
+            ]
+            (map
+                (fn [k] {:gKeys k,:gVal (get groupMap k)})
+                gKeys
+            )
+        )
+    )
+)
+
+(defn- do-group-with-time [groupKeys loglist getime]
+    (if (nil? groupKeys)
+        loglist
+        (let [groupMap (group-by
+                    (fn [log]
+                        (reduce
+                            #(assoc %1 %2 (get log %2))
+                            {:gTime (getime log)}
                             groupKeys
                         )
                     )
@@ -109,6 +132,8 @@
     )
 )
 
+
+
 (defn do-search [searchrules loglist]
    (let [eventFilter (get searchrules :eventRules)
             logFilted (event-search eventFilter loglist)
@@ -118,8 +143,10 @@
                 )
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys parseResult)
+            logGroupWithTime (do-group-with-time groupKeys parseResult)
             statRules (get searchrules :statRules)
             statResult (do-statistic statRules logGrouped)
+            statWithTimeResult (do-statistic statRules logGroupWithTime)
         ]
         {:logtable parseResult,:grouptable statResult}
     )
