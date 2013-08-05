@@ -56,9 +56,7 @@ var matrix11 = [
 
 //var color2=["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
 
-//var dataset=[1,2,3,4,5,6,7];
-
-//d3.range(4)
+var miterm=[1,1,1,1,1,1,1];
 
 var fill = d3.scale.ordinal()
     .domain([0,1,2,3])
@@ -103,15 +101,17 @@ var fill2 = d3.scale.ordinal()
       .attr("height", 18)
       .style("fill", function(d,i){return color[i];});
 
+
    svg.selectAll("text")
       .data(dataset)
       .enter().append("text")
-      .attr("x", width/2-26)
+      .attr("x", width/2-24)
       .attr("y", function(d,i){return -height / 4-i*20.5+3;})
       .attr("dy", ".35em")
       .style("text-anchor", "end")
       .text(function(d) { return d; });
 
+  
   
     chord.padding(.05)
             .matrix(matrix);
@@ -175,6 +175,7 @@ var fill2 = d3.scale.ordinal()
                         "return:",response.responseText];  
             var jsondata = Ext.JSON.decode(response.responseText);
             getMatrix(jsondata.info) 
+            
         }  
     }
     function getMatrix(dataflowlist){//from source data to matrix and draw
@@ -206,6 +207,7 @@ var fill2 = d3.scale.ordinal()
       }
 
       var uniListColor=new Array(serverCount);//node color list
+      
       var listmatrix=new Array(serverCount);           //path color list
       var listmatrix1=new Array(serverCount);
       var mmax=0;
@@ -276,7 +278,19 @@ var fill2 = d3.scale.ordinal()
           
       }
  */     
-      var colortextset=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
+      
+      if(serverCount==0) var colortextset=[0+" M",0+" M",0+" M",0+" M",0+" M",0+" M",0+" M"];
+      else 
+      {
+         var colortextset1=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
+         var colortextset=new Array(7);
+         for(var citer=0;citer<7;citer++)
+         {
+            var plu=(colortextset1[citer]/1024)/1024;
+            colortextset[citer]=Math.round(plu*100)/100+" M";
+         }
+      }
+//var colortextset=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
 
       loaddata(newMatrix,uniqueList,uniListColor,listmatrix,colortextset);
       
