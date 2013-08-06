@@ -45,13 +45,16 @@
     )
 )
 
-(defn- filter-parse [loglist]
-    (filter 
+
+    (comment filter 
         #(empty?
             (filter nil? (vals %))
         )
         loglist
     )
+
+(defn- filter-parse [loglist]
+    loglist
 )
 
 (defn- do-group [groupKeys loglist]
@@ -78,17 +81,16 @@
 )
 
 (defn- do-group-with-time [groupKeys loglist timeRule]
-    (if (nil? groupKeys)
+    (if (or (nil? groupKeys) (nil? timeRule))
         loglist
         (let [groupMap (group-by
                     (fn [log]
                         (reduce
                             #(assoc %1 %2 (get log %2))
                             ;;{:gTime (getime log)}
-                            (
-                                (:tf timeRule)
-                                (:timestamp log)
-                            )
+                            {:groupTime ((:tf timeRule)
+                                (read-string (:timestamp log))
+                            )}
                             groupKeys
                         )
                     )

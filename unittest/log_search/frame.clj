@@ -7,13 +7,21 @@
 
 (def ^:private test-loglist1
     [
-        {:message 
+        {
+            :timestamp "1375684054183"
+            :message 
             "1970-01-01 08:00:00,001 INFO Class.func: hello world!"}
-        {:message 
+        {
+            :timestamp "1375684065183"
+            :message 
             "1970-01-01 08:00:00,002 INFO Class.func: hello world!"}
-        {:message 
+        {
+            :timestamp "1375684074183"
+            :message 
             "1970-01-01 08:00:00,003 INFO Class.func: hello world!"}
-        {:message 
+        {
+            :timestamp "1375684081183"
+            :message 
             "1970-01-01 08:00:00,004 INFO Class.func: hello world!"}
     ]
 )
@@ -38,7 +46,7 @@
             )
         )
         :is
-        (list "test-parse-1" :message)        
+        (list "test-parse-1" :timestamp :message)        
     )
     (:fact searchparser-parse-checkkey2
         (let [psr (sparser "1970 | parse \":00,* INFO\" as parse-1
@@ -51,14 +59,14 @@
             )
         )
         :is
-        (list "parse-2" "parse-1" :message)
+        (list "parse-2" "parse-1" :timestamp :message)
     )
     (:fact searchparser-group-checkkey
         (let [psr (sparser "1970 | parse \":00,* INFO\" as parse-1
                 | parse \"hello *\" as parse-2|count b by parse-1")]
             (->> 
                 (do-search psr test-loglist1)
-                :grouptable
+                :groupall
                 first
                 :gKeys
             )
@@ -71,7 +79,7 @@
                 | parse \"hello *\" as parse-2|count a by parse-1,parse-2")]
             (->> 
                 (do-search psr test-loglist1)
-                :grouptable
+                :groupall
                 first
                 :gKeys
             )
@@ -92,7 +100,7 @@
                     }]
                 )
                 (#(do-search % test-loglist1))
-                :grouptable
+                :groupall
                 first
                 (#(get % "count-1"))
             )
@@ -105,13 +113,25 @@
                 | parse \"hello *\" as parse-2|sum parse-1 by parse-2")]
             (->> 
                 (do-search psr test-loglist1)
-                :grouptable
+                :groupall
                 first
                 (#(get % "sum_parse-1"))
             )
         )
         :is
         10
-    ) 
+    )
+    (:fact searchparser-time-check-
+        (let [psr (sparser "1970 | parse \":00,* INFO\" as parse-1
+                | parse \"hello *\" as parse-2|sum parse-1 by parse-2" "60")]
+            (->> 
+                (do-search psr test-loglist1)
+                :grouptable
+                first
+            )
+        )
+        :is
+        10
+    )
 )
 

@@ -13,7 +13,6 @@
         (load-cases 
             'unittest.log-collector.log-line-parser 
             'unittest.log-search.frame
-            'unittest.log-search.searchparser
         )
         (main args)
     )

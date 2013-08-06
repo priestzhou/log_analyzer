@@ -40,9 +40,12 @@
 )
 
 (defn- run-query [psr log-atom query-atom]
+    (debug "query run " :inputlogcount (count @log-atom))
     (reset! 
         query-atom
-        (fr/do-search psr @log-atom) 
+        (assoc (fr/do-search psr @log-atom) 
+            :query-time (str (System/currentTimeMillis) )
+        )
     )
     (Thread/sleep 5000)
     (recur psr log-atom query-atom)
@@ -57,12 +60,24 @@
 )
 
 (defn- get-query-result [query-id]
-    (swap! 
-        futurMap 
-        #(update-in % [query-id :time] (fn [a] (System/currentTimeMillis)))
+    (if (nil? (get @futurMap query-id))
+        (do
+            (debug "the query is invalid " :query-id query-id)
+            "the query is invalid"
+        )
+        (do
+            (swap! 
+                futurMap 
+                #(update-in % [query-id :time] 
+                    (fn [a] (System/currentTimeMillis))
+                )
+            )
+            (debug "the query output is" 
+                @(get-in @futurMap [query-id :output]) 
+            )
+            (js/write-str @(get-in @futurMap [query-id :output]) )
+        )
     )
-    (println @(get-in @futurMap [query-id :output]) )
-    (js/write-str @(get-in @futurMap [query-id :output]) )
 )
 
 (defn- delete-future [fMap qid]
@@ -135,10 +150,14 @@
                     }
                 )
             )
-            (str "{query-id:" query-id "}")
+            (str "{\"query-id\":\"" query-id "\"}")
         )
         (str "the max query count is " maxQueryCount)
     )
+)
+
+(defn- get-log-example []
+    (map #(str % "\n") (take 10 @logdata))
 )
 
 (cp/defroutes app-routes
@@ -146,11 +165,20 @@
         (format "You requested with query %s" params)
     )
     (cp/ANY "/query/create" {params :params}
-        (create-query (get params "querystring") (get params "timewindow"))
+        (do
+            (debug "get a query create post" (:querystring params))
+            (create-query-t (:querystring params ) (:timewindow params))
+        )
     )
     (cp/ANY "/query/get" {params :params} 
-        (get-query-result (get params "query-id"))
-    )    
+        (do
+            (get-query-result (:query-id params))    
+        )        
+        
+    )
+    (cp/GET "/testlog/first" []
+        (get-log-example)
+    )
     (route/files "/" {:root "public"})
     (route/not-found "Not Found")
 )
@@ -167,8 +195,8 @@
     (handler/site app-routes)
 )
 
-(def ^:pravite max-log 1000)
-(def ^:pravite new-log 500)
+(def ^:pravite max-log 500)
+(def ^:pravite new-log 200)
 
 (defn- max-log-watch [watch-key log-atom old-data new-data]
     (let [logcount (count new-data)]

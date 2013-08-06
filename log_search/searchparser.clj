@@ -172,7 +172,6 @@
                 gKeys (get-groupkey lastStr)
                 statRules (parse-static lastStr)
             ]
-            (println statRules)
             (if (empty? gKeys)
                 log-parser  
                 (assoc log-parser :groupKeys gKeys :statRules statRules
