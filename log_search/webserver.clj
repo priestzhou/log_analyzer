@@ -48,6 +48,7 @@
         )
     )
     (Thread/sleep 5000)
+    (debug " next query running")
     (recur psr log-atom query-atom)
 )
 
