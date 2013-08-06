@@ -156,7 +156,7 @@
         {
             :logtable parseResult,
             :grouptable statWithTimeResult,
-            :groupall statRules
+            :groupall statResult
         }
     )
 )
