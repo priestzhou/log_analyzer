@@ -159,8 +159,8 @@
 
 (def ^:private timeMap
     {
-        "1" {:tw 60000,:tf #(get-group-time 5000 %)},
-        "5" {:tw 300000,:tf #(get-group-time 10000 %)}
+        "60" {:tw 60000,:tf #(get-group-time 5000 %)},
+        "300" {:tw 300000,:tf #(get-group-time 10000 %)}
     }
 )
 
