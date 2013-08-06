@@ -54,6 +54,10 @@ var matrix11 = [
             innerRadius = Math.min(width, height) * .28,
             outerRadius = innerRadius * 1.1;
 
+//var color2=["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
+
+var miterm=[1,1,1,1,1,1,1];
+
 var fill = d3.scale.ordinal()
     .domain([0,1,2,3])
     .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
@@ -64,9 +68,20 @@ var fill2 = d3.scale.ordinal()
     .domain([0,1,2,3])
     .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
 
-   // var color =["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "test", "#ff8c00"];//bar color
+   // var color =["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];//bar color
     var color=[d3.rgb(220,0,30), d3.rgb(190,0,60), d3.rgb(160,0,90), d3.rgb(130,0,120), d3.rgb(100,0,150), d3.rgb(70,0,180), d3.rgb(40,0,220)];
 
+
+      /*
+    var myPath =svg.append("g").selectAll("path")
+        .data(chord.groups)
+      .enter().append("path")
+
+    var myText = svg.append("g").selectAll("path")
+        .data(chord.groups)
+      .enter()
+        .append("text")
+*/
 
     var chord = d3.layout.chord();
 
@@ -86,15 +101,17 @@ var fill2 = d3.scale.ordinal()
       .attr("height", 18)
       .style("fill", function(d,i){return color[i];});
 
+
    svg.selectAll("text")
       .data(dataset)
       .enter().append("text")
-      .attr("x", width/2-26)
+      .attr("x", width/2-24)
       .attr("y", function(d,i){return -height / 4-i*20.5+3;})
       .attr("dy", ".35em")
       .style("text-anchor", "end")
       .text(function(d) { return d; });
 
+  
   
     chord.padding(.05)
             .matrix(matrix);
@@ -139,6 +156,16 @@ var fill2 = d3.scale.ordinal()
     
 
  // .domain().slice().reverse()
+  
+
+
+/*
+     svg.append("g").selectAll("path")
+        .data(chord.groups)
+        .enter().append("path")
+        .append("text")
+        
+*/
 
      }
        var requestConfig = {  //request data and decode
@@ -148,6 +175,7 @@ var fill2 = d3.scale.ordinal()
                         "return:",response.responseText];  
             var jsondata = Ext.JSON.decode(response.responseText);
             getMatrix(jsondata.info) 
+            
         }  
     }
     function getMatrix(dataflowlist){//from source data to matrix and draw
@@ -179,6 +207,7 @@ var fill2 = d3.scale.ordinal()
       }
 
       var uniListColor=new Array(serverCount);//node color list
+      
       var listmatrix=new Array(serverCount);           //path color list
       var listmatrix1=new Array(serverCount);
       var mmax=0;
@@ -217,8 +246,51 @@ var fill2 = d3.scale.ordinal()
       var interint=(mmax-mmin)/6;
 
 /*
+      var colorsets=new Array(7);
+      var colortextsets=new Array(7);
+     // var colortexts=new Array();
+      for(var ii=0;ii<7;ii++)
+      {
+          colorsets[ii]=mmin+ii*interint;
+          var whilecolor=colorsets[ii];
+          var datacopy=new Array();
+          datacopy.push(whilecolor);
+          while(whilecolor>1000)
+          {
+             
+             whilecolor=whilecolor%1000;
+             datacopy.push(whilecolor);
+          }
+       var datass=new Array(datacopy.length);
+          for(var jj=datacopy.length;jj>0;jj--)
+          {
+             datass[datacopy.length-jj]=datacopy[jj]-Math.pow(1000,datacopy.length-jj);
+          }
+        var setitem=datass[0];
+          for(var kk=1;kk<datass.length;kk++)
+          {
+             if(datass.length>1){
+                 setitem=setitem+","+datass[kk];
+             }
+            
+          }
+          colortextsets[ii]=setitem;
+          
+      }
  */     
-      var colortextset=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
+      
+      if(serverCount==0) var colortextset=[0+" M",0+" M",0+" M",0+" M",0+" M",0+" M",0+" M"];
+      else 
+      {
+         var colortextset1=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
+         var colortextset=new Array(7);
+         for(var citer=0;citer<7;citer++)
+         {
+            var plu=(colortextset1[citer]/1024)/1024;
+            colortextset[citer]=Math.round(plu*100)/100+" M";
+         }
+      }
+//var colortextset=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
 
       loaddata(newMatrix,uniqueList,uniListColor,listmatrix,colortextset);
       
