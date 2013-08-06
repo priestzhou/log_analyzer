@@ -8,19 +8,19 @@
 (def ^:private test-loglist1
     [
         {
-            :timestamp "1375684054183"
+            :timestamp 1375684054183
             :message 
             "1970-01-01 08:00:00,001 INFO Class.func: hello world!"}
         {
-            :timestamp "1375684065183"
+            :timestamp 1375684065183
             :message 
             "1970-01-01 08:00:00,002 INFO Class.func: hello world!"}
         {
-            :timestamp "1375684074183"
+            :timestamp 1375684074183
             :message 
             "1970-01-01 08:00:00,003 INFO Class.func: hello world!"}
         {
-            :timestamp "1375684081183"
+            :timestamp 1375684081183
             :message 
             "1970-01-01 08:00:00,004 INFO Class.func: hello world!"}
     ]

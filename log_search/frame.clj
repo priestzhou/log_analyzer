@@ -88,9 +88,11 @@
                         (reduce
                             #(assoc %1 %2 (get log %2))
                             ;;{:gTime (getime log)}
-                            {:groupTime ((:tf timeRule)
-                                (read-string (:timestamp log))
-                            )}
+                            {:groupTime 
+                                ((:tf timeRule)
+                                     (:timestamp log)
+                                )
+                            }
                             groupKeys
                         )
                     )
@@ -153,11 +155,11 @@
             logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
             statRules (get searchrules :statRules)
             statResult (do-statistic statRules logGrouped)
-            statWithTimeResult (do-statistic statRules logGroupWithTime)
+            ;statWithTimeResult (do-statistic statRules logGroupWithTime)
         ]
         {
             :logtable parseResult,
-            :grouptable statWithTimeResult,
+            :grouptable logGroupWithTime,
             :groupall statResult
         }
     )
