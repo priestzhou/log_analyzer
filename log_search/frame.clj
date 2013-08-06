@@ -155,11 +155,11 @@
             logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
             statRules (get searchrules :statRules)
             statResult (do-statistic statRules logGrouped)
-            ;statWithTimeResult (do-statistic statRules logGroupWithTime)
+            statWithTimeResult (do-statistic statRules logGroupWithTime)
         ]
         {
             :logtable parseResult,
-            :grouptable logGroupWithTime,
+            :grouptable statWithTimeResult,
             :groupall statResult
         }
     )

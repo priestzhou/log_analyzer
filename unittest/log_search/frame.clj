@@ -121,17 +121,18 @@
         :is
         10
     )
-    (:fact searchparser-time-check-
+    (:fact searchparser-time-check-gkey1
         (let [psr (sparser "1970 | parse \":00,* INFO\" as parse-1
                 | parse \"hello *\" as parse-2|sum parse-1 by parse-2" "60")]
             (->> 
                 (do-search psr test-loglist1)
                 :grouptable
                 first
+                :gKeys
             )
         )
         :is
-        10
+        {"parse-2" "world!", :groupTime "08/05/2013 14:27:30"}
     )
 )
 
