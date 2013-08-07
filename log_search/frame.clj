@@ -59,7 +59,7 @@
 
 (defn- do-group [groupKeys loglist]
     (if (nil? groupKeys)
-        loglist
+        []
         (let [groupMap (group-by
                     (fn [log]
                         (reduce
@@ -82,7 +82,7 @@
 
 (defn- do-group-with-time [groupKeys loglist timeRule]
     (if (or (nil? groupKeys) (nil? timeRule))
-        loglist
+        []
         (let [groupMap (group-by
                     (fn [log]
                         (reduce
@@ -140,7 +140,9 @@
     )
 )
 
-
+(defn- delet-gVal [loglist]
+    ()
+)
 
 (defn do-search [searchrules loglist]
    (let [eventFilter (get searchrules :eventRules)
@@ -149,18 +151,21 @@
             parseResult (filter-parse 
                     (apply-parse parseRules logFilted)
                 )
+            limitResult (take-last 100 parseResult)
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys parseResult)
             timeRule (:timeRule searchrules)
             logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
             statRules (get searchrules :statRules)
             statResult (do-statistic statRules logGrouped)
+            limitStatResult (map #(dissoc % :gVal) statResult)
             statWithTimeResult (do-statistic statRules logGroupWithTime)
+            limitResultWithTime (map #(dissoc % :gVal) statWithTimeResult)
         ]
         {
-            :logtable parseResult,
-            :grouptable statWithTimeResult,
-            :groupall statResult
+            :logtable limitResult,
+            :grouptable limitResultWithTime,
+            :groupall limitStatResult
         }
     )
 )
