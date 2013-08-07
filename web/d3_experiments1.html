@@ -58,6 +58,8 @@ var matrix11 = [
 
 var miterm=[1,1,1,1,1,1,1];
 
+var timeinterval=30;
+
 var fill = d3.scale.ordinal()
     .domain([0,1,2,3])
     .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
@@ -150,7 +152,7 @@ var fill2 = d3.scale.ordinal()
       .enter().append("path")
         .attr("d", d3.svg.chord().radius(innerRadius))
         
-        .style("fill", function(d) { return pathcolor[computername.length*d.source.index+d.target.index]; })//d.target.index
+        .style("fill", function(d) { return nodecolor[d.source.index];})//pathcolor[computername.length*d.source.index+d.target.index];
         .style("opacity", fadetwo(0));
 
     
@@ -194,7 +196,8 @@ var fill2 = d3.scale.ordinal()
         }
       }
       
-
+     
+      ////////matrix data
       for(var i=0;i<dataflowlist.length;i++){
         serverFrom=dataflowlist[i].src;
         serverTo = dataflowlist[i].dest;
@@ -205,13 +208,41 @@ var fill2 = d3.scale.ordinal()
           newMatrix[indexFrom][indexTo]=dataflowlist[i].dataflow;
         //}
       }
+      
 
       var uniListColor=new Array(serverCount);//node color list
+      var uniNodeColor=new Array(serverCount);//node color list
       
       var listmatrix=new Array(serverCount);           //path color list
       var listmatrix1=new Array(serverCount);
       var mmax=0;
       var mmin=1000000;
+
+
+      for(var p=0;p<serverCount;p++)
+      {
+          var iterm=0;
+          for(var q=0;q<serverCount;q++)
+          {
+             iterm=iterm+newMatrix[p][q];
+          }
+          uniListColor[p]=iterm;
+          
+      }
+
+      for(var t=0;t<serverCount;t++)
+     {
+         if(mmax<uniListColor[t]) mmax=uniListColor[t];
+         if(mmin>uniListColor[t] && uniListColor[t]>0) mmin=uniListColor[t];
+     }
+
+     for(var a=0;a<serverCount;a++)
+     {
+         var xx=255*(mmax-uniListColor[a])/(mmax-mmin);
+         var zz=255-255*(mmax-uniListColor[a])/(mmax-mmin);
+         uniNodeColor[a]=d3.rgb(xx,0,zz);
+     }
+/*
       for(var p=0;p<serverCount;p++)
       {
           var iterm=0;
@@ -242,13 +273,10 @@ var fill2 = d3.scale.ordinal()
       {
           listmatrix[l]=(listmatrix[l]+listmatrix1[l])/2;
       }
-       
-      var interint=(mmax-mmin)/6;
-
-/*
+     
       var colorsets=new Array(7);
       var colortextsets=new Array(7);
-     // var colortexts=new Array();
+  
       for(var ii=0;ii<7;ii++)
       {
           colorsets[ii]=mmin+ii*interint;
@@ -278,6 +306,8 @@ var fill2 = d3.scale.ordinal()
           
       }
  */     
+  
+       var interint=(mmax-mmin)/6;
       
       if(serverCount==0) var colortextset=[0+" M",0+" M",0+" M",0+" M",0+" M",0+" M",0+" M"];
       else 
@@ -286,13 +316,13 @@ var fill2 = d3.scale.ordinal()
          var colortextset=new Array(7);
          for(var citer=0;citer<7;citer++)
          {
-            var plu=(colortextset1[citer]/1024)/1024;
+            var plu=(colortextset1[citer]/1024)/1024/timeinterval;
             colortextset[citer]=Math.round(plu*100)/100+" M";
          }
       }
-//var colortextset=[mmin,Math.floor(mmax-5*interint),Math.floor(mmax-4*interint),Math.floor(mmax-3*interint),Math.floor(mmax-2*interint),Math.floor(mmax-interint),mmax];
 
-      loaddata(newMatrix,uniqueList,uniListColor,listmatrix,colortextset);
+
+      loaddata(newMatrix,uniqueList,uniNodeColor,listmatrix,colortextset);
       
     }
     Ext.Ajax.request(requestConfig);
