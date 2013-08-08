@@ -161,6 +161,13 @@
     )
 )
 
+(defn- showLimitResult [loglist]
+    (let [ll (map #(dissoc % :gVal) loglist)
+        ]
+        (sort-by #(get-in % [:gKeys :groupTime]) ll)
+    )
+)
+
 (defn do-search [searchrules loglist]
    (let [eventFilter (get searchrules :eventRules)
             logFilted (event-search eventFilter loglist)
@@ -177,7 +184,7 @@
             statResult (do-statistic statRules logGrouped)
             limitStatResult (map #(dissoc % :gVal) statResult)
             statWithTimeResult (do-statistic statRules logGroupWithTime)
-            limitResultWithTime (map #(dissoc % :gVal) statWithTimeResult)
+            limitResultWithTime (showLimitResult statWithTimeResult)
         ]
         {
             :logtable limitResult,
