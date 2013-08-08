@@ -31,6 +31,7 @@
         (->>
             (do-search (sparser "003") test-loglist1)
             :logtable
+            (remove nil? )
             count
         )
         :is
