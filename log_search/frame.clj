@@ -45,16 +45,13 @@
     )
 )
 
-
-    (comment filter 
+(defn- filter-parse [loglist]
+    ( filter 
         #(empty?
             (filter nil? (vals %))
         )
         loglist
     )
-
-(defn- filter-parse [loglist]
-    loglist
 )
 
 (defn- do-group [groupKeys loglist]
