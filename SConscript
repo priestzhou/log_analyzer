@@ -65,6 +65,7 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
     env.File('$BUILD_DIR/kfktools.jar'),
     env.File('$BUILD_DIR/argparser.jar'),
     env.File('$EXTLIB/data.json-0.2.2.jar'),
+    env.File('$EXTLIB/clj-spark-0.1.0-SNAPSHOT.jar'),
     env.File('$BUILD_DIR/logging.jar')    
     ],
     install={
