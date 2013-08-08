@@ -1,0 +1,493 @@
+.splClearfix:after {
+    clear: both;
+    content: ".";
+    display: block;
+    height: 0;
+    visibility: hidden;
+}
+.splView-timeline div.splSearchControls-inline, .splView-flashtimeline div.splSearchControls-inline {
+    background: none repeat scroll 0 0 white;
+    margin: 0 20px;
+    padding: 20px 10px 0;
+}
+div.splSearchControls-inline {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    border-color: #CCCCCC #CCCCCC -moz-use-text-color;
+    border-image: none;
+    border-radius: 5px 5px 0 0;
+    border-style: solid solid none;
+    border-width: 1px 1px medium;
+}
+div.layoutRow {
+    clear: both;
+}
+.splSearchControls-inline table.mainSearchControlsTable {
+    border: 0 none;
+    margin: 0 10px 10px;
+}
+.searchFieldWrapperInner textarea {
+    padding: 0;
+}
+input[disabled], .searchFieldWrapperInner textarea {
+    box-shadow: none;
+}
+.SearchBar textarea {
+    border: 0 none;
+    border-radius: 0 0 0 0;
+    display: block;
+    height: 16px;
+    line-height: 1;
+    margin: 0;
+    overflow: hidden;
+    padding: 0;
+    resize: none;
+    width: 100%;
+}
+table.mainSearchControlsTable .SearchBar .searchFieldWrapper, .SearchBar .searchFieldWrapperInner {
+    border-color: #2D65A1;
+}
+.SearchBar .searchFieldWrapperInner {
+    background-color: #FFFFFF;
+    border-radius: 4px 4px 4px 4px;
+    border-style: solid;
+    border-width: 1px;
+    display: block;
+    height: 16px;
+    margin: 0;
+    min-height: 12px;
+    overflow: hidden;
+    padding: 4px 2px 4px 5px;
+}
+.SearchBar .searchFieldWrapper {
+    border-radius: 5px 5px 5px 5px;
+    height: 26px;
+    padding: 0;
+    position: relative;
+    z-index: 3;
+}
+.SearchBar .searchFieldWrapperInner {
+    border-color: #A0C288;
+}
+.searchFieldWrapperInner {
+    padding: 5px;
+}
+input, textarea, .searchFieldWrapperInner {
+    box-shadow: -1px 1px 3px #CCCCCC inset;
+}
+.SearchBar textarea, .SearchBar label {
+    box-shadow: none;
+    font-size: 12px;
+}
+table.mainSearchControlsTable .SearchBar .searchFieldWrapper {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    border-bottom-right-radius: 0;
+    border-color: #5E8D3D;
+    border-image: none;
+    border-style: solid;
+    border-top-right-radius: 0;
+    border-width: 1px 0 1px 1px;
+}
+table.mainSearchControlsTable .TimeRangePicker .timeRangeActivatorWrapper {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background: url("../image/search_bar.png") repeat scroll 0 0 #659C40;
+    border-color: #5E8D3D;
+    border-image: none;
+    border-radius: 0 0 0 0;
+    border-style: solid;
+    border-width: 1px 1px 1px 0;
+    color: #FFFFFF;
+    font-size: 12px;
+    height: 26px;
+}
+.splButton-primary, .TimeRangePicker .timeRangeActivatorWrapper {
+    background-attachment: scroll;
+    background-clip: border-box;
+    background-color: #2D65A1 !important;
+    background-image: url("../image/overlay_gloss_28.png");
+    background-origin: padding-box;
+    background-position: center 0;
+    background-repeat: repeat-x;
+    background-size: auto auto;
+    border-color: #2D65A1 !important;
+    color: #FFFFFF !important;
+}
+
+table.mainSearchControlsTable .TimeRangePicker .timeRangeActivatorWrapper .dropDown {
+    background-position: -27px -367px;
+    margin-top: 11px;
+}
+.TimeRangePicker .timeRangeActivatorWrapper span.splIcon-triangle-4-s {
+    float: right;
+    margin: 8px -3px 0 0;
+}
+
+table.mainSearchControlsTable .TimeRangePicker .timeRangeActivator {
+    padding-top: 3px;
+}
+.TimeRangePicker .timeRangeActivator {
+    cursor: pointer;
+    display: block;
+    margin-right: 8px;
+    padding: 0 0 0 10px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.splIcon-triangle, .splIcon-triangle-1-n, .splIcon-triangle-1-s, .splIcon-triangle-1-e, .splIcon-triangle-1-w, .splIcon-triangle-2-n, .splIcon-triangle-2-s, .splIcon-triangle-2-e, .splIcon-triangle-2-w, .splIcon-triangle-3-n, .splIcon-triangle-3-s, .splIcon-triangle-3-e, .splIcon-triangle-3-w, .splIcon-triangle-4-n, .splIcon-triangle-4-s, .splIcon-triangle-4-e, .splIcon-triangle-4-w, .splIcon-triangle-5-n, .splIcon-triangle-5-s, .splIcon-triangle-5-e, .splIcon-triangle-5-w {
+    height: 5px;
+    width: 5px;
+}
+
+.splIcon-triangle, .splIcon-triangle-1-n, .splIcon-triangle-1-s, .splIcon-triangle-1-e, .splIcon-triangle-1-w, .splIcon-triangle-2-n, .splIcon-triangle-2-s, .splIcon-triangle-2-e, .splIcon-triangle-2-w, .splIcon-triangle-3-n, .splIcon-triangle-3-s, .splIcon-triangle-3-e, .splIcon-triangle-3-w, .splIcon-triangle-4-n, .splIcon-triangle-4-s, .splIcon-triangle-4-e, .splIcon-triangle-4-w, .splIcon-triangle-5-n, .splIcon-triangle-5-s, .splIcon-triangle-5-e, .splIcon-triangle-5-w {
+    background-color: transparent !important;
+}
+.splIcon {
+    background-color: #999999;
+    background-image: url("../image/splIcons.gif");
+}
+.dropDown {
+    height: 6px;
+    overflow: hidden;
+    text-indent: -10000px;
+    width: 6px;
+}
+
+.splIcon {
+    background-repeat: no-repeat;
+    cursor: pointer;
+    display: block;
+    height: 13px;
+    width: 13px;
+}
+table.mainSearchControlsTable .TimeRangePicker .timeRangeActivatorWrapper {
+    color: #FFFFFF;
+    font-size: 12px;
+}
+.splButton-primary, .TimeRangePicker .timeRangeActivatorWrapper {
+    color: #FFFFFF !important;
+}
+.TimeRangePicker .timeRangeActivatorWrapper {
+    color: #000000;
+    line-height: 21px;
+}
+.TimeRangePicker .timeRangeActivatorWrapper {
+    color: #000000;
+    display: inline-block;
+    line-height: 21px;
+    min-width: 100px;
+    outline: medium none;
+    padding-right: 15px;
+}
+table.mainSearchControlsTable .SearchBar .searchFieldWrapper, .SearchBar .searchFieldWrapperInner {
+    border-color: #2D65A1;
+}
+table.mainSearchControlsTable .SearchBar .searchFieldWrapper {
+    background-color: #2D65A1;
+}
+.splSearchControls-inline table.mainSearchControlsTable td {
+    padding: 0;
+}
+.splSearchControls-inline td {
+    vertical-align: top;
+}
+body, td {
+    color: #333333;
+    font-size: 13px;
+    line-height: 150%;
+}
+body, td, .eaiResultsPerPage label {
+    color: #333333;
+    font-size: 13px !important;
+    line-height: 150%;
+}
+fieldset {
+    border: medium none;
+    margin: 0;
+    padding: 0;
+}
+table.mainSearchControlsTable input.searchButton {
+    border-left: medium none;
+}
+table.mainSearchControlsTable input.searchButton {
+    border-bottom-left-radius: 0;
+    border-left-color: #8FB777;
+    border-top-left-radius: 0;
+	border-top-right-radius:4px;
+	border-bottom-right-radius:4px;
+}
+input.searchButton {
+    background: url("../image/go_btn.png") no-repeat scroll center 0 #2D65A1;
+    border: 1px solid #2D65A1;
+    box-shadow: none;
+
+}
+.SearchBar .assistantActivator, input.searchButton {
+    background-color: #2D65A1;
+}
+input.searchButton {
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    padding-top: 3px;
+}
+input.searchButton, .splButton-primary span {
+    min-width: 0;
+    text-shadow: 0 -1px 0 #3F64C0;
+}
+input.searchButton, input.searchButton:focus, input.searchButton:active {
+    outline: medium none;
+}
+
+input.searchButton {
+    border: 0 none;
+    height: 28px;
+    margin: 0;
+    width: 44px;
+}
+
+.splMenu-primary, .splMenu-primary a {
+    color: #333333;
+}
+.splMenu {
+    font-family: Arial,Helvetica,sans-serif;
+    font-size: 11px;
+}
+.splShadow {
+    background: url("../image/shadow_soft.png") no-repeat scroll right bottom transparent;
+    border-bottom-left-radius: 17px;
+    border-top-right-radius: 17px;
+}
+.splMenu, .splMenu * {
+    list-style: none outside none;
+    margin: 0;
+    z-index: 500;
+}
+.splMenu, .splMenu div.outerMenuWrapper {
+    display: none;
+    position: absolute;
+    text-align: left;
+}
+.splShadow {
+    padding: 0 8px 9px 0;
+}
+
+.splMenu ul div.innerMenuWrapper {
+    padding: 5px 0;
+    width: 160px;
+}
+.splMenu, .splMenu * {
+    list-style: none outside none;
+    margin: 0;
+    z-index: 500;
+}
+
+.splMenu ul li {
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    width: 160px;
+    word-wrap: break-word;
+}
+.splMenu, .splMenu * {
+    list-style: none outside none;
+    margin: 0;
+    z-index: 500;
+}
+
+.splMenu-primary, .splMenu-primary a {
+    color: #333333;
+}
+.splMenu a {
+    display: block;
+    overflow: hidden;
+    padding: 5px 10px;
+    text-decoration: none;
+    width: 140px;
+}
+.splMenu, .splMenu * {
+    list-style: none outside none;
+    margin: 0;
+    z-index: 500;
+}
+
+.splMenu li.hasSubMenu span.splIcon {
+    position: absolute;
+    right: 5px;
+    top: 10px;
+}
+.splIcon-triangle-4-e {
+    background-position: -67px -407px;
+}
+.splMenu-primary ul {
+    background-color: #FFFFFF;
+}
+.splMenu ul {
+    border-style: solid;
+    border-width: 1px;
+}
+.splMenu, .splMenu * {
+    list-style: none outside none;
+    margin: 0;
+    z-index: 500;
+}
+.splMenu-primary, .splMenu-primary a {
+    color: #333333;
+}
+* {
+    border-color: #CCCCCC;
+}
+.splMenuMoseOver {
+    background-color: #FCEEBE;
+}
+.timeRangeDiv {
+	position: relative;
+}
+.splClearfix:after {
+    clear: both;
+    content: ".";
+    display: block;
+    height: 0;
+    visibility: hidden;
+}
+.layoutRow.graphArea {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background: none repeat scroll 0 0 white;
+    border-color: -moz-use-text-color #CCCCCC #CCCCCC;
+    border-image: none;
+    border-radius: 0 0 5px 5px;
+    border-right: 1px solid #CCCCCC;
+    border-style: none solid solid;
+    border-width: medium 1px 1px;
+    margin: 0 20px;
+}
+div.layoutRow {
+    clear: both;
+}
+.eventsDiv{
+	height: 28px;
+	border-bottom-style: solid;
+    border-bottom-width: 1px;
+    margin: 0;
+    padding: 5px;
+}
+.eventsDiv h2{
+	padding-left: 20px;
+	height: 22px;
+    line-height: 24px;
+	font-size: 13px;
+}
+.searchResultDiv{
+	 border: 1px solid #CCCCCC;
+	 border-radius: 5px 5px 5px 5px;
+	 margin: 10px 20px;
+}
+
+.ButtonSwitcher ul {
+    float: left;
+    list-style: none outside none;
+    margin: 3px 0 0;
+    padding: 0;
+}
+.ButtonSwitcher ul li.selected, .ButtonSwitcher ul li.selected:hover {
+    background-color: #999999;
+    box-shadow: 1px 1px 1px 0 #333333 inset;
+}
+.ButtonSwitcher ul li {
+    float: left;
+    height: 19px;
+    margin-right: 2px;
+    width: 19px;
+    border-color: #FFFFFF;
+    border-radius: 3px 3px 3px 3px;
+}
+
+.ButtonSwitcher ul li.selected .splIcon-events-list {
+    background-position: 0 -740px;
+}
+.ButtonSwitcher ul li.selected, .ButtonSwitcher ul li.selected:hover {
+    background-color: #999999;
+    box-shadow: 1px 1px 1px 0 #333333 inset;
+}
+.ButtonSwitcher ul li.selected, .ButtonSwitcher ul li.selected:hover {
+    background-color: #999999;
+    box-shadow: 1px 1px 1px 0 #333333 inset;
+}
+.splIcon-results-table {
+    background-position: -39px -780px;
+}
+.splIcon-results-chart {
+    background-position: -39px -800px;
+}
+.splIcon-events-list {
+    background-position: -39px -740px;
+}
+.ButtonSwitcher ul li a {
+    cursor: pointer;
+    display: block;
+}
+.splIcon-events-list, .splIcon-events-table, .splIcon-results-table, .splIcon-results-chart, .splIconicLinkIcon, .splButtonIcon, span.splMenuIcon {
+    background-image: url("../image/sprite_button_icons.png");
+}
+.splIcon-events-list, .splIcon-events-table, .splIcon-results-table, .splIcon-results-chart {
+    background-repeat: no-repeat;
+    height: 13px;
+    margin: 3px;
+    width: 13px;
+}
+
+#pagination {
+    text-align: right;
+    vertical-align: middle;
+}
+.page-area {
+    /*border-top: 1px solid #DFDFDF;*/
+    height: 26px;
+    padding-right: 5px;
+	padding-bottom: 5px;
+    text-align: right;
+}
+
+#pagination a.prev, #pagination a.next {
+    border: medium none;
+}
+#pagination a {
+    border: 1px solid #C5C4C4;
+    color: #448CCA;
+    text-decoration: none;
+}
+#pagination a, #pagination span {
+    display: inline-block;
+    margin: 0 2px;
+    padding: 2px 8px;
+    vertical-align: middle;
+}
+
+#pagination span.current {
+    background-color: #448CCA;
+    color: #FFFFFF;
+}
+.VisualObject{
+	min-height:100px;
+}
+
+.eventsNumOk {
+    background: url("../image/icons_sprite.png") no-repeat scroll 0 -57px transparent;
+    height: 22px;
+    line-height: 24px;
+}
+.eventsNumLoading {
+    background: url("../image/loader.gif") no-repeat;
+    height: 22px;
+    line-height: 24px;
+}
