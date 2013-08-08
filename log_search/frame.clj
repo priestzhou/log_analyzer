@@ -137,8 +137,28 @@
     )
 )
 
-(defn- delet-gVal [loglist]
-    ()
+(defn- dateformat [t]
+    (.format 
+        (java.text.SimpleDateFormat. "MM/dd/yyyy HH:mm:ss") 
+        t
+    )    
+)
+
+(defn- change-time [log]
+    (update-in log [:timestamp] dateformat)
+)
+
+(defn- getime [log]
+    (:timestamp log)
+)
+
+(defn- showlog [loglist]
+    (->>
+        loglist
+        (#(map change-time %))
+        (#(sort-by getime %))
+        (take-last 100)
+    )
 )
 
 (defn do-search [searchrules loglist]
@@ -148,7 +168,7 @@
             parseResult (filter-parse 
                     (apply-parse parseRules logFilted)
                 )
-            limitResult (take-last 100 parseResult)
+            limitResult (showlog parseResult)
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys parseResult)
             timeRule (:timeRule searchrules)
