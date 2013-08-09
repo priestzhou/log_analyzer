@@ -5,7 +5,6 @@
     (:gen-class)
 )
 
-
 (defn -main []
     (->>
         (JavaSparkContext. 
@@ -14,21 +13,19 @@
             "/home/admin/spark-0.7.3"
             "/Users/zhangjun/temp.hs"
         )
+        (#(.textFile % "/etc/hosts"))
+        (#(.count %))
         println
     )
 )
 
 (comment defn -main []
     (let [sc (k/spark-context 
-                :master "192.168.1.100:7077" :job-name "Simple Job" 
+                :master "spark://192.168.1.100:7077" :job-name "Simple Job" 
             )
-            input-rdd (.textFile sc "/Users/zhangjun/Desktop/code/fs/search/
-                log-collector.log.2013-08-06"
+            input-rdd (.textFile sc "/etc/hosts"
                 )
         ]
-        (-> input-rdd
-            (k/count)
-            println
-        )
+        (println (k/count input-rdd))            
     )   
 )
