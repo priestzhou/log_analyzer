@@ -14,7 +14,8 @@
             "/home/admin/spark-0.7.3"
             "/Users/zhangjun/temp.hs"
         )
-        println
+        (#(.textFile % "file://Users/zhangjun/temp.hs"))
+        (#(.count %))
     )
 )
 
