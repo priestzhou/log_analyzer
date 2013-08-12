@@ -30,15 +30,6 @@
     (atom [])
 )
 
-(defn- test-query [qStr log-atom query-atom]
-    (reset! 
-        query-atom
-        (str (System/currentTimeMillis) "=" qStr "=" @log-atom) 
-    )
-    (Thread/sleep 2000)
-    (recur qStr log-atom query-atom)
-)
-
 (defn- run-query [psr log-atom query-atom]
     (debug "query run " :inputlogcount (count @log-atom))
     (reset! 
@@ -85,8 +76,7 @@
     (let [ft (get-in @fMap [qid :future])]
         (swap! fMap #(dissoc % qid))
         (future-cancel ft)
-    )
-    
+    )   
 )
 
 (defn- check-query [fMap]
@@ -105,29 +95,6 @@
     )
     (Thread/sleep 5000)
     (recur fMap)
-)
-
-(defn- create-query [qStr]
-    (if  (> maxQueryCount (count (keys @futurMap)))
-        (let [query-id (gen-query-id)
-                output (atom [])
-            ] 
-            (swap! futurMap
-                #(assoc % query-id 
-                    {
-                        :future 
-                            (future 
-                                (run-query (sp/sparser qStr) logdata output)
-                            )
-                        :time (System/currentTimeMillis)
-                        :output output
-                    }
-                )
-            )
-            (str "{query-id:" query-id "}")
-        )
-        (str "the max query count is " maxQueryCount)
-    )
 )
 
 (defn- create-query-t [qStr timewindow]
@@ -174,8 +141,7 @@
     (cp/ANY "/query/get" {params :params} 
         (do
             (get-query-result (:query-id params))    
-        )        
-        
+        )       
     )
     (cp/GET "/testlog/first" []
         (get-log-example)
@@ -183,14 +149,6 @@
     (route/files "/" {:root "public"})
     (route/not-found "Not Found")
 )
-
-    (comment cp/GET "/query/create/:qStr" [qStr]
-        (create-query qStr)
-    )
-
-    (comment cp/GET "/query/getdes/:query-id" [query-id] 
-        (get-query-result query-id)
-    )
 
 (def ^:private app
     (handler/site app-routes)

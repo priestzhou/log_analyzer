@@ -4,12 +4,9 @@
     )
 )
 
-
 (defn- splitStr [sStr]
     (cs/split sStr #"\|")
 )
-
-
 
 (defn- event-func [eStr]
     #(->>
@@ -143,7 +140,6 @@
             pSeqs
         )
     )
-
 )
 
 (defn- get-group-time [timeStep timeValue]
@@ -187,4 +183,3 @@
         )
     )
 )
-

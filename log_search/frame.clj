@@ -169,9 +169,9 @@
 )
 
 (defn do-search [searchrules loglist]
-   (let [eventFilter (get searchrules :eventRules)
+   (let [eventFilter (:eventRules searchrules)
             logFilted (event-search eventFilter loglist)
-            parseRules (get searchrules :parseRules)
+            parseRules (:parseRules searchrules)
             parseResult (filter-parse 
                     (apply-parse parseRules logFilted)
                 )
@@ -180,7 +180,7 @@
             logGrouped (do-group groupKeys parseResult)
             timeRule (:timeRule searchrules)
             logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
-            statRules (get searchrules :statRules)
+            statRules (:statRules searchrules)
             statResult (do-statistic statRules logGrouped)
             limitStatResult (map #(dissoc % :gVal) statResult)
             statWithTimeResult (do-statistic statRules logGroupWithTime)
