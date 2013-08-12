@@ -14,8 +14,10 @@
             "/Users/zhangjun/temp.hs"
         )
         (#(.textFile % "/etc/hosts"))
-        (#(.count %))
-        println
+        (#(.collect %))
+        (into [] )
+        (#(map println %))
+        dorun
     )
 )
 
