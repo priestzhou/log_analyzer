@@ -15,6 +15,7 @@
 
 (def jobconf (new org.apache.hadoop.mapred.JobConf))
 
+
 (defn- count-state [stat-list]
     (let [stat-key-list (keys stat-list)
         stat-str-list         
