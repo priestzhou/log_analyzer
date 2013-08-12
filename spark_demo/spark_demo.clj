@@ -2,10 +2,14 @@
     (:import 
          spark.api.java.JavaSparkContext
     )
+    (:require 
+        [serializable.fn :as sfn]
+        [clj-spark.api :as k]
+    )    
     (:gen-class)
 )
 
-(defn -main []
+(comment defn -main []
     (->>
         (JavaSparkContext. 
             "spark://192.168.1.100:7077" 
@@ -14,20 +18,28 @@
             "/Users/zhangjun/temp.hs"
         )
         (#(.textFile % "/etc/hosts"))
+        (#(.map % 
+            (sfn/fn [log]
+                ({:message log})
+            )
+        ))
         (#(.collect %))
         (into [] )
-        (#(map println %))
-        dorun
+        println
+        ;(#(map println %))
+        ;dorun
     )
 )
 
-(comment defn -main []
+(defn -main []
     (let [sc (k/spark-context 
                 :master "spark://192.168.1.100:7077" :job-name "Simple Job" 
+                :spark-home "/home/admin/spark-0.7.3" 
+                :jars "/Users/zhangjun/temp.hs"
             )
             input-rdd (.textFile sc "/etc/hosts"
                 )
         ]
         (println (k/count input-rdd))            
-    )   
+    )
 )

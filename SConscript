@@ -65,17 +65,8 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
     env.File('$BUILD_DIR/kfktools.jar'),
     env.File('$BUILD_DIR/argparser.jar'),
     env.File('$EXTLIB/data.json-0.2.2.jar'),
-    env.File('$EXTLIB/clj-spark-0.1.0-SNAPSHOT.jar'),
     env.File('$EXTLIB/serializable-fn-0.0.3.jar'),
     env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'),
-    env.File('$EXTLIB/scala-2.9.3-library.jar'),
-    env.File('$EXTLIB/mesos-0.9.0-incubating.jar'),
-    env.File('$EXTLIB/hadoop-core-0.20.205.0.jar'),
-    env.File('$EXTLIB/concurrent-1.3.4.jar'),
-    env.File('$EXTLIB/guava-11.0.1.jar'),
-    env.File('$EXTLIB/akka-actor-2.0.3.jar'),
-    env.File('$EXTLIB/config-0.3.1.jar'),
-    env.File('$EXTLIB/akka-remote-2.0.3.jar'),
     env.File('$BUILD_DIR/logging.jar')    
     ],
     install={
@@ -108,4 +99,10 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
 env.install(env.compileAndJar('spark_demo.jar', 'spark_demo',
     libs=[env['CLOJURE'],
     env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'),
+    env.File('$BUILD_DIR/log_search.jar'),
+    env.File('$BUILD_DIR/clj_spark_rebuild.jar'),
+    ]))
+env.install(env.compileAndJar('clj_spark_rebuild.jar', 'clj_spark',
+    libs=[env['CLOJURE'],
+    env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar')
     ]))

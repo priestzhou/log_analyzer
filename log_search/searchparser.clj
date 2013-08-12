@@ -4,6 +4,7 @@
     )    
     (:require 
         [clojure.string :as cs]
+        [serializable.fn :as sfn]
     )
 )
 
@@ -14,10 +15,15 @@
 )
 
 (defn- event-func [eStr]
-    #(->>
-        (re-find (re-pattern (cs/lower-case (cs/trim eStr) )) (cs/lower-case %))
-        nil?
-        not
+    (sfn/fn [inStr]
+        (->>
+            (re-find 
+                (re-pattern (cs/lower-case (cs/trim eStr) )) 
+                (cs/lower-case inStr)
+            )
+            nil?
+            not
+        )
     )
 )
 
