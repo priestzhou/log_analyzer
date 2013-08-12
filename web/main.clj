@@ -35,9 +35,8 @@
                     "/web/d3_experiments1.html"
                 )
             )
-            (get-json)            
+            (get-json)         
         )
-        
     }
 )
 
@@ -81,3 +80,4 @@
         )
     )
 )
+

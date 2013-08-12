@@ -9,7 +9,6 @@
     <script type="text/javascript"
             src="http://docs.sencha.com/extjs/4.2.1/extjs-build/ext-all.js">
     </script>
-
     <style type="text/css">
       .box {
         background-color: skyblue;
@@ -23,7 +22,6 @@
       }
     </style>
     <style>
-
 body {
   font: 10px sans-serif;
 }
@@ -52,6 +50,7 @@ var matrix11 = [
     var width = 950,
             height = 850,
             innerRadius = Math.min(width, height) * .28,
+
             outerRadius = innerRadius * 1.1;
 
 //var color2=["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"];
@@ -155,6 +154,34 @@ var fill2 = d3.scale.ordinal()
         .append("text")
         
 */
+// Returns an event handler for fading a given chord group.
+function fade(opacity) {
+  return function(g, i) {
+    svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index != i && d.target.index != i; })
+      .transition()
+        .style("opacity", opacity);
+  };
+}
+
+//return d.source.index != i && d.target.index != i;
+
+function fadetwo(opacity) {
+  return function(g, i) {
+    svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index==i && d.target.index==i; })
+      .transition()
+        .style("opacity", opacity);
+  };
+}
+function fadethree(opacity) {
+  return function(g, i) {
+    svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index!=d.target.index;})
+      .transition()
+        .style("opacity", opacity);
+  };
+}
 
      }
        var requestConfig = {  //request data and decode
@@ -231,7 +258,6 @@ var fill2 = d3.scale.ordinal()
       }
 
       loaddata(newMatrix,uniqueList,uniListColor,listmatrix);
-      
     }
     Ext.Ajax.request(requestConfig);
     var requestConfigRenew = {  //request data and decode

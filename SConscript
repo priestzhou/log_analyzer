@@ -12,6 +12,7 @@ env.install(env.compileAndJar('log_collector.jar', 'log_collector',
 env.install(env.compileAndJar('log_analyzer_unittest.jar', 'unittest',
     libs=[env['CLOJURE'], 
         env.File('$BUILD_DIR/log_collector.jar'),
+        env.File('$BUILD_DIR/log_search.jar'),
         env.File('$EXTLIB/tools.cli-0.2.2.jar'),
         env.File('$BUILD_DIR/testing.jar')],
     standalone=True, manifest={'Main-Class': 'unittest.main'}))
@@ -55,3 +56,15 @@ env.install(env.compileAndJar('log_analyzer_hadoop_adapt.jar', 'hadoop_adapt',
     env.File('$EXTLIB/lib-for-hadoop/commons-lang-2.4.jar')
     ],
     standalone=True, manifest={'Main-Class': 'hadoop_adapt.jobtracker'}))
+env.install(env.compileAndJar('log_search.jar', 'log_search',
+    libs=[env['CLOJURE'],
+    env.File('$EXTLIB/ring-1.1.8.jar'),
+    env.File('$EXTLIB/ring-jetty-adapter-1.1.8.jar'),
+    env.File('$EXTLIB/compojure-1.1.5.jar'),
+    env.File('$BUILD_DIR/zktools.jar'),
+    env.File('$BUILD_DIR/kfktools.jar'),
+    env.File('$BUILD_DIR/argparser.jar'),
+    env.File('$EXTLIB/data.json-0.2.2.jar'),
+    env.File('$BUILD_DIR/logging.jar')    
+    ],
+    standalone=True, manifest={'Main-Class': 'log_search.webserver'}))
