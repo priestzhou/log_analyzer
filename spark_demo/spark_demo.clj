@@ -35,11 +35,20 @@
     (let [sc (k/spark-context 
                 :master "spark://192.168.1.100:7077" :job-name "Simple Job" 
                 :spark-home "/home/admin/spark-0.7.3" 
-                :jars "/Users/zhangjun/temp.hs"
-            )
+                :jars ["./clj_spark_rebuild.jar" "./spark_demo.jar"] ;
+                )
             input-rdd (.textFile sc "/etc/hosts"
                 )
         ]
-        (println (k/count input-rdd))            
+        (->
+            input-rdd
+            (k/map 
+                (sfn/fn f [log]
+                    {:message log}
+                )
+            )
+            (#(k/collect %))
+            println
+        )            
     )
 )

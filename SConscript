@@ -95,7 +95,8 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
         env.File('#front/resources/image/splIcons.gif'): '@/resources/image',
         env.File('#front/resources/image/sprite_button_icons.png'): '@/resources/image',
     },
-    standalone=True, manifest={'Main-Class': 'log_search.spark_demo'}))
+))
+
 env.install(env.compileAndJar('spark_demo.jar', 'spark_demo',
     libs=[env['CLOJURE'],
     env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'),
@@ -105,4 +106,5 @@ env.install(env.compileAndJar('spark_demo.jar', 'spark_demo',
 env.install(env.compileAndJar('clj_spark_rebuild.jar', 'clj_spark',
     libs=[env['CLOJURE'],
     env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar')
-    ]))
+    ],
+    standalone=True, manifest={'Main-Class': 'clj_spark.api'}))
