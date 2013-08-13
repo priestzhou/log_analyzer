@@ -5,6 +5,8 @@
     (:require 
         [serializable.fn :as sfn]
         [clj-spark.api :as k]
+        [spark-demo.spark-engine :as spe]
+        [log-search.searchparser :as lsp]
     )    
     (:gen-class)
 )
@@ -39,6 +41,7 @@
                 )
             input-rdd (.textFile sc "/etc/hosts"
                 )
+            testp (lsp/sparser "0|parse \"pc*\" as pcid ")
         ]
         (->
             input-rdd
@@ -47,6 +50,7 @@
                     {:message log}
                 )
             )
+            (#(spe/do-search testp %))
             (#(k/collect %))
             println
         )            
