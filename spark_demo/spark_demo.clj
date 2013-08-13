@@ -51,6 +51,12 @@
                 )
             )
             (#(spe/do-search testp %))
+            (k/map 
+                (sfn/fn f1 [log]
+                    [(get log "pcid") log]
+                )
+            )
+            k/group-by-key
             (#(k/collect %))
             println
         )            
