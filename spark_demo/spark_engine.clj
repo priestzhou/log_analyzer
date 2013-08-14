@@ -8,6 +8,14 @@
     )
 )
 
+(def <> 
+    (sfn/fn f1 [a b]
+        (
+            (not (= a b))
+        )
+    )
+)
+
 (defn- event-search [fitlers rdd]
     (k/filter rdd
         (sfn/fn f [log]
@@ -22,6 +30,23 @@
                 )
             )
         )        
+    )
+)
+
+(defn- where-filter [fitlers rdd]
+    (k/filter rdd
+        (sfn/fn f [log]
+            (reduce 
+                (sfn/fn f1 [a b]
+                    (and a b)
+                )
+                true
+                (map
+                    (sfn/fn f1 [a](a log))
+                    fitlers
+                )
+            )
+        ) 
     )
 )
 
@@ -130,14 +155,17 @@
 (defn do-search [searchrules rdd]
    (let [eventFilter (:eventRules searchrules)
             logFilted (event-search eventFilter rdd)
+            whereRules (:whereRules searchrules)
+            
             parseRules (:parseRules searchrules)
             parseResult (filter-parse 
                     (apply-parse parseRules logFilted)
                 )
 ;            limitResult (showlog parseResult)
+            whereResult (where-filter whereRules parseResult)
             timeRule (:timeRule searchrules)
             groupKeys (get searchrules :groupKeys)
-            logGrouped (do-group groupKeys parseResult timeRule)
+            logGrouped (do-group groupKeys whereResult timeRule)
 
 ;            logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
             statRules (:statRules searchrules)
@@ -146,7 +174,8 @@
 ;            statWithTimeResult (do-statistic statRules logGroupWithTime)
 ;            limitResultWithTime (showLimitResult statWithTimeResult)
         ]
-        statResult
+        (println (first whereRules))
+        whereResult
         ;{
          ;   :logtable logFilted,
 ;            :grouptable limitResultWithTime,

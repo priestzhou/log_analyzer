@@ -73,18 +73,74 @@
     (let [pStr (first sSeq)
             tailSeq (rest sSeq)
             plist (:parseRules pMap)
-            psflag (re-find #"^[\s]*parse" pStr)
-            prflag (re-find #"^[\s]*reparse" pStr)
-            ptag (re-find #"(?<=^[\s]*)[\S]+" pStr)
         ]
         (if (and 
                 (not (nil? pStr)) 
-                (or psflag prflag)
+                (or 
+                    (re-find #"^[\s]*parse" pStr) 
+                    (re-find #"^[\s]*reparse" pStr)
+                )
             )
             (build-parse 
                 tailSeq 
                 (merge pMap 
-                    {:parseRules (conj plist (parser-one pStr ptag))}
+                    {:parseRules 
+                        (conj 
+                            plist 
+                            (parser-one 
+                                pStr 
+                                (re-find #"(?<=^[\s]*)[\S]+" pStr)
+                            )
+                        )
+                    }
+                )
+            )
+            pMap
+        )
+    )
+)
+
+(def ^:private wheresym #"=|<>|>|>=|<|<=|where")
+(def ^:private wheresym2 #" = | <> | > | >= | < | <= ")
+
+(defn- where-step [pStr]
+    (let [pSeq (->> 
+                (cs/split pStr wheresym)
+                (map cs/trim)
+                (filter #(< 0 (count %)))
+                ) ;"
+            secStr (second pSeq)
+            firstStr (first pSeq)
+            tag (re-find wheresym2 pStr)
+        ]
+        (println pSeq)
+            (println secStr)
+            (println firstStr)
+            (println (read-string secStr))
+        (sfn/fn f [log]
+
+            (=
+                (get log firstStr)
+                secStr
+            )
+        )
+        
+    )
+)
+
+(defn- build-where [sSeq pMap]
+    (let [pStr (first sSeq)
+            tailSeq (rest sSeq)
+            plist (:whereRules pMap)
+        ]
+        (if (and 
+                (not (nil? pStr)) 
+                (re-find #"^[\s]*where" pStr)
+            )
+            (build-where 
+                tailSeq 
+                (merge pMap 
+                    {:whereRules (conj plist (where-step pStr ))}
                 )
             )
             pMap
@@ -96,12 +152,19 @@
     (let [sSeq (splitStr sStr)
             eStr (first sSeq)
             tailSeq (rest sSeq)
+            whereSeq (filter  #(re-find #"^[\s]*where" %) tailSeq)
         ]
         (if (empty? tailSeq)
             {:eventRules [(event-func eStr)]}
-            (build-parse  
-                tailSeq  
-                (assoc {:eventRules [(event-func eStr)]} :parseRules []) 
+            (->>
+                (build-parse  
+                    tailSeq  
+                    (assoc {:eventRules [(event-func eStr)]} :parseRules []) 
+                )
+                (#(build-where
+                    whereSeq
+                    (assoc % :whereRules [])
+                ))
             )
         )
     )
