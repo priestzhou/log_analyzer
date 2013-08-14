@@ -37,11 +37,12 @@
     (let [sc (k/spark-context 
                 :master "spark://192.168.1.100:7077" :job-name "Simple Job" 
                 :spark-home "/home/admin/spark-0.7.3" 
-                :jars ["./clj_spark_rebuild.jar" "./spark_demo.jar"] ;
+                :jars ["./clj_spark_rebuild.jar" "./spark_demo.jar"
+                    "./log_search.jar"] ;
                 )
             input-rdd (.textFile sc "/etc/hosts"
                 )
-            testp (lsp/sparser "0|parse \"pc*\" as pcid |parse \".*.\" as ip
+            testp (lsp/sparser "0|reparse \"(?<=pc)[\\S]+\" as pcid |parse \".*.\" as ip
                 |count ip by ip,pcid")
         ]
         (->

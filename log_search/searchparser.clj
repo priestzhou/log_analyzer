@@ -27,28 +27,41 @@
     )
 )
 
-(defn- parser-one [pStr]
-    (let [pSeq (cs/split pStr #"\"" ) ;")
+(def ^:private parser-fun-map
+    {
+        "parse" 
+        (sfn/fn f [secStr]
+            (str 
+                "(?<="
+                (cs/replace 
+                    secStr 
+                    #"\*"
+                    ")[\\\\S]*(?="    
+                )
+                ")"
+            )
+        )
+        "reparse"
+        identity
+    }
+)
+
+(defn- parser-one [pStr ptag]
+    (let [pSeq (cs/split pStr #"\"" ) ;"
             secStr (second pSeq)
             secSeq (cs/split secStr #"\*")
             lastStr (last pSeq)
             tKey (re-find #"(?<= as )[\S]+" lastStr)
         ]
+        (println ptag)
+        (println ((get parser-fun-map ptag) secStr))
         {   
             :key
             tKey
             :parser 
             #(re-find 
                 (re-pattern 
-                    (str 
-                        "(?<="
-                        (cs/replace 
-                            secStr 
-                            #"\*"
-                            ")[\\\\S]*(?="    
-                        )
-                        ")"
-                    )
+                    ((get parser-fun-map ptag) secStr)
                 ) 
                 %
             )
@@ -60,12 +73,18 @@
     (let [pStr (first sSeq)
             tailSeq (rest sSeq)
             plist (:parseRules pMap)
+            psflag (re-find #"^[\s]*parse" pStr)
+            prflag (re-find #"^[\s]*reparse" pStr)
+            ptag (re-find #"(?<=^[\s]*)[\S]+" pStr)
         ]
-        (if (and (not (nil? pStr)) (re-find #"^[\s]*parse" pStr))
+        (if (and 
+                (not (nil? pStr)) 
+                (or psflag prflag)
+            )
             (build-parse 
                 tailSeq 
                 (merge pMap 
-                    {:parseRules (conj plist (parser-one pStr))}
+                    {:parseRules (conj plist (parser-one pStr ptag))}
                 )
             )
             pMap
