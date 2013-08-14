@@ -93,6 +93,40 @@
     )
 )
 
+(defn- static-fun [stRule log]
+    (let [logVal (second log)
+            inKey (:statInKey stRule)
+            statFun (:statFun stRule)
+        ]
+        (->>
+            logVal
+            (map 
+                (sfn/fn f [log](get log inKey) )
+            )
+            statFun
+        )
+    )
+)
+
+(defn- do-statistic [statRules rdd]
+    (if (nil? statRules)
+        rdd
+        (k/map rdd
+            (sfn/fn fs [log]
+                [(reduce
+                    (sfn/fn f [a b]
+                        (assoc a 
+                        (:statOutKey b)
+                        (static-fun b log))
+                    )
+                    (first log)
+                    statRules
+                ) (second log)]
+            )
+        )
+    )
+)
+
 (defn do-search [searchrules rdd]
    (let [eventFilter (:eventRules searchrules)
             logFilted (event-search eventFilter rdd)
@@ -106,13 +140,13 @@
             logGrouped (do-group groupKeys parseResult timeRule)
 
 ;            logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
-;            statRules (:statRules searchrules)
-;            statResult (do-statistic statRules logGrouped)
+            statRules (:statRules searchrules)
+            statResult (do-statistic statRules logGrouped)
 ;            limitStatResult (map #(dissoc % :gVal) statResult)
 ;            statWithTimeResult (do-statistic statRules logGroupWithTime)
 ;            limitResultWithTime (showLimitResult statWithTimeResult)
         ]
-        logGrouped
+        statResult
         ;{
          ;   :logtable logFilted,
 ;            :grouptable limitResultWithTime,
