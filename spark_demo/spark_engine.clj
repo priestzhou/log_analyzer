@@ -57,6 +57,42 @@
 ;    )
 )
 
+(defn- get-key-func [groupKeys timeRule]
+    (let [startmap (if (nil? timeRule)
+                (sfn/fn ft1 [log] {})
+                (sfn/fn ft2 [log]
+                    {:groupTime
+                        ((:tf timeRule)
+                            (:timestamp log)
+                        )
+                    }
+                )
+            )
+        ]
+        (sfn/fn gk [log]
+            (reduce
+                #(assoc %1 %2 (get log %2))
+                (startmap log)                
+                groupKeys
+            )
+        )
+    )
+)
+
+(defn- do-group [groupKeys rdd timeRule]
+    (let [keyFunc (get-key-func groupKeys timeRule)]
+        
+        (-> rdd
+            (k/map  
+                (sfn/fn gen-key [log]
+                    [(keyFunc log) log]
+                )
+            )
+            (k/group-by-key)
+        )
+    )
+)
+
 (defn do-search [searchrules rdd]
    (let [eventFilter (:eventRules searchrules)
             logFilted (event-search eventFilter rdd)
@@ -65,9 +101,10 @@
                     (apply-parse parseRules logFilted)
                 )
 ;            limitResult (showlog parseResult)
-;            groupKeys (get searchrules :groupKeys)
-;            logGrouped (do-group groupKeys parseResult)
-;            timeRule (:timeRule searchrules)
+            timeRule (:timeRule searchrules)
+            groupKeys (get searchrules :groupKeys)
+            logGrouped (do-group groupKeys parseResult timeRule)
+
 ;            logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
 ;            statRules (:statRules searchrules)
 ;            statResult (do-statistic statRules logGrouped)
@@ -75,7 +112,7 @@
 ;            statWithTimeResult (do-statistic statRules logGroupWithTime)
 ;            limitResultWithTime (showLimitResult statWithTimeResult)
         ]
-        parseResult
+        logGrouped
         ;{
          ;   :logtable logFilted,
 ;            :grouptable limitResultWithTime,
