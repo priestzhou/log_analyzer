@@ -152,12 +152,45 @@
     (:timestamp log)
 )
 
+(defn- get-header [logkeys]
+    (let [userkeys (filter string? logkeys)
+            syskeys (filter keyword? logkeys)
+            usedkeys (remove #(or (= % :message) (= % :timestamp) ) syskeys)
+        ]
+        (concat 
+            [:timestamp]
+            usedkeys
+            userkeys
+            [:message]
+        )
+    )
+)
+
 (defn- showlog [loglist]
-    (->>
-        loglist
-        (#(map change-time %))
-        (#(sort-by getime %))
-        (take-last 100)
+    (let [limitLog (->>
+                loglist
+                (#(map change-time %))
+                (#(sort-by getime %))
+                (take-last 100)
+                reverse
+            )
+            logkeys (keys (first limitLog))
+            header (get-header logkeys)
+        ]
+        
+        {:header 
+            logkeys
+            :data 
+            (map 
+                (fn [log]
+                    (map
+                        #(get log %)
+                        header
+                    )
+                )
+                limitLog
+            )
+        }
     )
 )
 
@@ -189,7 +222,7 @@
         {
             :logtable limitResult,
             :grouptable limitResultWithTime,
-            :groupall limitStatResult
+            :meta limitStatResult
         }
     )
 )
