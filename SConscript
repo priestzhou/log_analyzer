@@ -67,4 +67,31 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
     env.File('$EXTLIB/data.json-0.2.2.jar'),
     env.File('$BUILD_DIR/logging.jar')    
     ],
+    install={
+        env.File('$BUILD_DIR/front/log_monitor.js'): '@/resources/js',
+        env.File('$EXTLIB/highcharts.js'): '@/resources/js',
+        env.File('$EXTLIB/jquery-1.10.2.min.js'): '@/resources/js',
+        env.File('#front/log_monitor/helper.js'): '@/resources/js',
+        env.File('#front/resources/js/jquery-ui.js'): '@/resources/js',
+        env.File('#front/resources/js/jquery.loadmask.min.js'): '@/resources/js',
+        env.File('#front/resources/js/bootstrap.min.js'): '@/resources/js',
+        env.File('#front/resources/js/jquery.pagination.js'): '@/resources/js',
+
+        env.File('#front/log_monitor/index.html'): '@/resources/',
+
+        env.File('#front/resources/css/bootstrap.css'): '@/resources/css',
+        env.File('#front/resources/css/index.css'): '@/resources/css',
+        env.File('#front/resources/css/jquery-ui.css'): '@/resources/css',
+        env.File('#front/resources/css/jquery.loadmask.css'): '@/resources/css',
+
+        env.File('#front/resources/image/bar.png'): '@/resources/image',
+        env.File('#front/resources/image/go_btn.png'): '@/resources/image',
+        env.File('#front/resources/image/icons_sprite.png'): '@/resources/image',
+        env.File('#front/resources/image/loader.gif'): '@/resources/image',
+        env.File('#front/resources/image/logo.png'): '@/resources/image',
+        env.File('#front/resources/image/search_bar.png'): '@/resources/image',
+        env.File('#front/resources/image/shadow_soft.png'): '@/resources/image',
+        env.File('#front/resources/image/splIcons.gif'): '@/resources/image',
+        env.File('#front/resources/image/sprite_button_icons.png'): '@/resources/image',
+    },
     standalone=True, manifest={'Main-Class': 'log_search.webserver'}))

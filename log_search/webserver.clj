@@ -132,13 +132,13 @@
     (cp/GET "/test" {params :params} 
         (format "You requested with query %s" params)
     )
-    (cp/ANY "/query/create" {params :params}
+    (cp/POST "/query/create" {params :params}
         (do
             (debug "get a query create post" (:querystring params))
             (create-query-t (:querystring params ) (:timewindow params))
         )
     )
-    (cp/ANY "/query/get" {params :params} 
+    (cp/GET "/query/get" {params :params} 
         (do
             (get-query-result (:query-id params))    
         )       
