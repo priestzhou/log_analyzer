@@ -20,7 +20,7 @@
 )
 
 (defn- parser-one [pStr]
-    (let [pSeq (cs/split pStr #"\"" ) ;"
+    (let [pSeq (cs/split pStr #"\"" ) ;")
             secStr (second pSeq)
             secSeq (cs/split secStr #"\*")
             lastStr (last pSeq)
