@@ -8,14 +8,6 @@
     )
 )
 
-(def <> 
-    (sfn/fn f1 [a b]
-        (
-            (not (= a b))
-        )
-    )
-)
-
 (defn- event-search [fitlers rdd]
     (k/filter rdd
         (sfn/fn f [log]
@@ -175,7 +167,7 @@
 ;            limitResultWithTime (showLimitResult statWithTimeResult)
         ]
         (println (first whereRules))
-        whereResult
+        statResult
         ;{
          ;   :logtable logFilted,
 ;            :grouptable limitResultWithTime,

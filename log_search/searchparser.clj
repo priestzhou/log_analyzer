@@ -291,4 +291,12 @@
             (assoc psr :timeRule timeRule)
         )
     )
+   ([sStr timeWindow startTime]
+        (let [psr (sparser sStr)
+                timeRule (get timeMap timeWindow)
+                
+            ]
+            (assoc psr :timeRule timeRule)
+        )
+    )
 )

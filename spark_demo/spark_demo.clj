@@ -43,7 +43,7 @@
             input-rdd (.textFile sc "/etc/hosts"
                 )
             testp (lsp/sparser "0|reparse \"(?<=pc)[\\S]+\" as pcid |parse \".*.\" as ip
-                |where pcid = 00|count ip by ip,pcid")
+                |reparse \"[0-9]+\" as num |sum num by pcid")
         ]
         (->
             input-rdd
