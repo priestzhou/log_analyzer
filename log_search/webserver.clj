@@ -67,7 +67,15 @@
             (comment debug "the query output is" 
                 @(get-in @futurMap [query-id :output]) 
             )
-            (js/write-str @(get-in @futurMap [query-id :output]) )
+            {:status 202
+                :headers {
+                    "Access-Control-Allow-Origin" "*"
+                    "content-type" "application/json"
+                }
+                :body 
+                (js/write-str @(get-in @futurMap [query-id :output]) )
+            }
+            
         )
     )
 )
@@ -136,8 +144,15 @@
     )
     (cp/POST "/query/create" {params :params}
         (do
-            (debug "get a query create post" (:querystring params))
-            (create-query-t (:querystring params ) (:timewindow params))
+            (debug "get a query create post" (:query params))
+            {:status 202
+                :headers {
+                    "Access-Control-Allow-Origin" "*"
+                    "content-type" "application/json"
+                }
+                :body (create-query-t (:query params ) (:timewindow params))
+            }
+            
         )
     )
     (cp/GET "/query/get" {params :params} 
