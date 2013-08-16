@@ -64,7 +64,7 @@
                     (fn [a] (System/currentTimeMillis))
                 )
             )
-            (debug "the query output is" 
+            (comment debug "the query output is" 
                 @(get-in @futurMap [query-id :output]) 
             )
             (js/write-str @(get-in @futurMap [query-id :output]) )
@@ -98,10 +98,12 @@
 )
 
 (defn- create-query-t [qStr timewindow]
+    (debug "create-query-t " :string qStr  :timewindow timewindow)
     (if  (> maxQueryCount (count (keys @futurMap)))
         (let [query-id (gen-query-id)
                 output (atom [])
-            ] 
+            ]
+            (debug "create-query-t into let")
             (swap! futurMap
                 #(assoc % query-id 
                     {

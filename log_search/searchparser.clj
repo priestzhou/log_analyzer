@@ -162,12 +162,14 @@
 
 (defn sparser 
     ([sStr]
+        (println "sparser sStr" sStr)
         (let [log-parser (log-table-parser sStr)
                 sSeq (splitStr sStr)
                 lastStr (last sSeq)
                 gKeys (get-groupkey lastStr)
                 statRules (parse-static lastStr)
             ]
+            (println "the log-parser" log-parser)
             (if (empty? gKeys)
                 log-parser  
                 (assoc log-parser :groupKeys gKeys :statRules statRules
@@ -175,9 +177,20 @@
             )
         )
     )
-   ([sStr timeWindow]
+    ([sStr timeWindow]
+        (println "str timeWindow in sparser" sStr timeWindow)
         (let [psr (sparser sStr)
-                timeRule (get timeMap timeWindow)
+                endTime (System/currentTimeMillis)
+                timeRule (get timeMap timeWindow) 
+                startTime (- endTime (:tw timeRule))
+            ]
+            (println "sparser s t let in")
+            (assoc psr :timeRule (assoc timeRule :startTime startTime))
+        )
+    )
+   ([sStr timeWindow startTime]
+        (let [psr (sparser sStr)
+                timeRule (assoc (get timeMap timeWindow) :startTime startTime)
             ]
             (assoc psr :timeRule timeRule)
         )

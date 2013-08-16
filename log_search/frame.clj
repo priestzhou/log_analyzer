@@ -1,5 +1,10 @@
 (ns log-search.frame
+    (:use
+        [logging.core :only [defloggers]]
+    )
 )
+
+(defloggers debug info warn error)
 
 (defn- get-message [log]
     (get log :message)
@@ -167,6 +172,7 @@
 )
 
 (defn- showlog [loglist]
+    (println "into showlog" :firstlog (first loglist))
     (let [limitLog (->>
                 loglist
                 (#(map change-time %))
@@ -177,12 +183,13 @@
             logkeys (keys (first limitLog))
             header (get-header logkeys)
         ]
-        
+        (println "into showlog let" :header header)
         {:header 
-            logkeys
+            header
             :data 
             (map 
                 (fn [log]
+                    (println "log in map" log)
                     (map
                         #(get log %)
                         header
@@ -194,20 +201,73 @@
     )
 )
 
-(defn- showLimitResult [loglist]
-    (let [ll (map #(dissoc % :gVal) loglist)
+(defn- get-event-item [t i v loglist]
+    (println "tiv" t i v)
+    (let [filterlist (filter
+                #(and 
+                    (= t (get-in % [:gKeys :groupTime]))
+                    (= v (dissoc (:gKeys %) :groupTime))
+                )
+                loglist
+            )
         ]
-        (sort-by #(get-in % [:gKeys :groupTime]) ll)
+        (comment println "filterlist" filterlist) 
+        (if (empty? filterlist)
+            nil
+            (assoc 
+                (dissoc (first filterlist) :gKeys :gVal)
+                :gId i
+            )
+        )
+    )
+)
+
+(defn- showLimitResult [loglist timeRule metaData]
+    (println "metaData" metaData)
+    (println "timeRule" timeRule)
+    (let [ll (map #(dissoc % :gVal) loglist)
+            sortlist (sort-by #(get-in % [:gKeys :groupTime]) ll)
+            timelist1 (iterate #(+ 5000 %) (:startTime timeRule))
+            step (/ (:tw timeRule) 5000)
+            timelist (take 
+                step
+                timelist1
+            )
+            gTimeList (distinct (map (:tf timeRule) timelist))
+            metaValue (map #(:gKeys %) metaData)
+        ]
+        (comment println "gTimeList" gTimeList)
+        (comment println "metaValue" metaValue)
+        (map 
+            (fn [t]
+                (println "t=" t)
+                {:timestamp t,
+                    :event
+                    (remove
+                        nil?
+                        (map-indexed
+                            (fn [i k]
+                                (println "i & k =" i "&" k)
+                                (get-event-item t i k loglist)
+                            )
+                            metaValue
+                        )                        
+                    )
+                }
+            )
+            gTimeList
+        )
     )
 )
 
 (defn do-search [searchrules loglist]
-   (let [eventFilter (:eventRules searchrules)
+    (println "go indo do-search")
+    (let [eventFilter (:eventRules searchrules)
             logFilted (event-search eventFilter loglist)
             parseRules (:parseRules searchrules)
             parseResult (filter-parse 
-                    (apply-parse parseRules logFilted)
-                )
+                (apply-parse parseRules logFilted)
+            )
             limitResult (showlog parseResult)
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys parseResult)
@@ -217,8 +277,15 @@
             statResult (do-statistic statRules logGrouped)
             limitStatResult (map #(dissoc % :gVal) statResult)
             statWithTimeResult (do-statistic statRules logGroupWithTime)
-            limitResultWithTime (showLimitResult statWithTimeResult)
+            limitResultWithTime (showLimitResult 
+                statWithTimeResult 
+                timeRule 
+                limitStatResult
+            )
         ]
+        (println "limitResult" limitResult)
+        (println "meta" limitStatResult)
+        (println "limitResultWithTime" limitResultWithTime)
         {
             :logtable limitResult,
             :grouptable limitResultWithTime,
