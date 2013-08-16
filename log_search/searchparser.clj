@@ -147,7 +147,7 @@
             groupTime (- timeValue modTime)
         ]
         (.format 
-            (java.text.SimpleDateFormat. "MM/dd/yyyy HH:mm:ss") 
+            (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") 
             groupTime
         )
     )

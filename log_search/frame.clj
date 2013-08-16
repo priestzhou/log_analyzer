@@ -144,7 +144,7 @@
 
 (defn- dateformat [t]
     (.format 
-        (java.text.SimpleDateFormat. "MM/dd/yyyy HH:mm:ss") 
+        (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") 
         t
     )    
 )
@@ -222,18 +222,11 @@
     )
 )
 
-(defn- showLimitResult [loglist timeRule metaData]
+(defn- showLimitResult [loglist timeRule metaData gTimeList]
     (println "metaData" metaData)
     (println "timeRule" timeRule)
     (let [ll (map #(dissoc % :gVal) loglist)
             sortlist (sort-by #(get-in % [:gKeys :groupTime]) ll)
-            timelist1 (iterate #(+ 5000 %) (:startTime timeRule))
-            step (/ (:tw timeRule) 5000)
-            timelist (take 
-                step
-                timelist1
-            )
-            gTimeList (distinct (map (:tf timeRule) timelist))
             metaValue (map #(:gKeys %) metaData)
         ]
         (comment println "gTimeList" gTimeList)
@@ -242,7 +235,7 @@
             (fn [t]
                 (println "t=" t)
                 {:timestamp t,
-                    :event
+                    :events
                     (remove
                         nil?
                         (map-indexed
@@ -260,6 +253,36 @@
     )
 )
 
+(defn- get-time-list [timeRule]
+    (let [timelist1 (iterate #(+ 5000 %) (:startTime timeRule))
+            step (/ (:tw timeRule) 5000)
+            timelist (take 
+                step
+                timelist1
+            )
+            gTimeList (distinct (map (:tf timeRule) timelist))
+        ]
+        gTimeList
+    )
+    
+)
+
+(defn- get-matchart [gTimeList loglist timeRule]
+    (let [tf (:tf timeRule)
+            ll (map #(tf (:timestamp %)) loglist)
+        ]
+        {
+            :time-series 
+            gTimeList
+            :search-count 
+            (map  
+                #(count (filter (partial = %) ll))
+                gTimeList
+            )
+        }
+    )
+)
+
 (defn do-search [searchrules loglist]
     (println "go indo do-search")
     (let [eventFilter (:eventRules searchrules)
@@ -272,6 +295,8 @@
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys parseResult)
             timeRule (:timeRule searchrules)
+            gTimeList (get-time-list timeRule)
+            matchchart (get-matchart gTimeList parseResult timeRule)
             logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
             statRules (:statRules searchrules)
             statResult (do-statistic statRules logGrouped)
@@ -281,12 +306,14 @@
                 statWithTimeResult 
                 timeRule 
                 limitStatResult
+                gTimeList
             )
         ]
-        (println "limitResult" limitResult)
-        (println "meta" limitStatResult)
-        (println "limitResultWithTime" limitResultWithTime)
+        (comment println "limitResult" limitResult)
+        (comment println "meta" limitStatResult)
+        (comment println "limitResultWithTime" limitResultWithTime)
         {
+            :matchchart matchchart
             :logtable limitResult,
             :grouptable limitResultWithTime,
             :meta limitStatResult
