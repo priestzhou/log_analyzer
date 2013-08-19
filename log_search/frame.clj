@@ -1,10 +1,5 @@
 (ns log-search.frame
-    (:use
-        [logging.core :only [defloggers]]
-    )
 )
-
-(defloggers debug info warn error)
 
 (defn- get-message [log]
     (get log :message)
@@ -177,9 +172,6 @@
 )
 
 (defn- showlog [loglist]
-    (println " start showlog ")
-    (comment debug "into showlog" :firstlog (first loglist))
-    (println "end showlog ")
     (let [limitLog (->>
                 loglist
                 (#(map change-time %))
@@ -190,9 +182,6 @@
             logkeys (keys (first limitLog))
             header (get-header logkeys)
         ]
-        (println "start let")
-        (comment debug "into showlog let" :header header)
-        (println "stop let")
         {:header 
             header
             :data 
@@ -211,9 +200,6 @@
 )
 
 (defn- get-event-item [t i v loglist]
-    (println "start tiv")
-    (comment debug "t i v is " t i v)
-    (println "end tiv" )
     (let [filterlist (filter
                 #(and 
                     (= t (get-in % [:gKeys :groupTime]))
@@ -233,9 +219,6 @@
 )
 
 (defn- showLimitResult [loglist timeRule metaData gTimeList]
-    (println "start metadata")
-    (debug "metaData" :metaData metaData)
-    (println "end metadata")
     (let [ll (map #(dissoc % :gVal) loglist)
             sortlist (sort-by #(get-in % [:gKeys :groupTime]) ll)
             metaValue (map #(:gKeys %) metaData)
@@ -291,10 +274,7 @@
 )
 
 (defn do-search [searchrules loglist]
-    (println "start go indo do-search")
-    (debug "go indo do-search")
-    (let [eventFilter (:eventRules searchrules)
-            
+    (let [eventFilter (:eventRules searchrules)            
             timeRule (:timeRule searchrules)
             startTime (eval (:startTime timeRule))
             endTime (+ startTime (:tw timeRule))
