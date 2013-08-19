@@ -187,7 +187,6 @@
             :data 
             (map 
                 (fn [log]
-                    (println "log in map" log)
                     (map
                         #(get log %)
                         header
