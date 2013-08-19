@@ -5,15 +5,21 @@
     (get log :message)
 )
 
-(defn- event-search [fitlers loglist]
+(defn- event-search [fitlers loglist startTime endTime]
     (filter  
         (fn [log]
-            (reduce 
-                #(and %1 %2)
-                true
-                (map
-                    #(% (get-message log))
-                    fitlers
+            (and (reduce 
+                    #(and %1 %2)
+                    true
+                    (map
+                        #(% (get-message log))
+                        fitlers
+                    )
+                )
+                (<
+                    startTime
+                    (:timestamp log)
+                    endTime
                 )
             )
         )
@@ -28,7 +34,6 @@
         {pkey (tparser log)}
     )
 )
-
 
 (defn- apply-parse [parseRules loglist]
     (map
@@ -139,7 +144,7 @@
 
 (defn- dateformat [t]
     (.format 
-        (java.text.SimpleDateFormat. "MM/dd/yyyy HH:mm:ss") 
+        (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") 
         t
     )    
 )
@@ -152,44 +157,153 @@
     (:timestamp log)
 )
 
-(defn- showlog [loglist]
-    (->>
-        loglist
-        (#(map change-time %))
-        (#(sort-by getime %))
-        (take-last 100)
+(defn- get-header [logkeys]
+    (let [userkeys (filter string? logkeys)
+            syskeys (filter keyword? logkeys)
+            usedkeys (remove #{:message :timestamp} syskeys)
+        ]
+        (concat 
+            [:timestamp]
+            usedkeys
+            userkeys
+            [:message]
+        )
     )
 )
 
-(defn- showLimitResult [loglist]
-    (let [ll (map #(dissoc % :gVal) loglist)
+(defn- showlog [loglist]
+    (let [limitLog (->>
+                loglist
+                (map change-time )
+                (sort-by getime )
+                (take-last 100)
+                reverse
+            )
+            logkeys (keys (first limitLog))
+            header (get-header logkeys)
         ]
-        (sort-by #(get-in % [:gKeys :groupTime]) ll)
+        {:header 
+            header
+            :data 
+            (map 
+                (fn [log]
+                    (map
+                        #(get log %)
+                        header
+                    )
+                )
+                limitLog
+            )
+        }
+    )
+)
+
+(defn- get-event-item [t i v loglist]
+    (let [filterlist (filter
+                #(and 
+                    (= t (get-in % [:gKeys :groupTime]))
+                    (= v (dissoc (:gKeys %) :groupTime))
+                )
+                loglist
+            )
+        ]
+        (if (empty? filterlist)
+            nil
+            (assoc 
+                (dissoc (first filterlist) :gKeys :gVal)
+                :gId i
+            )
+        )
+    )
+)
+
+(defn- showLimitResult [loglist timeRule metaData gTimeList]
+    (let [ll (map #(dissoc % :gVal) loglist)
+            sortlist (sort-by #(get-in % [:gKeys :groupTime]) ll)
+            metaValue (map #(:gKeys %) metaData)
+        ]
+        (map 
+            (fn [t]
+                {:timestamp t,
+                    :events
+                    (remove
+                        nil?
+                        (map-indexed
+                            (fn [i k]
+                                (get-event-item t i k loglist)
+                            )
+                            metaValue
+                        )                        
+                    )
+                }
+            )
+            gTimeList
+        )
+    )
+)
+
+(defn- get-time-list [timeRule startTime]
+    (let [timelist1 (iterate #(+ 5000 %) startTime)
+            step (/ (:tw timeRule) 5000)
+            timelist (take 
+                step
+                timelist1
+            )
+            gTimeList (distinct (map (:tf timeRule) timelist))
+        ]
+        gTimeList
+    )
+    
+)
+
+(defn- get-matchart [gTimeList loglist timeRule]
+    (let [tf (:tf timeRule)
+            ll (map #(tf (:timestamp %)) loglist)
+        ]
+        {
+            :time-series 
+            gTimeList
+            :search-count 
+            (map  
+                #(count (filter (partial = %) ll))
+                gTimeList
+            )
+        }
     )
 )
 
 (defn do-search [searchrules loglist]
-   (let [eventFilter (:eventRules searchrules)
-            logFilted (event-search eventFilter loglist)
+    (let [eventFilter (:eventRules searchrules)            
+            timeRule (:timeRule searchrules)
+            startTime (eval (:startTime timeRule))
+            endTime (+ startTime (:tw timeRule))
+            logFilted (event-search eventFilter loglist startTime endTime)
             parseRules (:parseRules searchrules)
             parseResult (filter-parse 
-                    (apply-parse parseRules logFilted)
-                )
+                (apply-parse parseRules logFilted)
+            )
             limitResult (showlog parseResult)
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys parseResult)
-            timeRule (:timeRule searchrules)
+            gTimeList (get-time-list timeRule startTime)
+            matchchart (get-matchart gTimeList parseResult timeRule)
             logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
             statRules (:statRules searchrules)
             statResult (do-statistic statRules logGrouped)
             limitStatResult (map #(dissoc % :gVal) statResult)
             statWithTimeResult (do-statistic statRules logGroupWithTime)
-            limitResultWithTime (showLimitResult statWithTimeResult)
+            limitResultWithTime (showLimitResult 
+                statWithTimeResult 
+                timeRule 
+                limitStatResult
+                gTimeList
+            )
         ]
         {
+            :matchchart matchchart
             :logtable limitResult,
             :grouptable limitResultWithTime,
-            :groupall limitStatResult
+            :meta limitStatResult
         }
     )
 )

@@ -31,7 +31,7 @@
 )
 
 (defn- run-query [psr log-atom query-atom]
-    (debug "query run " :inputlogcount (count @log-atom))
+    (info "query run " :inputlogcount (count @log-atom))
     (reset! 
         query-atom
         (assoc (fr/do-search psr @log-atom) 
@@ -39,7 +39,7 @@
         )
     )
     (Thread/sleep 5000)
-    (debug " next query running")
+    (info " next query running")
     (recur psr log-atom query-atom)
 )
 
@@ -64,10 +64,15 @@
                     (fn [a] (System/currentTimeMillis))
                 )
             )
-            (debug "the query output is" 
-                @(get-in @futurMap [query-id :output]) 
-            )
-            (js/write-str @(get-in @futurMap [query-id :output]) )
+            {:status 202
+                :headers {
+                    "Access-Control-Allow-Origin" "*"
+                    "content-type" "application/json"
+                }
+                :body 
+                (js/write-str @(get-in @futurMap [query-id :output]) )
+            }
+            
         )
     )
 )
@@ -98,10 +103,12 @@
 )
 
 (defn- create-query-t [qStr timewindow]
+    (debug "create-query-t " :string qStr  :timewindow timewindow)
     (if  (> maxQueryCount (count (keys @futurMap)))
         (let [query-id (gen-query-id)
                 output (atom [])
-            ] 
+            ]
+            (debug "create-query-t into let")
             (swap! futurMap
                 #(assoc % query-id 
                     {
@@ -134,8 +141,15 @@
     )
     (cp/POST "/query/create" {params :params}
         (do
-            (debug "get a query create post" (:querystring params))
-            (create-query-t (:querystring params ) (:timewindow params))
+            (debug "get a query create post" (:query params))
+            {:status 202
+                :headers {
+                    "Access-Control-Allow-Origin" "*"
+                    "content-type" "application/json"
+                }
+                :body (create-query-t (:query params ) (:timewindow params))
+            }
+            
         )
     )
     (cp/GET "/query/get" {params :params} 
