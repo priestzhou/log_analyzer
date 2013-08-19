@@ -1,8 +1,13 @@
 (ns log-search.searchparser
+    (:use
+        [logging.core :only [defloggers]]
+    )    
     (:require 
         [clojure.string :as cs]
     )
 )
+
+(defloggers debug info warn error)
 
 (defn- splitStr [sStr]
     (cs/split sStr #"\|")
@@ -162,14 +167,14 @@
 
 (defn sparser 
     ([sStr]
-        (println "sparser sStr" sStr)
+        (debug "sparser sStr" sStr)
         (let [log-parser (log-table-parser sStr)
                 sSeq (splitStr sStr)
                 lastStr (last sSeq)
                 gKeys (get-groupkey lastStr)
                 statRules (parse-static lastStr)
             ]
-            (println "the log-parser" log-parser)
+            (debug "the log-parser" log-parser)
             (if (empty? gKeys)
                 log-parser  
                 (assoc log-parser :groupKeys gKeys :statRules statRules
@@ -178,13 +183,16 @@
         )
     )
     ([sStr timeWindow]
-        (println "str timeWindow in sparser" sStr timeWindow)
+        (debug "str timeWindow in sparser" sStr timeWindow)
         (let [psr (sparser sStr)
-                endTime (System/currentTimeMillis)
-                timeRule (get timeMap timeWindow) 
-                startTime (- endTime (:tw timeRule))
+                timeRule (get timeMap timeWindow)
+                tw (:tw timeRule)
+                startTime `(- 
+                        (System/currentTimeMillis)
+                        ~(eval tw)
+                    )
             ]
-            (println "sparser s t let in")
+            (debug "sparser s t let in")
             (assoc psr :timeRule (assoc timeRule :startTime startTime))
         )
     )
