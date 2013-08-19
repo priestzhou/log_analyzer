@@ -64,9 +64,6 @@
                     (fn [a] (System/currentTimeMillis))
                 )
             )
-            (comment debug "the query output is" 
-                @(get-in @futurMap [query-id :output]) 
-            )
             {:status 202
                 :headers {
                     "Access-Control-Allow-Origin" "*"

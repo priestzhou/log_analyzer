@@ -160,7 +160,7 @@
 (defn- get-header [logkeys]
     (let [userkeys (filter string? logkeys)
             syskeys (filter keyword? logkeys)
-            usedkeys (remove #(or (= % :message) (= % :timestamp) ) syskeys)
+            usedkeys (remove #{:message :timestamp} syskeys)
         ]
         (concat 
             [:timestamp]
@@ -174,8 +174,8 @@
 (defn- showlog [loglist]
     (let [limitLog (->>
                 loglist
-                (#(map change-time %))
-                (#(sort-by getime %))
+                (map change-time )
+                (sort-by getime )
                 (take-last 100)
                 reverse
             )
