@@ -52,109 +52,46 @@
 
 )
 
-(defn- parse-event-nostar [stream]
-    (let [[strm parsed] (
-                parse-event-str
-                stream
-            )
-            efunc  (sfn/fn [inStr]
-                (->>
-                    (re-find 
-                        (re-pattern (cs/lower-case (str " " parsed " ") )) 
-                        (cs/lower-case inStr)
-                    )
-                    nil?
-                    not
-                )
-            )
+(defn- star-parser [stream]
+    (let [[strm parsed]
+            ((ups/expect-char \*) stream)
         ]
-        [strm {:eventRules [efunc]}]
-    )
-)
 
-(defn- parse-event-leftstar [stream]
-    (let [[strm parsed] (
-                (ups/chain
-                    (ups/expect-char \*)
-                    parse-event-str
-                )
-                stream
-            )
-            efunc  (sfn/fn [inStr]
-                (->>
-                    (re-find 
-                        (re-pattern (cs/lower-case (str (last parsed) " ") )) 
-                        (cs/lower-case inStr)
-                    )
-                    nil?
-                    not
-                )
-            )
-        ]
-        [strm {:eventRules [efunc]}]
-    )
-)
-
-(defn- parse-event-rightstar [stream]
-    (let [[strm parsed] (
-                (ups/chain
-                    parse-event-str
-                    (ups/expect-char \*)
-                )
-                stream
-            )
-            efunc  (sfn/fn [inStr]
-                (->>
-                    (re-find 
-                        (re-pattern (cs/lower-case (str " " (first parsed) ) )) 
-                        (cs/lower-case inStr)
-                    )
-                    nil?
-                    not
-                )
-            )
-        ]
-        [strm {:eventRules [efunc]}]
-    )
-)
-
-(defn- parse-event-bothstar [stream]
-    (let [[strm parsed] (
-                (ups/chain
-                    (ups/expect-char \*)
-                    parse-event-str
-                    (ups/expect-char \*)
-                )
-                stream
-            )
-            efunc  (sfn/fn [inStr]
-                (->>
-                    (re-find 
-                        (re-pattern (cs/lower-case  (nth parsed 1)  )) 
-                        (cs/lower-case inStr)
-                    )
-                    nil?
-                    not
-                )
-            )
-        ]
-        [strm {:eventRules [efunc]}]
+        [strm :star]
     )
 )
 
 (defn- parse-event [stream]
-    (let [[strm rst]
-    ((ups/choice
-            parse-event-bothstar
-            parse-event-rightstar
-            parse-event-leftstar
-            parse-event-nostar            
-        )
-        stream
-        )]
-        [strm  rst]
-    )   
-        
+    (let [[strm parsed] (
+                (ups/chain
+                    (ups/optional star-parser )
+                    parse-event-str
+                    (ups/optional star-parser )
+                )
+                stream
+            )
+            pStr (first (filter string? parsed))
+            leftFlag (= :star (first parsed))
+            rightFlag (= :star (last parsed))
+            rstr (cond
+                    (and leftFlag rightFlag) pStr
+                    leftFlag (str pStr " ")
+                    rightFlag (str " " pStr)
+                    :else (str " " pStr " ")
+                )
+            efunc  (sfn/fn [inStr]
+                (->>
+                    (re-find 
+                        (re-pattern (cs/lower-case rstr )) 
+                        (cs/lower-case inStr)
+                    )
+                    nil?
+                    not
+                )
+            )
+        ]
+        [strm {:eventRules [efunc]}]
+    )
 )
 
 (defn- parse-split [stream]
@@ -179,9 +116,7 @@
         [strm rst]
     )
 )
-                    ;
-                    ;
-                    ;
+
 (defn- parse-string-parser [stream]
     (let [[strm parsed] (
                 (ups/chain
