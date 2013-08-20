@@ -56,7 +56,6 @@
     (let [[strm parsed]
             ((ups/expect-char \*) stream)
         ]
-
         [strm :star]
     )
 )
@@ -103,17 +102,59 @@
     )
 )
 
-(defn- parse-user-string [stream]
-    (let [ [strm parsed] ((ups/between 
-                    (ups/expect-char \")
-                    (ups/expect-char \")
-                    (ups/expect-no-eof)
-                )
+(defn- parse-escaped-char [stream]
+    (let [[[ch] & strm] stream]
+        (cond
+            (= ch :eof) (throw
+                (ups/gen-ISE stream "expect escaped char")
+            )
+            (= ch \b) [strm [:literal-char \backspace]]
+            (= ch \t) [strm [:literal-char \tab]]
+            (= ch \n) [strm [:literal-char \newline]]
+            (= ch \f) [strm [:literal-char \formfeed]]
+            (= ch \r) [strm [:literal-char \return]]
+            (= ch \") [strm [:literal-char \"]]
+            (= ch \') [strm [:literal-char \']]
+            (= ch \\) [strm [:literal-char \\]]
+        )
+    )
+)
+
+(defn- parse-char [stream]
+    (let [[[ch] & rest-stream] stream]
+        (cond
+            (= ch :eof) (throw
+                (ups/gen-ISE stream "expect char")
+            )
+            (= ch \\) (parse-escaped-char rest-stream)
+            :else [rest-stream [:literal-char ch]]
+        )
+    )
+)
+
+
+(defn- jliteral-string-parser' [sb stream]
+    (let [[[ch] & strm1] stream]
+        (cond
+            (= ch :eof) (throw (ups/gen-ISE stream "open quoted string"))
+            (= ch \") [strm1]
+            :else (let [[strm2 [_ ch]] (parse-char stream)]
+                (.append sb ch)
+                (recur sb strm2)
+            )
+        )
+    )
+)
+
+(defn- jliteral-string-parser [stream]
+    (let [[strm1] (
+                (ups/expect-char \")
                 stream
             )
-            rst (ups/extract-string-between stream strm)
+            sb (StringBuilder.)
+            [strm2] (jliteral-string-parser' sb strm1)
         ]
-        [strm rst]
+        [strm2 [:literal-string (str sb)]]
     )
 )
 
@@ -123,7 +164,7 @@
                     parse-split
                     (ups/expect-string "parse")
                     whitespaces
-                    parse-user-string
+                    jliteral-string-parser
                     whitespaces
                     (ups/expect-string "as")
                     whitespaces
@@ -168,7 +209,7 @@
                 stream
             )
         ]
-    rst
+    [rst strm]
     )
 )
 
