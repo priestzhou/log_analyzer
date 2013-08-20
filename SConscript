@@ -94,3 +94,8 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
         env.File('#front/resources/image/sprite_button_icons.png'): '@/resources/image',
     },
     standalone=True, manifest={'Main-Class': 'log_search.webserver'}))
+env.install(env.compileAndJar('kafka_hdfs.jar', 'kafka_hdfs',
+    libs=[env['CLOJURE'],
+        env.File('$EXTLIB/hadoop-common-2.0.0-cdh4.3.0.jar'),
+    ],
+    standalone=True, manifest={'Main-Class': 'kafka_hdfs.main'}))
