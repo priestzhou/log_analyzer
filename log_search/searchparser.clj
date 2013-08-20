@@ -130,7 +130,7 @@
             efunc  (sfn/fn [inStr]
                 (->>
                     (re-find 
-                        (re-pattern (cs/lower-case  (nth parsed 2)  )) 
+                        (re-pattern (cs/lower-case  (nth parsed 1)  )) 
                         (cs/lower-case inStr)
                     )
                     nil?
@@ -157,15 +157,80 @@
         
 )
 
+(defn- parse-split [stream]
+    (   (ups/chain
+            (ups/expect-char \|)
+            (ups/optional whitespaces)
+        )
+        stream
+    )
+)
+
+(defn- parse-user-string [stream]
+    (let [ [strm parsed] ((ups/between 
+                    (ups/expect-char \")
+                    (ups/expect-char \")
+                    (ups/expect-no-eof)
+                )
+                stream
+            )
+            rst (ups/extract-string-between stream strm)
+        ]
+        [strm rst]
+    )
+)
+                    ;
+                    ;
+                    ;
+(defn- parse-string-parser [stream]
+    (let [[strm parsed] (
+                (ups/chain
+                    parse-split
+                    (ups/expect-string "parse")
+                    whitespaces
+                    parse-user-string
+                    whitespaces
+                    (ups/expect-string "as")
+                    whitespaces
+                    parse-event-str
+                )
+                stream
+            )
+            tKey (last parsed)
+            parseStr (nth parsed 3)
+        ]
+    [strm  
+        {            
+            :key
+            tKey
+            :parser
+            parseStr
+        }
+    ]
+    )
+)
+ ;(ups/choice parse-string-parser parse-reg-parser)
+(defn- parse-parsers [stream]
+    (let [[strm parsed] ((ups/many 
+                parse-string-parser    
+            )
+            stream
+        )
+        ]
+        [strm parsed]
+    )
+)
+
 (defn parse-all [inStr]
-    (let [strm (ups/positional-stream inStr)
-            [strm2 rst](
+    (let [stream (ups/positional-stream inStr)
+            [strm rst](
                 (ups/chain 
                     whitespaces
                     parse-event
                     whitespaces
+                    parse-parsers
                 )
-                strm   
+                stream
             )
         ]
     rst
