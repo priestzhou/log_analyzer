@@ -14,6 +14,7 @@ env.install(env.compileAndJar('log_analyzer_unittest.jar', 'unittest',
         env.File('$BUILD_DIR/log_collector.jar'),
         env.File('$BUILD_DIR/log_search.jar'),
         env.File('$EXTLIB/tools.cli-0.2.2.jar'),
+        env.File('$EXTLIB/serializable-fn-0.0.3.jar'),        
         env.File('$BUILD_DIR/testing.jar')],
     standalone=True, manifest={'Main-Class': 'unittest.main'}))
 env.install(env.compileAndJar('log_analyzer_smoketest.jar', 'smoketest',
@@ -66,7 +67,6 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
     env.File('$BUILD_DIR/argparser.jar'),
     env.File('$EXTLIB/data.json-0.2.2.jar'),
     env.File('$EXTLIB/serializable-fn-0.0.3.jar'),
-    env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'),
     env.File('$BUILD_DIR/logging.jar')    
     ],
     install={
@@ -77,14 +77,11 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
         env.File('#front/resources/js/jquery.loadmask.min.js'): '@/resources/js',
         env.File('#front/resources/js/bootstrap.min.js'): '@/resources/js',
         env.File('#front/resources/js/jquery.pagination.js'): '@/resources/js',
-
         env.File('#front/log_monitor/index.html'): '@/resources/',
-
         env.File('#front/resources/css/bootstrap.css'): '@/resources/css',
         env.File('#front/resources/css/index.css'): '@/resources/css',
         env.File('#front/resources/css/jquery-ui.css'): '@/resources/css',
         env.File('#front/resources/css/jquery.loadmask.css'): '@/resources/css',
-
         env.File('#front/resources/image/bar.png'): '@/resources/image',
         env.File('#front/resources/image/go_btn.png'): '@/resources/image',
         env.File('#front/resources/image/icons_sprite.png'): '@/resources/image',

@@ -5,10 +5,173 @@
     (:require 
         [clojure.string :as cs]
         [serializable.fn :as sfn]
+        [utilities.parse :as ups]
     )
+    (:import
+        utilities.parse.InvalidSyntaxException
+    )    
 )
 
 (defloggers debug info warn error)
+
+(def ^:private whitespace #{\space \tab})
+
+(def ^:private usedsym #{\- \_ \= \. })
+
+
+(defn- whitespaces [stream]
+    (let [[strm parsed] (
+                (ups/many1 (ups/expect-char-if whitespace))
+                stream
+            )
+        ]
+        [strm [(ffirst parsed) (second (last parsed))]]
+    )
+)
+
+(defn- numberchar [stream]
+
+)
+
+
+(defn- parse-event-str [stream]
+    (let [[strm parsed] (
+                (ups/many1 
+                    (ups/choice
+                        (ups/expect-char-if ups/letter)
+                        (ups/expect-char-if ups/digit)
+                        (ups/expect-char-if usedsym)
+                    )
+                )
+                stream
+            )
+            pStr (ups/extract-string-between stream strm)
+        ]
+        [strm pStr]
+    )
+
+)
+
+(defn- parse-event-nostar [stream]
+    (let [[strm parsed] (
+                parse-event-str
+                stream
+            )
+            efunc  (sfn/fn [inStr]
+                (->>
+                    (re-find 
+                        (re-pattern (cs/lower-case (str " " parsed " ") )) 
+                        (cs/lower-case inStr)
+                    )
+                    nil?
+                    not
+                )
+            )
+        ]
+        [strm {:eventRules [efunc]}]
+    )
+)
+
+(defn- parse-event-leftstar [stream]
+    (let [[strm parsed] (
+                (ups/chain
+                    (ups/expect-char \*)
+                    parse-event-str
+                )
+                stream
+            )
+            efunc  (sfn/fn [inStr]
+                (->>
+                    (re-find 
+                        (re-pattern (cs/lower-case (str (last parsed) " ") )) 
+                        (cs/lower-case inStr)
+                    )
+                    nil?
+                    not
+                )
+            )
+        ]
+        [strm {:eventRules [efunc]}]
+    )
+)
+
+(defn- parse-event-rightstar [stream]
+    (let [[strm parsed] (
+                (ups/chain
+                    parse-event-str
+                    (ups/expect-char \*)
+                )
+                stream
+            )
+            efunc  (sfn/fn [inStr]
+                (->>
+                    (re-find 
+                        (re-pattern (cs/lower-case (str " " (first parsed) ) )) 
+                        (cs/lower-case inStr)
+                    )
+                    nil?
+                    not
+                )
+            )
+        ]
+        [strm {:eventRules [efunc]}]
+    )
+)
+
+(defn- parse-event-bothstar [stream]
+    (let [[strm parsed] (
+                (ups/chain
+                    (ups/expect-char \*)
+                    parse-event-str
+                    (ups/expect-char \*)
+                )
+                stream
+            )
+            efunc  (sfn/fn [inStr]
+                (->>
+                    (re-find 
+                        (re-pattern (cs/lower-case  (nth parsed 2)  )) 
+                        (cs/lower-case inStr)
+                    )
+                    nil?
+                    not
+                )
+            )
+        ]
+        [strm {:eventRules [efunc]}]
+    )
+)
+
+(defn- parse-event [stream]
+    (let [[strm rst]
+    ((ups/choice
+            parse-event-bothstar
+            parse-event-rightstar
+            parse-event-leftstar
+            parse-event-nostar            
+        )
+        stream
+        )]
+        [strm  rst]
+    )   
+        
+)
+
+(defn parse-all [inStr]
+    (let [strm (ups/positional-stream inStr)
+            [strm2 rst](
+                (ups/chain 
+                    whitespaces
+                    parse-event
+                    whitespaces
+                )
+                strm   
+            )
+        ]
+    rst
+    )
+)
+
 
 (defn- splitStr [sStr]
     (cs/split sStr #"\|")
@@ -45,6 +208,8 @@
         identity
     }
 )
+
+
 
 (defn- parser-one [pStr ptag]
     (let [pSeq (cs/split pStr #"\"" ) ;"
@@ -287,14 +452,6 @@
    ([sStr timeWindow startTime]
         (let [psr (sparser sStr)
                 timeRule (assoc (get timeMap timeWindow) :startTime startTime)
-            ]
-            (assoc psr :timeRule timeRule)
-        )
-    )
-   ([sStr timeWindow startTime]
-        (let [psr (sparser sStr)
-                timeRule (get timeMap timeWindow)
-                
             ]
             (assoc psr :timeRule timeRule)
         )
