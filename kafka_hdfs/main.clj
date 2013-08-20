@@ -8,11 +8,26 @@
 )
 
 (defn -main [& args]
-    (let [conf (Configuration.)
-        fs (FileSystem/get (URI/create "hdfs://pc03/hehe") conf)
+    (let [
+        host "hdfs://pc03/"
+        d (Path. host "smile/")
+        f (Path. d "xixi")
+        conf (Configuration.)
         ]
-        (try
-            (let [in (.open fs (Path. "hdfs://pc03/hehe"))])
-        (finally))
+        (with-open [fs (FileSystem/get (URI/create host) conf)]
+            (with-open [out (.create fs f)]
+                (spit out "You are my sunshine,\n")
+            )
+            (with-open [out (.append fs f)]
+                (spit out "my only sunshine.\n")
+            )
+            (let [xs (.listStatus fs d)]
+                (doseq [i (range (alength xs))
+                    :let [x (aget xs i)]
+                    ]
+                    (println (.getPath x))
+                )
+            )
+        )
     )
 )

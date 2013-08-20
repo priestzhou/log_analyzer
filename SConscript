@@ -97,5 +97,7 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
 env.install(env.compileAndJar('kafka_hdfs.jar', 'kafka_hdfs',
     libs=[env['CLOJURE'],
         env.File('$EXTLIB/hadoop-common-2.0.0-cdh4.3.0.jar'),
+        env.File('$EXTLIB/commons-logging-1.1.1.jar'),
     ],
-    standalone=True, manifest={'Main-Class': 'kafka_hdfs.main'}))
+    standalone=True, 
+    manifest={'Main-Class': 'kafka_hdfs.main'}))
