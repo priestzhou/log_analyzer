@@ -1,6 +1,7 @@
 (ns log-search.searchparser
     (:use
         [logging.core :only [defloggers]]
+        [log-search.parse-util]
     )    
     (:require 
         [clojure.string :as cs]
@@ -14,25 +15,9 @@
 
 (defloggers debug info warn error)
 
-(def ^:private whitespace #{\space \tab})
-
-(def ^:private usedsym #{\- \_ \= \. })
-
-
-(defn- whitespaces [stream]
-    (let [[strm parsed] (
-                (ups/many1 (ups/expect-char-if whitespace))
-                stream
-            )
-        ]
-        [strm [(ffirst parsed) (second (last parsed))]]
-    )
-)
-
 (defn- numberchar [stream]
 
 )
-
 
 (defn- parse-event-str [stream]
     (let [[strm parsed] (
@@ -40,7 +25,7 @@
                     (ups/choice
                         (ups/expect-char-if ups/letter)
                         (ups/expect-char-if ups/digit)
-                        (ups/expect-char-if usedsym)
+                        (ups/expect-char-if usersym)
                     )
                 )
                 stream
@@ -49,7 +34,24 @@
         ]
         [strm pStr]
     )
+)
 
+(defn- parse-parser-str [stream]
+    (let [[strm parsed] (
+                (ups/many1 
+                    (ups/choice
+                        (ups/expect-char-if ups/letter)
+                        (ups/expect-char-if ups/digit)
+                        (ups/expect-char-if parsersym)
+                        (ups/expect-char-if whitespace)
+                    )
+                )
+                stream
+            )
+            pStr (ups/extract-string-between stream strm)
+        ]
+        [strm pStr]
+    )
 )
 
 (defn- star-parser [stream]
@@ -102,98 +104,100 @@
     )
 )
 
-(defn- parse-escaped-char [stream]
-    (let [[[ch] & strm] stream]
-        (cond
-            (= ch :eof) (throw
-                (ups/gen-ISE stream "expect escaped char")
-            )
-            (= ch \b) [strm [:literal-char \backspace]]
-            (= ch \t) [strm [:literal-char \tab]]
-            (= ch \n) [strm [:literal-char \newline]]
-            (= ch \f) [strm [:literal-char \formfeed]]
-            (= ch \r) [strm [:literal-char \return]]
-            (= ch \") [strm [:literal-char \"]]
-            (= ch \') [strm [:literal-char \']]
-            (= ch \\) [strm [:literal-char \\]]
-        )
-    )
-)
-
-(defn- parse-char [stream]
-    (let [[[ch] & rest-stream] stream]
-        (cond
-            (= ch :eof) (throw
-                (ups/gen-ISE stream "expect char")
-            )
-            (= ch \\) (parse-escaped-char rest-stream)
-            :else [rest-stream [:literal-char ch]]
-        )
-    )
-)
-
-
-(defn- jliteral-string-parser' [sb stream]
-    (let [[[ch] & strm1] stream]
-        (cond
-            (= ch :eof) (throw (ups/gen-ISE stream "open quoted string"))
-            (= ch \") [strm1]
-            :else (let [[strm2 [_ ch]] (parse-char stream)]
-                (.append sb ch)
-                (recur sb strm2)
-            )
-        )
-    )
-)
-
-(defn- jliteral-string-parser [stream]
-    (let [[strm1] (
-                (ups/expect-char \")
+(defn- parser-for-string' [str1]
+    (println "parse1 " str1)
+    (let [
+            stream (ups/positional-stream str1)
+            [strm parsed] (
+                (ups/chain 
+                    (ups/optional parse-parser-str)
+                    star-parser
+                    (ups/optional parse-parser-str)
+                )
                 stream
             )
-            sb (StringBuilder.)
-            [strm2] (jliteral-string-parser' sb strm1)
+            leftStr (if (string? (first parsed))
+                    (str "(?<=" (first parsed) ")")
+                    ""
+                )
+            rightStr (if (string? (last parsed))
+                    (str "(?=" (last parsed) ")" )
+                    ""
+                )
         ]
-        [strm2 [:literal-string (str sb)]]
+
+        (re-pattern (str  leftStr "[\\\\S]*" rightStr))
+    )
+ 
+)
+
+(defn- parser-for-string [stream]
+    (let [[strm parsed] (
+                (ups/expect-string "parse")
+                stream
+            )
+        ]
+        [strm parser-for-string']
     )
 )
 
-(defn- parse-string-parser [stream]
+(defn- parser-for-reg [stream]
+    (let [[strm parsed] (
+                (ups/expect-string "parse-re")
+                stream
+            )
+        ]
+        [strm (sfn/fn [instr] (re-pattern instr))]
+    )
+)
+
+(defn- parse-parser [stream]
     (let [[strm parsed] (
                 (ups/chain
                     parse-split
-                    (ups/expect-string "parse")
+                    (ups/choice parser-for-string parser-for-reg)
                     whitespaces
                     jliteral-string-parser
                     whitespaces
                     (ups/expect-string "as")
                     whitespaces
                     parse-event-str
+                    (ups/optional whitespaces)
                 )
                 stream
             )
-            tKey (last parsed)
-            parseStr (nth parsed 3)
+            rfun (nth parsed 1)
+            tKey (nth parsed 7)
+            parseStr (last (nth parsed 3))
+            preg (rfun parseStr)
         ]
     [strm  
         {            
             :key
             tKey
             :parser
-            parseStr
+            (sfn/fn [inStr] 
+                (re-find preg inStr)
+            )
         }
     ]
     )
 )
- ;(ups/choice parse-string-parser parse-reg-parser)
+
 (defn- parse-parsers [stream]
     (let [[strm parsed] ((ups/many 
-                parse-string-parser    
+                parse-parser    
             )
             stream
         )
         ]
-        [strm parsed]
+        [strm 
+
+            (if (empty? parsed)
+                []
+                {:parseRules parsed}
+            )
+        ]
     )
 )
 
@@ -209,7 +213,7 @@
                 stream
             )
         ]
-    [rst strm]
+    rst
     )
 )
 
