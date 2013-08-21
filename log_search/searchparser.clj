@@ -76,10 +76,11 @@
             rightFlag (= :star (last parsed))
             rstr (cond
                     (and leftFlag rightFlag) pStr
-                    leftFlag (str pStr " ")
-                    rightFlag (str " " pStr)
-                    :else (str " " pStr " ")
+                    leftFlag (str pStr "(\\s|$)+")
+                    rightFlag (str "(^|\\s)+" pStr)
+                    :else (str "(^|\\s)+" pStr "(\\s|$)+")
                 )
+            t1 (println rstr)
             efunc  (sfn/fn [inStr]
                 (->>
                     (re-find 
@@ -125,8 +126,7 @@
                     ""
                 )
         ]
-
-        (re-pattern (str  leftStr "[\\\\S]*" rightStr))
+        (re-pattern (str  leftStr "[\\S]*" rightStr))
     )
  
 )
