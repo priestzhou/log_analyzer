@@ -359,99 +359,6 @@
     )
 )
 
-
-(defn- splitStr [sStr]
-    (cs/split sStr #"\|")
-)
-
-(defn- event-func [eStr]
-    (sfn/fn [inStr]
-        (->>
-            (re-find 
-                (re-pattern (cs/lower-case (cs/trim eStr) )) 
-                (cs/lower-case inStr)
-            )
-            nil?
-            not
-        )
-    )
-)
-
-(def ^:private parser-fun-map
-    {
-        "parse" 
-        (sfn/fn f [secStr]
-            (str 
-                "(?<="
-                (cs/replace 
-                    secStr 
-                    #"\*"
-                    ")[\\\\S]*(?="    
-                )
-                ")"
-            )
-        )
-        "reparse"
-        identity
-    }
-)
-
-
-
-(defn- parser-one [pStr ptag]
-    (let [pSeq (cs/split pStr #"\"" ) ;"
-            secStr (second pSeq)
-            secSeq (cs/split secStr #"\*")
-            lastStr (last pSeq)
-            tKey (re-find #"(?<= as )[\S]+" lastStr)
-        ]
-        (println ptag)
-        (println ((get parser-fun-map ptag) secStr))
-        {   
-            :key
-            tKey
-            :parser 
-            #(re-find 
-                (re-pattern 
-                    ((get parser-fun-map ptag) secStr)
-                ) 
-                %
-            )
-        }
-    )
-)
-
-(defn- build-parse [sSeq pMap]
-    (let [pStr (first sSeq)
-            tailSeq (rest sSeq)
-            plist (:parseRules pMap)
-        ]
-        (if (and 
-                (not (nil? pStr)) 
-                (or 
-                    (re-find #"^[\s]*parse" pStr) 
-                    (re-find #"^[\s]*reparse" pStr)
-                )
-            )
-            (build-parse 
-                tailSeq 
-                (merge pMap 
-                    {:parseRules 
-                        (conj 
-                            plist 
-                            (parser-one 
-                                pStr 
-                                (re-find #"(?<=^[\s]*)[\S]+" pStr)
-                            )
-                        )
-                    }
-                )
-            )
-            pMap
-        )
-    )
-)
-
 (def ^:private wheresym #"=|<>|>|>=|<|<=|where")
 (def ^:private wheresym2 #" = | <> | > | >= | < | <= ")
 
@@ -500,81 +407,6 @@
     )
 )
 
-(defn- log-table-parser [sStr]
-    (let [sSeq (splitStr sStr)
-            eStr (first sSeq)
-            tailSeq (rest sSeq)
-            whereSeq (filter  #(re-find #"^[\s]*where" %) tailSeq)
-        ]
-        (if (empty? tailSeq)
-            {:eventRules [(event-func eStr)]}
-            (->>
-                (build-parse  
-                    tailSeq  
-                    (assoc {:eventRules [(event-func eStr)]} :parseRules []) 
-                )
-                (#(build-where
-                    whereSeq
-                    (assoc % :whereRules [])
-                ))
-            )
-        )
-    )
-)
-
-(defn- get-groupkey [gStr]
-    (let [gSeq (cs/split gStr #" by ")]
-        (if (< 1 (count gSeq))
-            (->>
-                gSeq
-                last
-                (#(cs/split % #","))
-                (map cs/trim )
-            )
-            []
-        )
-    )
-)
-
-
-
-(defn- get-pSeq [sItem]
-    (->>
-        sItem
-        (#(cs/split % #" "))
-        (filter #(not (empty? %)) )
-    )
-)
-
-(defn- static-one [pSeq]
-    (let [c1 (count pSeq)
-            funcStr (cs/lower-case (first pSeq))
-            keyStr (last pSeq)
-            statFun (get static-rules funcStr)
-        ]
-        (if (and (= c1 2) (not (nil? statFun)) )
-            {
-                :statInKey keyStr,
-                :statFun statFun,
-                :statOutKey (str funcStr "_" keyStr)
-            }
-            (println "the input format can't parse as static")
-        )
-    )
-)
-
-(defn- parse-static [gStr]
-    (let [gSeq (cs/split gStr #" by ")
-            sStr (first gSeq)
-            sSeq (cs/split sStr #",")
-            pSeqs (map get-pSeq sSeq)
-        ]
-        (map 
-            static-one
-            pSeqs
-        )
-    )
-)
 
 (defn- get-group-time [timeStep timeValue]
     (let [modTime (mod timeValue timeStep)
@@ -597,19 +429,6 @@
 (defn sparser 
     ([sStr]
         (debug "sparser sStr" sStr)
-        (let [log-parser (log-table-parser sStr)
-                sSeq (splitStr sStr)
-                lastStr (last sSeq)
-                gKeys (get-groupkey lastStr)
-                statRules (parse-static lastStr)
-            ]
-            (debug "the log-parser" log-parser)
-            (if (empty? gKeys)
-                log-parser  
-                (assoc log-parser :groupKeys gKeys :statRules statRules
-                ) 
-            )
-        )
     )
     ([sStr timeWindow]
         (debug "str timeWindow in sparser" sStr timeWindow)
