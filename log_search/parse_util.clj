@@ -16,11 +16,11 @@
 
 (def usersym #{\- \_ \= \.})
 
-(def parsersym #{\- \_ \= \. \\ \"})
+(def parsersym #{\- \_ \= \. \\ \" \: \,    })
 
 (defn whitespaces [stream]
     (let [[strm parsed] (
-                (ups/many1 (ups/expect-char-if whitespace))
+                (ups/many1 (ups/expect-char-if ups/whitespace))
                 stream
             )
         ]

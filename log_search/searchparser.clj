@@ -105,7 +105,7 @@
 )
 
 (defn- parser-for-string' [str1]
-    (println "parse1 " str1)
+    (debug "parse1 " str1)
     (let [
             stream (ups/positional-stream str1)
             [strm parsed] (
@@ -171,6 +171,7 @@
             parseStr (last (nth parsed 3))
             preg (rfun parseStr)
         ]
+    (debug "parser key" tKey)
     [strm  
         {            
             :key
@@ -192,7 +193,6 @@
         )
         ]
         [strm 
-
             (if (empty? parsed)
                 []
                 {:parseRules parsed}
@@ -201,19 +201,161 @@
     )
 )
 
+(defn- parse-group-keys [stream]
+    (let [[strm parsed] (
+            (ups/chain
+                parse-event-str
+                (ups/optional whitespaces)
+                (ups/many
+                    (ups/chain
+                        (ups/expect-char \,)
+                        (ups/optional whitespaces)
+                        parse-event-str
+                        (ups/optional whitespaces)
+                    )
+                )
+            )
+            stream
+        )
+        keyStr (->>
+                parsed
+                flatten
+                (filter string?)
+            )
+        ]
+        [stream keyStr]
+    )
+)
+
+(def ^:private static-rules
+    {
+        "sum"
+        (fn [l] 
+            (reduce #(+ %1 (read-string %2)) 0 l)
+        )
+        "count"
+        (fn [l] 
+            (reduce (fn [a b] (+ a 1)) 0 l)
+        )
+    }
+)
+
+(defn- parse-static-fun' [inStr inFun stream]
+    (let [[strm parsed] (
+                (ups/expect-string inStr)
+                stream
+            )
+        ]
+        [strm [inStr inFun] ]
+    )
+)
+
+(defn- parse-static-fun-list []
+    (let [keylist (keys static-rules)
+        ]
+        (debug "keylist " keylist)
+        (map 
+            (sfn/fn [tKey] 
+                (partial parse-static-fun' tKey (get static-rules tKey))
+            )
+            keylist
+        )
+    )
+)
+
+(defn- parse-static-fun'' [stream]
+    (let [[strm parsed] (
+                (ups/chain
+                    (apply 
+                        ups/choice
+                        (parse-static-fun-list)
+                    )
+                    whitespaces
+                    parse-event-str
+                )
+                stream
+            )
+            sFun (last (first parsed))
+            fStr (first (first parsed))
+            sKey (last parsed)
+        ]
+        [strm 
+            {
+                :statInKey sKey,
+                :statFun sFun,
+                :statOutKey (str fStr "_" sKey)
+            }
+        ]
+    )
+)
+
+(defn- parse-static-fun [stream]
+    (let [[strm parsed] (
+            (ups/chain
+                parse-static-fun'' 
+                (ups/many 
+                    (ups/chain 
+                        (ups/optional whitespaces)
+                        (ups/expect-char \,)
+                        (ups/optional whitespaces)
+                        parse-static-fun''
+                        (ups/optional whitespaces)
+                    )
+                )
+            )
+            stream
+        )
+        maps (filter  map? (flatten parsed))
+        ]
+        [strm maps]
+    )
+)
+
+(defn- parse-group [stream]
+    (let [[strm parsed] (
+                (ups/chain
+                    parse-split
+                    parse-static-fun
+                    whitespaces
+                    (ups/expect-string "by")
+                    whitespaces
+                    parse-group-keys
+                )
+                stream
+            )
+            gKeys (last parsed)
+            statRules (nth parsed 1)
+        ]
+        [strm {:groupKeys gKeys :statRules statRules}]
+        )
+)
+
 (defn parse-all [inStr]
     (let [stream (ups/positional-stream inStr)
             [strm rst](
                 (ups/chain 
-                    whitespaces
+                    (ups/optional whitespaces)
                     parse-event
-                    whitespaces
-                    parse-parsers
+                    (ups/optional whitespaces)
+                    (ups/optional parse-parsers)
+                    (ups/optional whitespaces)
+                    (ups/optional parse-group)
+                    (ups/optional whitespaces)
                 )
                 stream
             )
         ]
-    rst
+    ;[
+    ;    (ups/extract-string-between stream strm) 
+    ;    rst
+    ;] 
+    (->>
+        rst
+        flatten
+        (filter map?)
+        (apply merge)
+    )
+        
     )
 )
 
@@ -394,18 +536,7 @@
     )
 )
 
-(def ^:private static-rules
-    {
-        "sum"
-        (fn [l] 
-            (reduce #(+ %1 (read-string %2)) 0 l)
-        )
-        "count"
-        (fn [l] 
-            (reduce (fn [a b] (+ a 1)) 0 l)
-        )
-    }
-)
+
 
 (defn- get-pSeq [sItem]
     (->>
@@ -482,7 +613,7 @@
     )
     ([sStr timeWindow]
         (debug "str timeWindow in sparser" sStr timeWindow)
-        (let [psr (sparser sStr)
+        (let [psr (parse-all sStr)
                 timeRule (get timeMap timeWindow)
                 tw (:tw timeRule)
                 startTime `(- 
@@ -495,7 +626,7 @@
         )
     )
    ([sStr timeWindow startTime]
-        (let [psr (sparser sStr)
+        (let [psr (parse-all sStr)
                 timeRule (assoc (get timeMap timeWindow) :startTime startTime)
             ]
             (assoc psr :timeRule timeRule)
