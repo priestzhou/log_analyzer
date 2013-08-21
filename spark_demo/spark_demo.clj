@@ -40,10 +40,9 @@
                 :jars ["./clj_spark_rebuild.jar" "./spark_demo.jar"
                     "./log_search.jar"] ;
                 )
-            input-rdd (.textFile sc "/etc/hosts"
+            input-rdd (.textFile sc "hdfs://192.168.1.103/spark/logfile"
                 )
-            testp (lsp/sparser "0|reparse \"(?<=pc)[\\S]+\" as pcid |parse \".*.\" as ip
-                |reparse \"[0-9]+\" as num |sum num by pcid")
+            testp (lsp/parse-all "hdfs")
         ]
         (->
             input-rdd
