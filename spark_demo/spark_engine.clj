@@ -153,19 +153,24 @@
 (defn- do-statistic [statRules rdd]
     (if (nil? statRules)
         rdd
-        (k/map rdd
-            (sfn/fn fs [log]
-                [(reduce
-                    (sfn/fn f [a b]
-                        (assoc a 
-                        (:statOutKey b)
-                        (static-fun b log))
-                    )
-                    (first log)
-                    statRules
-                ) (second log)]
+        (->
+            rdd
+            (k/map 
+                (sfn/fn fs [log]
+                    [(reduce
+                        (sfn/fn f [a b]
+                            (assoc a 
+                            (:statOutKey b)
+                            (static-fun b log))
+                        )
+                        (first log)
+                        statRules
+                    ) (second log)]
+                )
             )
+            (k/map first)
         )
+
     )
 )
 
@@ -196,7 +201,7 @@
         {
             :logtable limitResult
             ;:grouptable limitResultWithTime,
-            ;:meta (k/collect statResult)
+            :meta (k/collect statResult)
         }
     )
 )
