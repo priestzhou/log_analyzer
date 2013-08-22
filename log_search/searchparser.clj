@@ -423,6 +423,9 @@
     {
         "60" {:tw 60000,:tf #(get-group-time 5000 %)},
         "300" {:tw 300000,:tf #(get-group-time 10000 %)}
+        "1800" {:tw 1800000,:tf #(get-group-time 60000 %)}
+        "14400" {:tw 14400000,:tf #(get-group-time 600000 %)}
+        "86400" {:tw 86400000,:tf #(get-group-time 3600000 %)}
     }
 )
 
