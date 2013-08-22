@@ -7,6 +7,7 @@
         [clj-spark.api :as k]
         [spark-demo.spark-engine :as spe]
         [log-search.searchparser :as lsp]
+        [clojure.data.json :as json]
     )    
     (:gen-class)
 )
@@ -40,19 +41,19 @@
                 :jars ["./clj_spark_rebuild.jar" "./spark_demo.jar"
                     "./log_search.jar"] ;
                 )
-            input-rdd (.textFile sc "hdfs://192.168.1.103/spark/logfile"
+            input-rdd (.textFile sc "/logfile"
                 )
-            testp (lsp/parse-all "hdfs")
+            testp (lsp/parse-all "*hdfs*")
         ]
         (->
             input-rdd
             (k/map 
                 (sfn/fn f [log]
-                    {:message log}
+                    (json/read-str log :key-fn keyword)
                 )
             )
             (#(spe/do-search testp %))
-            (#(k/collect %))
+            (#(k/first %))
             println
         )
     )

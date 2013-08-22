@@ -162,16 +162,16 @@
 ;            logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
             statRules (:statRules searchrules)
             statResult (do-statistic statRules logGrouped)
-;            limitStatResult (map #(dissoc % :gVal) statResult)
+            limitStatResult (map #(dissoc % :gVal) statResult)
 ;            statWithTimeResult (do-statistic statRules logGroupWithTime)
 ;            limitResultWithTime (showLimitResult statWithTimeResult)
         ]
         (println (first whereRules))
-        statResult
-        ;{
-         ;   :logtable logFilted,
-;            :grouptable limitResultWithTime,
-;            :groupall limitStatResult
-        ;}
+        
+        {
+            :logtable (k/collect parseResult),
+            ;:grouptable limitResultWithTime,
+            :meta (k/collect limitStatResult)
+        }
     )
 )
