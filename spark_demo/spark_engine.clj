@@ -65,13 +65,38 @@
     )
 )
 
-(defn- filter-parse [loglist]
+(defn- filter-parse [rdd]
 ;    ( filter 
 ;        #(empty?
 ;            (filter nil? (vals %))
 ;        )
-        loglist
+        rdd
 ;    )
+)
+
+(defn- dateformat [t]
+    (.format 
+        (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") 
+        t
+    )    
+)
+
+(defn- change-time [log]
+    (update-in log [:timestamp] dateformat)
+)
+
+(defn- get-newest-log [rdd]
+    (->
+        rdd
+        (k/map
+            (sfn/fn [log]
+                [(:timestamp log)  (change-time log)]
+            )
+        )
+        (k/sort-by-key compare false)
+        (k/take 10)
+        (#(map last %))
+    )
 )
 
 (defn- get-key-func [groupKeys timeRule]
@@ -153,7 +178,7 @@
             parseResult (filter-parse 
                     (apply-parse parseRules logFilted)
                 )
-;            limitResult (showlog parseResult)
+            limitResult (get-newest-log parseResult)
             whereResult (where-filter whereRules parseResult)
             timeRule (:timeRule searchrules)
             groupKeys (get searchrules :groupKeys)
@@ -162,16 +187,16 @@
 ;            logGroupWithTime (do-group-with-time groupKeys parseResult timeRule)
             statRules (:statRules searchrules)
             statResult (do-statistic statRules logGrouped)
-            limitStatResult (map #(dissoc % :gVal) statResult)
+;            limitStatResult (map #(dissoc % :gVal) statResult)
 ;            statWithTimeResult (do-statistic statRules logGroupWithTime)
 ;            limitResultWithTime (showLimitResult statWithTimeResult)
         ]
         (println (first whereRules))
         
         {
-            :logtable (k/collect parseResult),
+            :logtable limitResult
             ;:grouptable limitResultWithTime,
-            :meta (k/collect limitStatResult)
+            ;:meta (k/collect statResult)
         }
     )
 )

@@ -12,12 +12,11 @@
     (:gen-class)
 )
 
-(defn get-test-rdd []
+(defn- get-test-rdd []
     (let [sc (k/spark-context 
                 :master "spark://192.168.1.100:7077" :job-name "Simple Job" 
                 :spark-home "/home/admin/spark-0.7.3" 
-                :jars ["./spark_demo.jar" "./clj_spark_rebuild.jar" 
-                    "./log_search.jar"] ;
+                :jars ["./spark_demo.jar"]
                 )
             input-rdd (.textFile sc "/logfile"
                 )
@@ -31,7 +30,7 @@
     )
 )
 
-(defn run-test [inStr]
+(defn- run-test [inStr]
     (let [testrdd (get-test-rdd)
             tp (lsp/parse-all inStr)
         ]
@@ -45,7 +44,7 @@
 
 (defn -main []
     (do
-        (run-test "*hdfs*")
-        ;(run-test "*hdfs_* | parse \"HDFS_*\" as type | count type by type ")
+        ;(run-test "*hdfs*")
+        (run-test "*hdfs_* | parse \"HDFS_*\" as type | count type by type ")
     )
 )
