@@ -30,9 +30,9 @@
     )
 )
 
-(defn- run-test [inStr]
+(defn- run-test [inStr tw st]
     (let [testrdd (get-test-rdd)
-            tp (lsp/parse-all inStr)
+            tp (lsp/sparser inStr tw st)
         ]
     (->>
         testrdd
@@ -45,6 +45,10 @@
 (defn -main []
     (do
         ;(run-test "*hdfs*")
-        (run-test "*hdfs_* | parse \"HDFS_*\" as type | count type by type ")
+        (run-test 
+            "*hdfs_* | parse \"HDFS_*\" as type | count type by type " 
+            "14400"
+            1376902364451
+        )
     )
 )
