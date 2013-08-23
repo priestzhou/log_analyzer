@@ -8,14 +8,18 @@
     )
 )
 
-(defn- event-search [fitlers rdd]
+(defn- event-search [fitlers rdd startTime endTime]
     (k/filter rdd
         (sfn/fn f [log]
             (reduce 
                 (sfn/fn f1 [a b]
                     (and a b)
                 )
-                true
+                (<
+                    startTime
+                    (:timestamp log)
+                    endTime
+                )
                 (map
                     (sfn/fn f1 [a](a(:message log)))
                     fitlers
@@ -293,7 +297,7 @@
             startTime (eval (:startTime timeRule))
             endTime (+ startTime (:tw timeRule))
             gTimeList (get-time-list timeRule startTime)            
-            logFilted (event-search eventFilter rdd)
+            logFilted (event-search eventFilter rdd startTime endTime)
             whereRules (:whereRules searchrules)
             parseRules (:parseRules searchrules)
             parseResult (filter-parse 
