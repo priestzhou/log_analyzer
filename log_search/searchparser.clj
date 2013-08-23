@@ -237,6 +237,46 @@
         (fn [l] 
             (reduce (fn [a b] (+ a 1)) 0 l)
         )
+        "uc"
+        (fn [l] 
+            (distinct l)
+        )
+        "min"
+        (fn [l] 
+            (apply min l)
+        )        
+        "max"
+        (fn [l] 
+            (apply max l)
+        )
+        "first"
+        (fn [l] 
+            (first l)
+        )        
+        "last"
+        (fn [l]
+            (last l)
+        )
+        "avg"
+        (fn [l]
+            (/  (apply + l) (count l)
+            )
+        )
+        "stddev"
+        (fn [l]
+            (let [avg (/ (apply + l) (count l))
+                ]
+                (/ 
+                    (reduce 
+                        (fn [a b]
+                            (+ a (* (- b avg) (- b avg)))
+                        )
+                        l
+                    )
+                    (count l)
+                )
+            )
+        )
     }
 )
 
@@ -330,6 +370,91 @@
         )
 )
 
+
+(def ^:private where-rules
+    {
+        "="
+        (fn [i j] 
+            (= i j)
+        )
+        "<>"
+        (fn [i j] 
+            (not (=  i j))
+        )        
+        "<="
+        (fn [i j] 
+            (<= (read-string i) (read-string j))
+        )
+        ">="
+        (fn [i j] 
+            (>= (read-string i) (read-string j))
+        )
+        "<"
+        (fn [i j] 
+            (< (read-string i) (read-string j))
+        )
+        ">"
+        (fn [i j] 
+            (> (read-string i) (read-string j))
+        )
+    }
+)
+
+(defn- parse-where-fun [inStr inFun stream]
+    (let [[strm parsed] (
+                (ups/expect-string inStr)
+                stream
+            )
+        ]
+        [strm  inFun]
+    )
+)
+
+(defn- parse-where-fun-list []
+    (let [keylist (keys where-rules)
+        ]
+        (debug "keylist " keylist)
+        (map 
+            (sfn/fn [tKey] 
+                (partial parse-where-fun tKey (get where-rules tKey))
+            )
+            keylist
+        )
+    )
+)
+
+(defn- parse-where [stream]
+    (let [[strm parsed] ((ups/chain
+                    parse-split
+                    (ups/expect-string "where")
+                    whitespaces
+                    parse-event-str
+                    (ups/optional  whitespaces)
+                    (apply ups/choice (parse-where-fun-list))
+                    (ups/optional  whitespaces)
+                    parse-parser-str
+                    (ups/optional  whitespaces)
+                )
+                stream
+            )
+            clearResult (remove seq? parsed)
+            wkey (first clearResult)
+            wfunc (nth clearResult 1)
+            wvalue (last clearResult)
+        ]
+        [
+            strm
+            {:whereRules 
+                [
+                    (sfn/fn [log]
+                        (wfunc (get log wkey) wvalue)
+                    )
+                ]
+            }
+        ]
+    )
+)
+
 (defn parse-all [inStr]
     (let [stream (ups/positional-stream inStr)
             [strm rst](
@@ -338,6 +463,8 @@
                     parse-event
                     (ups/optional whitespaces)
                     (ups/optional parse-parsers)
+                    (ups/optional whitespaces)
+                    (ups/optional parse-where)
                     (ups/optional whitespaces)
                     (ups/optional parse-group)
                     (ups/optional whitespaces)
@@ -358,6 +485,7 @@
         
     )
 )
+
 
 (def ^:private wheresym #"=|<>|>|>=|<|<=|where")
 (def ^:private wheresym2 #" = | <> | > | >= | < | <= ")
