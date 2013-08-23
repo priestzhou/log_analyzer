@@ -114,6 +114,7 @@
 )
 
 (defn- showlog [rdd]
+    (println "showlog" )
     (let [limitLog (get-newest-log
                 rdd
             )
@@ -239,7 +240,7 @@
         (-> rdd
             (k/map  
                 (sfn/fn gen-key [log]
-                    [(keyFunc log) log]
+                    [{:gKeys (keyFunc log)} log]
                 )
             )
             (k/group-by-key)
@@ -294,7 +295,6 @@
             gTimeList (get-time-list timeRule startTime)            
             logFilted (event-search eventFilter rdd)
             whereRules (:whereRules searchrules)
-            
             parseRules (:parseRules searchrules)
             parseResult (filter-parse 
                     (apply-parse parseRules logFilted)

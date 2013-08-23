@@ -48,7 +48,7 @@
         (run-test 
             "*hdfs_* | parse \"HDFS_*\" as type | count type by type " 
             "14400"
-            1376902364451
+            1377018378063
         )
     )
 )
