@@ -7,12 +7,14 @@
         [clojure.java.io :as io]
         [clojure.data.json :as json]
         [utilities.shutil :as sh]
+        [utilities.core :as helpers]
         [kafka-hdfs.core :as kh]
         [kfktools.core :as kfk]
         [zktools.core :as zk]
     )
     (:import
         [java.net URI]
+        [java.util NavigableMap]
         [java.util.concurrent ArrayBlockingQueue]
         [org.apache.hadoop.conf Configuration]
         [org.apache.hadoop.fs FileSystem]
@@ -193,6 +195,16 @@ my only sunshine.
     )
 )
 
+(defn format-existents [^NavigableMap existents base]
+    (into (sorted-map)
+        (for [k (helpers/iterable->lazy-seq (.keySet existents))
+            :let [[uri size] (.get existents k)]
+            ]
+            [k [(str (.relativize base uri)) size]]
+        )
+    )
+)
+
 (suite "save messages to hdfs"
     (:testbench (fn [test]
         (let [rt (sh/tempdir)
@@ -209,27 +221,158 @@ my only sunshine.
             ))
         )
     ))
-    (:fact when-hdfs-is-empty
+    (:fact scan-existent-files:empty
         (fn [rt fs]
-            (let [base (jpath->uri rt)
-                q (ArrayBlockingQueue. 16)
-                _ (.put q {
-                    :topic "test" 
-                    :message (json/write-str {
-                        :timestamp -23215049510877
-                        :level "INFO"
-                        :location "Client"
-                        :message "msg1"
-                    })
-                })
-                ]
-                (kh/save->hdfs fs base 5000 q)
+            (let [uri (jpath->uri rt)]
+                (format-existents (kh/scan-existents fs uri) uri)
             )
-            (read-fs rt)
         )
         :eq
         (fn [rt fs]
-            {"1234-05-06/1234-05-06T07:08:09.123Z.test" "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}"}
+            {}
+        )
+    )
+    (:fact scan-existent-files:one
+        (fn [rt fs]
+            (sh/spitFile 
+                (sh/getPath rt "1234-05-06/1234-05-06T07:08:09.123Z.test")
+                "0123456789"
+            )
+            (let [uri (jpath->uri rt)
+                tree-map (kh/scan-existents fs uri)
+                ]
+                (format-existents tree-map uri)
+            )
+        )
+        :eq
+        (fn [rt fs]
+            {-23215049510877 ["1234-05-06/1234-05-06T07:08:09.123Z.test" 10]}
+        )
+    )
+    (:fact when-hdfs-is-empty
+        (fn [rt fs]
+            (let [base (jpath->uri rt)
+                q (doto
+                    (ArrayBlockingQueue. 16)
+                    (.put {
+                        :topic "test" 
+                        :message (json/write-str {
+                            :timestamp -23215049510877
+                            :level "INFO"
+                            :location "Client"
+                            :message "msg1"
+                        })
+                    })
+                )
+                existents (kh/scan-existents fs base)
+                ]
+                (kh/save->hdfs! fs base 5000 q existents)
+                [
+                    (format-existents existents base)
+                    (read-fs rt)
+                ]
+            )
+        )
+        :eq
+        (fn [rt fs]
+            [
+                {
+                    -23215049510877 ["1234-05-06/1234-05-06T07:08:09.123Z.test" 81]
+                }
+                {
+                    "1234-05-06/1234-05-06T07:08:09.123Z.test" 
+                    "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}\n"
+                }
+            ]
+        )
+    )
+    (:fact append-existent-file
+        (fn [rt fs]
+            (sh/spitFile 
+                (sh/getPath rt "1234-05-06/1234-05-06T07:08:09.123Z.test")
+                "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}\n"
+            )
+            (let [base (jpath->uri rt)
+                q (doto
+                    (ArrayBlockingQueue. 16)
+                    (.put {
+                        :topic "test" 
+                        :message (json/write-str {
+                            :timestamp -23215049510544
+                            :level "DEBUG"
+                            :location "Client"
+                            :message "msg2"
+                        })
+                    })
+                )
+                existents (kh/scan-existents fs base)
+                ]
+                (kh/save->hdfs! fs base 5000 q existents)
+                [
+                    (format-existents existents base)
+                    (read-fs rt)
+                ]
+            )
+        )
+        :eq
+        (fn [rt fs]
+            [
+                {
+                    -23215049510877 ["1234-05-06/1234-05-06T07:08:09.123Z.test" 164]
+                }
+                {
+                    "1234-05-06/1234-05-06T07:08:09.123Z.test" 
+                    "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}
+{\"timestamp\":-23215049510544,\"location\":\"Client\",\"message\":\"msg2\",\"level\":\"DEBUG\"}
+"
+                }
+            ]
+        )
+    )
+    (:fact create-new-file-because-of-size
+        (fn [rt fs]
+            (sh/spitFile 
+                (sh/getPath rt "1234-05-06/1234-05-06T07:08:09.123Z.test")
+                "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}\n"
+            )
+            (let [base (jpath->uri rt)
+                q (doto
+                    (ArrayBlockingQueue. 16)
+                    (.put {
+                        :topic "test" 
+                        :message (json/write-str {
+                            :timestamp -23215049510544
+                            :level "DEBUG"
+                            :location "Client"
+                            :message "msg2"
+                        })
+                    })
+                )
+                existents (kh/scan-existents fs base)
+                ]
+                (binding [kh/size-for-new-file 10]
+                    (kh/save->hdfs! fs base 5000 q existents)
+                )
+                [
+                    (format-existents existents base)
+                    (read-fs rt)
+                ]
+            )
+        )
+        :eq
+        (fn [rt fs]
+            [
+                {
+                    -23215049510877 ["1234-05-06/1234-05-06T07:08:09.123Z.test" 82]
+                    -23215049510544 ["1234-05-06/1234-05-06T07:08:09.456Z.test" 82]
+                }
+                {
+                    "1234-05-06/1234-05-06T07:08:09.123Z.test" 
+                    "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}\n"
+                    "1234-05-06/1234-05-06T07:08:09.456Z.test"
+                    "{\"timestamp\":-23215049510544,\"location\":\"Client\",\"message\":\"msg2\",\"level\":\"DEBUG\"}\n"
+                }
+            ]
         )
     )
 )
