@@ -19,6 +19,11 @@
 
 )
 
+(defn- testparse [stream]
+    (println "test" stream)
+    [stream []]
+)
+
 (defn- parse-event-str [stream]
     (let [[strm parsed] (
                 (ups/many1 
@@ -226,7 +231,7 @@
                 (filter string?)
             )
         ]
-        [stream keyStr]
+        [strm keyStr]
     )
 )
 
@@ -296,7 +301,6 @@
 (defn- parse-static-fun-list []
     (let [keylist (keys static-rules)
         ]
-        (debug "keylist " keylist)
         (map 
             (sfn/fn [tKey] 
                 (partial parse-static-fun' tKey (get static-rules tKey))

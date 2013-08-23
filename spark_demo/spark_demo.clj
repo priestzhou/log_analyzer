@@ -46,7 +46,8 @@
     (do
         ;(run-test "*hdfs*")
         (run-test 
-            "*hdfs_* | parse-re \"(?<=HDFS_)[a-zA-Z]*\" as type | parse \"bytes: *,\" as size " 
+            "*hdfs_* | parse-re \"(?<=HDFS_)[a-zA-Z]*\" as type 
+            | parse \"bytes: *,\" as size | count type by type " 
             "14400"
             1377018378063
         )                
