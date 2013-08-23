@@ -16,7 +16,7 @@
 
 (def usersym #{\- \_ \= \.})
 
-(def parsersym #{\- \_ \= \. \\ \" \: \,    })
+(def parsersym #{\- \_ \= \. \\ \" \: \, \? \< \( \) \] \[ \} \{ \+ \|})
 
 (defn whitespaces [stream]
     (let [[strm parsed] (

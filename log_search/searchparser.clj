@@ -132,8 +132,10 @@
 )
 
 (defn- parser-for-string [stream]
-    (let [[strm parsed] (
-                (ups/expect-string "parse")
+    (let [[strm parsed] ((ups/chain
+                    (ups/expect-string "parse")
+                    whitespaces
+                )
                 stream
             )
         ]
@@ -142,12 +144,14 @@
 )
 
 (defn- parser-for-reg [stream]
-    (let [[strm parsed] (
+    (let [[strm parsed] ((ups/chain
                 (ups/expect-string "parse-re")
+                    whitespaces
+                )
                 stream
             )
         ]
-        [strm (sfn/fn [instr] (re-pattern instr))]
+        [strm re-pattern]
     )
 )
 
@@ -156,7 +160,6 @@
                 (ups/chain
                     parse-split
                     (ups/choice parser-for-string parser-for-reg)
-                    whitespaces
                     jliteral-string-parser
                     whitespaces
                     (ups/expect-string "as")
@@ -167,8 +170,8 @@
                 stream
             )
             rfun (nth parsed 1)
-            tKey (nth parsed 7)
-            parseStr (last (nth parsed 3))
+            tKey (nth parsed 6)
+            parseStr (last (nth parsed 2))
             preg (rfun parseStr)
         ]
     (debug "parser key" tKey)
@@ -468,6 +471,7 @@
                     (ups/optional whitespaces)
                     (ups/optional parse-group)
                     (ups/optional whitespaces)
+                    (ups/expect-eof)
                 )
                 stream
             )
