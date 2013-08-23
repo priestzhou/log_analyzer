@@ -196,19 +196,30 @@
         ]
         gTimeList
     )
-    
 )
 
-(defn- get-matchart [gTimeList loglist timeRule]
-    (let [tf (:tf timeRule)
-            ll (map #(tf (:timestamp %)) loglist)
+(defn- get-matchart [gTimeList rdd timeRule]
+    (let [ll (k/map 
+                rdd 
+                (sfn/fn [log] 
+                    ((:tf timeRule) (:timestamp log))
+                ) 
+            )
         ]
         {
             :time-series 
             gTimeList
             :search-count 
             (map  
-                #(count (filter (partial = %) ll))
+                #(->
+                    ll
+                    (k/filter
+                        (sfn/fn [log]
+                            (= log %)
+                        )
+                    )
+                    k/count  
+                )
                 gTimeList
             )
         }
@@ -303,6 +314,7 @@
             parseResult (filter-parse 
                     (apply-parse parseRules logFilted)
                 )
+            matchchart (get-matchart gTimeList parseResult timeRule)
             limitResult (showlog parseResult)
             whereResult (where-filter whereRules parseResult)
             timeRule (:timeRule searchrules)
@@ -321,12 +333,11 @@
                 gTimeList
             )
         ]
-        (println (first whereRules))
-        
         {
             :logtable limitResult
             :grouptable limitResultWithTime,
             :meta statResult
+            :matchchart matchchart
         }
     )
 )
