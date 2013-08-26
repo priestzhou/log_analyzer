@@ -13,7 +13,7 @@
     )
     (:import
         [java.util.concurrent BlockingQueue TimeUnit]
-        [java.util TreeMap NavigableMap Map List Iterator]
+        [java.util TreeMap NavigableMap Map Deque Iterator]
         [java.net URI]
         [org.apache.hadoop.fs Path FileSystem FileStatus]
     )
@@ -130,9 +130,9 @@
     )
 )
 
-(defn- new-file! [^FileSystem fs ^List cache uri]
+(defn- new-file! [^FileSystem fs ^Deque cache uri]
     (let [out (.create fs (uri->hpath uri))]
-        (.add cache {:uri uri :stream out :create-timestamp (date/now)})
+        (.addFirst cache {:uri uri :stream out :open-timestamp (date/now)})
         out
     )
 )
@@ -160,11 +160,11 @@
     )
 )
 
-(defn- existent-file! [^FileSystem fs ^List cache uri]
+(defn- existent-file! [^FileSystem fs ^Deque cache uri]
     (if-let [hit (search-in-cache! (.iterator cache) uri)]
         hit
         (let [out (.append fs (uri->hpath uri))]
-            (.add cache {:uri uri :stream out :create-timestamp (date/now)})
+            (.addFirst cache {:uri uri :stream out :open-timestamp (date/now)})
             out
         )
     )
@@ -194,18 +194,19 @@
 (def utf-8-newline (util/str->bytes "\n"))
 
 (def ^:dynamic timeout 5000)
+(def ^:dynamic max-open-files 100)
 
-(defn- close-timeout-files! [^List cache]
+(defn- close-timeout-files! [^Deque cache]
     (let [iter (.iterator cache)
         now (date/now)
         start (date/minus now (date/millis timeout))
         ]
         (while (.hasNext iter)
-            (let [cache-item (.next iter)
-                create-ts (:create-timestamp cache-item)
+            (let [x (.next iter)
+                ts (:open-timestamp x)
                 ]
-                (when-not (date/within? start now create-ts)
-                    (.close (:stream cache-item))
+                (when-not (date/within? start now ts)
+                    (.close (:stream x))
                     (.remove iter)
                 )
             )
@@ -213,7 +214,7 @@
     )
 )
 
-(defn save->hdfs! [queue base ^FileSystem fs ^NavigableMap existents ^List cache]
+(defn save->hdfs! [queue base ^FileSystem fs ^NavigableMap existents ^Deque cache]
     (let [m (poll! queue timeout)]
         (when m
             (let [{:keys [topic message]} m

@@ -14,7 +14,7 @@
     )
     (:import
         [java.net URI]
-        [java.util NavigableMap ArrayList]
+        [java.util NavigableMap ArrayDeque]
         [java.util.concurrent ArrayBlockingQueue]
         [org.apache.hadoop.conf Configuration]
         [org.apache.hadoop.fs FileSystem]
@@ -210,21 +210,19 @@ my only sunshine.
     )
 )
 
-(defn close-all [cache]
-    (doseq [:let [size (.size cache)]
-        i (range size)
-        :let [x (.get cache i)]
-        ]
-        (.close (:stream x))
+(defn close-all! [cache]
+    (when-not (.isEmpty cache)
+        (let [x (.removeFirst cache)]
+            (.close (:stream x))
+            (recur cache)
+        )
     )
 )
 
-(defn show-cache [lst base]
-    (vec
-        (for [i (range (.size lst))
-            :let [x (.get lst i)]
-            ]
-            (str (.relativize base (:uri x)))
+(defn show-cache [cache base]
+    (vec 
+        (map #(str (.relativize base (:uri %)))
+            (util/iterable->lazy-seq cache)
         )
     )
 )
@@ -289,10 +287,10 @@ my only sunshine.
                     })
                 )
                 existents (kh/scan-existents fs base)
-                cache (ArrayList.)
+                cache (ArrayDeque.)
                 ]
                 (kh/save->hdfs! q base fs existents cache)
-                (close-all cache)
+                (close-all! cache)
                 [
                     (format-existents existents base)
                     (read-fs rt)
@@ -332,10 +330,10 @@ my only sunshine.
                     })
                 )
                 existents (kh/scan-existents fs base)
-                cache (ArrayList.)
+                cache (ArrayDeque.)
                 ]
                 (kh/save->hdfs! q base fs existents cache)
-                (close-all cache)
+                (close-all! cache)
                 [
                     (format-existents existents base)
                     (read-fs rt)
@@ -377,12 +375,12 @@ my only sunshine.
                     })
                 )
                 existents (kh/scan-existents fs base)
-                cache (ArrayList.)
+                cache (ArrayDeque.)
                 ]
                 (binding [kh/size-for-new-file 10]
                     (kh/save->hdfs! q base fs existents cache)
                 )
-                (close-all cache)
+                (close-all! cache)
                 [
                     (format-existents existents base)
                     (read-fs rt)
@@ -421,7 +419,7 @@ my only sunshine.
                     })
                 )
                 existents (kh/scan-existents fs base)
-                cache (ArrayList.)
+                cache (ArrayDeque.)
                 ]
                 (kh/save->hdfs! q base fs existents cache)
                 (let [before (show-cache cache base)]
