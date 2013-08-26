@@ -5,6 +5,7 @@
     (:require
         [clj-time.coerce :as date-coerce]
         [clj-time.format :as date-format]
+        [clj-time.core :as date]
         [clojure.data.json :as json]
         [clojure.java.io :as io]
         [utilities.core :as helpers]
@@ -12,7 +13,7 @@
     )
     (:import
         [java.util.concurrent BlockingQueue TimeUnit]
-        [java.util TreeMap NavigableMap Map]
+        [java.util TreeMap NavigableMap Map ArrayList Iterator]
         [java.net URI]
         [org.apache.hadoop.fs Path FileSystem FileStatus]
     )
@@ -133,12 +134,28 @@
     )
 )
 
-(defn create-file [^FileSystem fs add-meta gen-uri ^long ts]
-    (let [uri (gen-uri ts)
-        out (.create fs (uri->hpath uri))
-        ]
-        (add-meta ts uri)
+(defprotocol Modifiable
+    (modify! [this now])
+)
+
+(deftype CacheItem [uri stream ^:unsynchronized-mutable last-modify]
+    Modifiable
+    (modify! [this now]
+        (set! last-modify now)
+    )
+)
+
+(defn new-file [^FileSystem fs ^ArrayList cache uri]
+    (let [out (.create fs (uri->hpath uri))]
+        (.add cache (CacheItem. uri out (date/now)))
         out
+    )
+)
+
+(defn create-file [new-file add-meta gen-uri ^long ts]
+    (let [uri (gen-uri ts)]
+        (add-meta ts uri)
+        (new-file uri)
     )
 )
 
@@ -146,8 +163,33 @@
     (.put existents ts [uri size])
 )
 
-(defn append-file [^FileSystem fs update-meta uri ts]
-    (let [out (.append fs (uri->hpath uri))]
+(defn search-in-cache! [^Iterator cache-iter uri]
+    (if-not (.hasNext cache-iter)
+        nil
+        (let [cache-item (.next cache-iter)]
+            (if (= (.uri cache-item) uri)
+                (do
+                    (.modify! cache-item (date/now))
+                    (.stream cache-item)
+                )
+                (recur cache-iter uri)
+            )
+        )
+    )
+)
+
+(defn existent-file [^FileSystem fs ^ArrayList cache uri]
+    (if-let [hit (search-in-cache! (.iterator cache) uri)]
+        hit
+        (let [out (.append fs (uri->hpath uri))]
+            (.add cache (CacheItem. uri out (date/now)))
+            out
+        )
+    )
+)
+
+(defn append-file [existent-file update-meta uri ts]
+    (let [out (existent-file uri)]
         (update-meta ts)
         out
     )
@@ -169,18 +211,22 @@
 
 (def utf-8-newline (helpers/str->bytes "\n"))
 
-(defn save->hdfs! [fs base timeout queue ^NavigableMap existents]
+(def ^:dynamic timeout 5000)
+
+(defn save->hdfs! [^FileSystem fs base queue ^NavigableMap existents ^ArrayList cache]
     (let [m (poll! queue timeout)]
         (when m
             (let [{:keys [topic message]} m
                 ts (parse-timestamp message)
                 ]
-                (with-open [out (out-stream existents ts 
-                        (partial create-file fs 
+                (let [out (out-stream existents ts 
+                        (partial create-file 
+                            (partial new-file fs cache) 
                             (partial add-meta existents (alength message))
                             (partial gen-uri base topic)
                         )
-                        (partial append-file fs
+                        (partial append-file 
+                            (partial existent-file fs cache)
                             (partial update-meta existents (alength message))
                         )
                     )

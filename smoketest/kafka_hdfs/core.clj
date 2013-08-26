@@ -14,7 +14,7 @@
     )
     (:import
         [java.net URI]
-        [java.util NavigableMap]
+        [java.util NavigableMap ArrayList]
         [java.util.concurrent ArrayBlockingQueue]
         [org.apache.hadoop.conf Configuration]
         [org.apache.hadoop.fs FileSystem]
@@ -210,6 +210,15 @@ my only sunshine.
     )
 )
 
+(defn close-all [cache]
+    (doseq [:let [size (.size cache)]
+        i (range size)
+        :let [x (.get cache i)]
+        ]
+        (.close (.stream x))
+    )
+)
+
 (suite "save messages to hdfs"
     (:testbench (fn [test]
         (let [rt (sh/tempdir)
@@ -270,8 +279,10 @@ my only sunshine.
                     })
                 )
                 existents (kh/scan-existents fs base)
+                cache (ArrayList.)
                 ]
-                (kh/save->hdfs! fs base 5000 q existents)
+                (kh/save->hdfs! fs base q existents cache)
+                (close-all cache)
                 [
                     (format-existents existents base)
                     (read-fs rt)
@@ -311,8 +322,10 @@ my only sunshine.
                     })
                 )
                 existents (kh/scan-existents fs base)
+                cache (ArrayList.)
                 ]
-                (kh/save->hdfs! fs base 5000 q existents)
+                (kh/save->hdfs! fs base q existents cache)
+                (close-all cache)
                 [
                     (format-existents existents base)
                     (read-fs rt)
@@ -354,10 +367,12 @@ my only sunshine.
                     })
                 )
                 existents (kh/scan-existents fs base)
+                cache (ArrayList.)
                 ]
                 (binding [kh/size-for-new-file 10]
-                    (kh/save->hdfs! fs base 5000 q existents)
+                    (kh/save->hdfs! fs base q existents cache)
                 )
+                (close-all cache)
                 [
                     (format-existents existents base)
                     (read-fs rt)
