@@ -212,6 +212,11 @@
             )
         )
     )
+    (while (> (.size cache) max-open-files)
+        (let [x (.removeLast cache)]
+            (.close (:stream x))
+        )
+    )
 )
 
 (defn save->hdfs! [queue base ^FileSystem fs ^NavigableMap existents ^Deque cache]

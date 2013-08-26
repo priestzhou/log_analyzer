@@ -438,4 +438,45 @@ my only sunshine.
             ]
         )
     )
+    (:fact close-file-because-of-too-many-files
+        (fn [rt fs]
+            (let [base (jpath->uri rt)
+                q (doto
+                    (ArrayBlockingQueue. 16)
+                    (.put {
+                        :topic "test" 
+                        :message (util/str->bytes (json/write-str {
+                            :timestamp -23215049510877
+                            :level "DEBUG"
+                            :location "Client"
+                            :message "msg1"
+                        }))
+                    })
+                    (.put {
+                        :topic "test" 
+                        :message (util/str->bytes (json/write-str {
+                            :timestamp -23215049510544
+                            :level "IFNO"
+                            :location "Client"
+                            :message "msg2"
+                        }))
+                    })
+                )
+                existents (kh/scan-existents fs base)
+                cache (ArrayDeque.)
+                ]
+                (binding [kh/size-for-new-file 10
+                    kh/max-open-files 1
+                    ]
+                    (kh/save->hdfs! q base fs existents cache)
+                    (kh/save->hdfs! q base fs existents cache)
+                    (show-cache cache base)
+                )
+            )
+        )
+        :eq
+        (fn [rt fs]
+            ["1234-05-06/1234-05-06T07:08:09.456Z.test"]
+        )
+    )
 )
