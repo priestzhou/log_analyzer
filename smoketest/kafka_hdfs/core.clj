@@ -215,7 +215,17 @@ my only sunshine.
         i (range size)
         :let [x (.get cache i)]
         ]
-        (.close (.stream x))
+        (.close (:stream x))
+    )
+)
+
+(defn show-cache [lst base]
+    (vec
+        (for [i (range (.size lst))
+            :let [x (.get lst i)]
+            ]
+            (str (.relativize base (:uri x)))
+        )
     )
 )
 
@@ -392,6 +402,41 @@ my only sunshine.
                     "1234-05-06/1234-05-06T07:08:09.456Z.test"
                     "{\"timestamp\":-23215049510544,\"location\":\"Client\",\"message\":\"msg2\",\"level\":\"DEBUG\"}\n"
                 }
+            ]
+        )
+    )
+    (:fact close-file-because-of-timeout
+        (fn [rt fs]
+            (let [base (jpath->uri rt)
+                q (doto
+                    (ArrayBlockingQueue. 16)
+                    (.put {
+                        :topic "test" 
+                        :message (helpers/str->bytes (json/write-str {
+                            :timestamp -23215049510877
+                            :level "DEBUG"
+                            :location "Client"
+                            :message "msg2"
+                        }))
+                    })
+                )
+                existents (kh/scan-existents fs base)
+                cache (ArrayList.)
+                ]
+                (kh/save->hdfs! fs base q existents cache)
+                (let [before (show-cache cache base)]
+                    (kh/save->hdfs! fs base q existents cache)
+                    (let [after (show-cache cache base)]
+                        [before after]
+                    )
+                )
+            )
+        )
+        :eq
+        (fn [rt fs]
+            [
+                ["1234-05-06/1234-05-06T07:08:09.123Z.test"]
+                []
             ]
         )
     )

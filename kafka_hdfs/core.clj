@@ -13,7 +13,7 @@
     )
     (:import
         [java.util.concurrent BlockingQueue TimeUnit]
-        [java.util TreeMap NavigableMap Map ArrayList Iterator]
+        [java.util TreeMap NavigableMap Map List Iterator]
         [java.net URI]
         [org.apache.hadoop.fs Path FileSystem FileStatus]
     )
@@ -134,20 +134,9 @@
     )
 )
 
-(defprotocol Modifiable
-    (modify! [this now])
-)
-
-(deftype CacheItem [uri stream ^:unsynchronized-mutable last-modify]
-    Modifiable
-    (modify! [this now]
-        (set! last-modify now)
-    )
-)
-
-(defn new-file [^FileSystem fs ^ArrayList cache uri]
+(defn new-file [^FileSystem fs ^List cache uri]
     (let [out (.create fs (uri->hpath uri))]
-        (.add cache (CacheItem. uri out (date/now)))
+        (.add cache {:uri uri :stream out :create-timestamp (date/now)})
         out
     )
 )
@@ -168,21 +157,18 @@
         nil
         (let [cache-item (.next cache-iter)]
             (if (= (.uri cache-item) uri)
-                (do
-                    (.modify! cache-item (date/now))
-                    (.stream cache-item)
-                )
+                (:stream cache-item)
                 (recur cache-iter uri)
             )
         )
     )
 )
 
-(defn existent-file [^FileSystem fs ^ArrayList cache uri]
+(defn existent-file [^FileSystem fs ^List cache uri]
     (if-let [hit (search-in-cache! (.iterator cache) uri)]
         hit
         (let [out (.append fs (uri->hpath uri))]
-            (.add cache (CacheItem. uri out (date/now)))
+            (.add cache {:uri uri :stream out :create-timestamp (date/now)})
             out
         )
     )
@@ -213,7 +199,25 @@
 
 (def ^:dynamic timeout 5000)
 
-(defn save->hdfs! [^FileSystem fs base queue ^NavigableMap existents ^ArrayList cache]
+(defn close-timeout-files [^List cache]
+    (let [iter (.iterator cache)
+        now (date/now)
+        start (date/minus now (date/millis timeout))
+        ]
+        (while (.hasNext iter)
+            (let [cache-item (.next iter)
+                create-ts (:create-timestamp cache-item)
+                ]
+                (when-not (date/within? start now create-ts)
+                    (.close (:stream cache-item))
+                    (.remove iter)
+                )
+            )
+        )
+    )
+)
+
+(defn save->hdfs! [^FileSystem fs base queue ^NavigableMap existents ^List cache]
     (let [m (poll! queue timeout)]
         (when m
             (let [{:keys [topic message]} m
@@ -236,5 +240,6 @@
                 )
             )
         )
+        (close-timeout-files cache)
     )
 )
