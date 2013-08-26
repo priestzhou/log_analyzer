@@ -2,6 +2,15 @@
     (:require
         [utilities.core :as util]
         [argparser.core :as arg]
+        [kfktools.core :as kfk]
+        [kafka-hdfs.core :as kh]
+    )
+    (:import
+        [java.util.concurrent ArrayBlockingQueue]
+        [java.util ArrayDeque]
+        [java.net URI]
+        [org.apache.hadoop.conf Configuration]
+        [org.apache.hadoop.fs FileSystem]
     )
     (:gen-class)
 )
@@ -30,10 +39,36 @@
     )
 )
 
+(defn- new-consumer [cfg]
+    (->>
+        (for [[k v] cfg] [k v])
+        (flatten)
+        (apply kfk/newConsumer)
+    )
+)
+
 (defn -main [& args]
-    (-> (parseArgs args)
-        (slurp)
-        (read-string)
-        (prn)
+    (let [cfg (-> (parseArgs args)
+            (slurp)
+            (read-string)
+        )
+        c (new-consumer (:consumer cfg))
+        q (ArrayBlockingQueue. 256)
+        stubs (doall
+            (for [topic (:topics cfg)]
+                (kh/assign-consumer-to-queue! c topic q)
+            )
+        )
+        base (URI/create (:base cfg))
+        hdfs-cfg (Configuration.)
+        cache (ArrayDeque.)
+        ]
+        (with-open [fs (FileSystem/get base hdfs-cfg)]
+            (let [existents (kh/scan-existents fs base)]
+                (while true
+                    (kh/save->hdfs! q base fs existents cache)
+                )
+            )
+        )
     )
 )

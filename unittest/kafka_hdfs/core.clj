@@ -9,9 +9,9 @@
 )
 
 (suite "->uri: determine URI by timestamp and topic"
-    (:fact ->uri-case
+    (:fact gen-uri-case
         (let [base (URI/create "file://flyingsand.com/smile/")
-            uri (->uri base "test" 1370098139466)
+            uri (gen-uri base "test" 1370098139466)
             ]
             (str uri)
         )

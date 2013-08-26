@@ -56,7 +56,7 @@
     (Path. uri)
 )
 
-(defn- gen-uri [base topic ts]
+(defn gen-uri [base topic ts]
     (let [d (date-coerce/from-long ts)
         rfc3339-fulldate (date-format/formatter "yyyy-MM-dd")
         rfc3339-datetime (date-format/formatters :date-time)
@@ -132,6 +132,7 @@
 
 (defn- new-file! [^FileSystem fs ^Deque cache uri]
     (let [out (.create fs (uri->hpath uri))]
+        (info "create file" :uri uri)
         (.addFirst cache {:uri uri :stream out :open-timestamp (date/now)})
         out
     )
@@ -164,6 +165,7 @@
     (if-let [hit (search-in-cache! (.iterator cache) uri)]
         hit
         (let [out (.append fs (uri->hpath uri))]
+            (info "append file" :uri uri)
             (.addFirst cache {:uri uri :stream out :open-timestamp (date/now)})
             out
         )
@@ -207,6 +209,7 @@
                 ]
                 (when-not (date/within? start now ts)
                     (.close (:stream x))
+                    (info "close file" :uri (:uri x))
                     (.remove iter)
                 )
             )
@@ -215,6 +218,7 @@
     (while (> (.size cache) max-open-files)
         (let [x (.removeLast cache)]
             (.close (:stream x))
+            (info "close file" :uri (:uri x))
         )
     )
 )
