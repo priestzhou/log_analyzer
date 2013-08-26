@@ -107,6 +107,7 @@ env.install(env.compileAndJar('kafka_hdfs.jar', 'kafka_hdfs',
         env.File('$EXTLIB/data.json-0.2.2.jar'),
         env.File('$BUILD_DIR/kfktools.jar'),
         env.File('$BUILD_DIR/logging.jar'),
+        env.File('$BUILD_DIR/argparser.jar'),
     ],
     standalone=True, 
     manifest={'Main-Class': 'kafka_hdfs.main'}))

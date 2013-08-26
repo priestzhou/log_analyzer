@@ -8,7 +8,7 @@
         [clj-time.core :as date]
         [clojure.data.json :as json]
         [clojure.java.io :as io]
-        [utilities.core :as helpers]
+        [utilities.core :as util]
         [kfktools.core :as kfk]
     )
     (:import
@@ -52,15 +52,11 @@
 )
 
 
-(defn hpath->uri [^Path p]
-    (.toUri p)
-)
-
-(defn uri->hpath [^URI uri]
+(defn- uri->hpath [^URI uri]
     (Path. uri)
 )
 
-(defn gen-uri [base topic ts]
+(defn- gen-uri [base topic ts]
     (let [d (date-coerce/from-long ts)
         rfc3339-fulldate (date-format/formatter "yyyy-MM-dd")
         rfc3339-datetime (date-format/formatters :date-time)
@@ -75,15 +71,7 @@
     )
 )
 
-(defn recent? [existents uri]
-    (let [recent (.lastEntry existents)
-        [recent-uri _] (.getValue recent)
-        ]
-        (= recent-uri uri)
-    )
-)
-
-(defn parse-timestamp-from-path [p]
+(defn- parse-timestamp-from-path [p]
     (let [f (.getName p)]
         (->>
             (re-find #"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[.]\d{3}Z(?=[.])" f)
@@ -93,13 +81,13 @@
     )
 )
 
-(defn- scan-existents! [tree-map fs base]
+(defn- scan-existents' [tree-map fs base]
     (let [xs (.listStatus fs base)]
-        (doseq [x (helpers/array->lazy-seq xs)
+        (doseq [x (util/array->lazy-seq xs)
             :let [p (.getPath x)]
             ]
             (cond
-                (.isDirectory x) (scan-existents! tree-map fs p)
+                (.isDirectory x) (scan-existents' tree-map fs p)
                 (.isFile x) (.put tree-map 
                     (parse-timestamp-from-path p) [(.toUri p) (.getLen x)]
                 )
@@ -113,46 +101,54 @@
 
 (defn scan-existents [fs base]
     (let [tree-map (TreeMap.)]
-        (scan-existents! tree-map fs (uri->hpath base))
+        (scan-existents' tree-map fs (uri->hpath base))
         tree-map
     )
 )
 
 (def ^:dynamic size-for-new-file (* 60 1024 1024))
 
-(defn out-stream [^NavigableMap existents ^long ts create-file append-file]
+(defn- recent? [existents uri]
+    (let [recent (.lastEntry existents)
+        [recent-uri _] (.getValue recent)
+        ]
+        (= recent-uri uri)
+    )
+)
+
+(defn- out-stream! [^NavigableMap existents ^long ts create-file! append-file!]
     (if (.isEmpty existents)
-        (create-file ts)
+        (create-file! ts)
         (let [kv (.floorEntry existents ts)
             [uri size] (.getValue kv)
             ]
             (if (and (recent? existents uri) (> size size-for-new-file))
-                (create-file ts)
-                (append-file uri (.getKey kv))
+                (create-file! ts)
+                (append-file! uri (.getKey kv))
             )
         )
     )
 )
 
-(defn new-file [^FileSystem fs ^List cache uri]
+(defn- new-file! [^FileSystem fs ^List cache uri]
     (let [out (.create fs (uri->hpath uri))]
         (.add cache {:uri uri :stream out :create-timestamp (date/now)})
         out
     )
 )
 
-(defn create-file [new-file add-meta gen-uri ^long ts]
+(defn- create-file! [new-file! add-meta! gen-uri ^long ts]
     (let [uri (gen-uri ts)]
-        (add-meta ts uri)
-        (new-file uri)
+        (add-meta! ts uri)
+        (new-file! uri)
     )
 )
 
-(defn add-meta [^NavigableMap existents size ts uri]
+(defn- add-meta! [^NavigableMap existents size ts uri]
     (.put existents ts [uri size])
 )
 
-(defn search-in-cache! [^Iterator cache-iter uri]
+(defn- search-in-cache! [^Iterator cache-iter uri]
     (if-not (.hasNext cache-iter)
         nil
         (let [cache-item (.next cache-iter)]
@@ -164,7 +160,7 @@
     )
 )
 
-(defn existent-file [^FileSystem fs ^List cache uri]
+(defn- existent-file! [^FileSystem fs ^List cache uri]
     (if-let [hit (search-in-cache! (.iterator cache) uri)]
         hit
         (let [out (.append fs (uri->hpath uri))]
@@ -174,32 +170,32 @@
     )
 )
 
-(defn append-file [existent-file update-meta uri ts]
-    (let [out (existent-file uri)]
-        (update-meta ts)
+(defn- append-file! [existent-file! update-meta! uri ts]
+    (let [out (existent-file! uri)]
+        (update-meta! ts)
         out
     )
 )
 
-(defn update-meta [^NavigableMap existents inc-size ts]
+(defn- update-meta! [^NavigableMap existents inc-size ts]
     (let [[uri size] (.get existents ts)]
         (.put existents ts [uri (+ size inc-size)])
     )
 )
 
-(defn parse-timestamp [^bytes m]
+(defn- parse-timestamp [^bytes m]
     (-> m
-        (helpers/bytes->str)
+        (util/bytes->str)
         (json/read-str :key-fn keyword)
         (:timestamp)
     )
 )
 
-(def utf-8-newline (helpers/str->bytes "\n"))
+(def utf-8-newline (util/str->bytes "\n"))
 
 (def ^:dynamic timeout 5000)
 
-(defn close-timeout-files [^List cache]
+(defn- close-timeout-files! [^List cache]
     (let [iter (.iterator cache)
         now (date/now)
         start (date/minus now (date/millis timeout))
@@ -217,21 +213,21 @@
     )
 )
 
-(defn save->hdfs! [^FileSystem fs base queue ^NavigableMap existents ^List cache]
+(defn save->hdfs! [queue base ^FileSystem fs ^NavigableMap existents ^List cache]
     (let [m (poll! queue timeout)]
         (when m
             (let [{:keys [topic message]} m
                 ts (parse-timestamp message)
                 ]
-                (let [out (out-stream existents ts 
-                        (partial create-file 
-                            (partial new-file fs cache) 
-                            (partial add-meta existents (alength message))
+                (let [out (out-stream! existents ts 
+                        (partial create-file! 
+                            (partial new-file! fs cache) 
+                            (partial add-meta! existents (alength message))
                             (partial gen-uri base topic)
                         )
-                        (partial append-file 
-                            (partial existent-file fs cache)
-                            (partial update-meta existents (alength message))
+                        (partial append-file! 
+                            (partial existent-file! fs cache)
+                            (partial update-meta! existents (alength message))
                         )
                     )
                     ]
@@ -240,6 +236,6 @@
                 )
             )
         )
-        (close-timeout-files cache)
+        (close-timeout-files! cache)
     )
 )

@@ -7,7 +7,7 @@
         [clojure.java.io :as io]
         [clojure.data.json :as json]
         [utilities.shutil :as sh]
-        [utilities.core :as helpers]
+        [utilities.core :as util]
         [kafka-hdfs.core :as kh]
         [kfktools.core :as kfk]
         [zktools.core :as zk]
@@ -151,7 +151,7 @@ my only sunshine.
                         (if-not m1
                             [m0 nil]
                             (let [{:keys [topic message]} m1]
-                                [m0 {:topic topic :message (helpers/bytes->str message)}]
+                                [m0 {:topic topic :message (util/bytes->str message)}]
                             )
                         )
                     )
@@ -202,7 +202,7 @@ my only sunshine.
 
 (defn format-existents [^NavigableMap existents base]
     (into (sorted-map)
-        (for [k (helpers/iterable->lazy-seq (.keySet existents))
+        (for [k (util/iterable->lazy-seq (.keySet existents))
             :let [[uri size] (.get existents k)]
             ]
             [k [(str (.relativize base uri)) size]]
@@ -280,7 +280,7 @@ my only sunshine.
                     (ArrayBlockingQueue. 16)
                     (.put {
                         :topic "test" 
-                        :message (helpers/str->bytes (json/write-str {
+                        :message (util/str->bytes (json/write-str {
                             :timestamp -23215049510877
                             :level "INFO"
                             :location "Client"
@@ -291,7 +291,7 @@ my only sunshine.
                 existents (kh/scan-existents fs base)
                 cache (ArrayList.)
                 ]
-                (kh/save->hdfs! fs base q existents cache)
+                (kh/save->hdfs! q base fs existents cache)
                 (close-all cache)
                 [
                     (format-existents existents base)
@@ -323,7 +323,7 @@ my only sunshine.
                     (ArrayBlockingQueue. 16)
                     (.put {
                         :topic "test" 
-                        :message (helpers/str->bytes (json/write-str {
+                        :message (util/str->bytes (json/write-str {
                             :timestamp -23215049510544
                             :level "DEBUG"
                             :location "Client"
@@ -334,7 +334,7 @@ my only sunshine.
                 existents (kh/scan-existents fs base)
                 cache (ArrayList.)
                 ]
-                (kh/save->hdfs! fs base q existents cache)
+                (kh/save->hdfs! q base fs existents cache)
                 (close-all cache)
                 [
                     (format-existents existents base)
@@ -368,7 +368,7 @@ my only sunshine.
                     (ArrayBlockingQueue. 16)
                     (.put {
                         :topic "test" 
-                        :message (helpers/str->bytes (json/write-str {
+                        :message (util/str->bytes (json/write-str {
                             :timestamp -23215049510544
                             :level "DEBUG"
                             :location "Client"
@@ -380,7 +380,7 @@ my only sunshine.
                 cache (ArrayList.)
                 ]
                 (binding [kh/size-for-new-file 10]
-                    (kh/save->hdfs! fs base q existents cache)
+                    (kh/save->hdfs! q base fs existents cache)
                 )
                 (close-all cache)
                 [
@@ -412,7 +412,7 @@ my only sunshine.
                     (ArrayBlockingQueue. 16)
                     (.put {
                         :topic "test" 
-                        :message (helpers/str->bytes (json/write-str {
+                        :message (util/str->bytes (json/write-str {
                             :timestamp -23215049510877
                             :level "DEBUG"
                             :location "Client"
@@ -423,9 +423,9 @@ my only sunshine.
                 existents (kh/scan-existents fs base)
                 cache (ArrayList.)
                 ]
-                (kh/save->hdfs! fs base q existents cache)
+                (kh/save->hdfs! q base fs existents cache)
                 (let [before (show-cache cache base)]
-                    (kh/save->hdfs! fs base q existents cache)
+                    (kh/save->hdfs! q base fs existents cache)
                     (let [after (show-cache cache base)]
                         [before after]
                     )
