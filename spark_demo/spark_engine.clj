@@ -70,12 +70,14 @@
 )
 
 (defn- filter-parse [rdd]
-;    ( filter 
-;        #(empty?
-;            (filter nil? (vals %))
-;        )
+    (k/filter 
         rdd
-;    )
+        (sfn/fn [l]
+            (empty?
+                (filter nil? (vals l))
+            )
+        )
+    )
 )
 
 (defn- dateformat [t]
@@ -271,7 +273,7 @@
         (->>
             logVal
             (map 
-                (sfn/fn f [log](get log inKey) )
+                (sfn/fn f [l](get l inKey) )
             )
             statFun
         )
@@ -327,7 +329,7 @@
 ;            limitStatResult (map #(dissoc % :gVal) statResult)
             statWithTimeResult (do-statistic statRules logGroupWithTime)
             limitResultWithTime (showLimitResult 
-                statWithTimeResult
+               statWithTimeResult
                 timeRule 
                 statResult
                 gTimeList

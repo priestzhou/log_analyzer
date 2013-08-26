@@ -47,8 +47,8 @@
         ;(run-test "*hdfs*")
         (run-test 
             "*hdfs_* | parse-re \"(?<=HDFS_)[a-zA-Z]*\" as type 
-            | parse \"bytes: *,\" as size | count type by type " 
-            "14400"
+            | parse \"bytes: *,\" as size | last size ,min size,stddev size ,max size , avg size by type " 
+            "86400"
             1377018378063
         )                
     )

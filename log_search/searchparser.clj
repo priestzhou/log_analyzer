@@ -19,10 +19,20 @@
 
 )
 
+
+(defn- testparse' [instr]
+    (fn [stream]
+        (println "test" instr (map first stream))
+        [stream []]
+    )
+)
+
 (defn- testparse [stream]
-    (println "test" stream)
+    (println "test" (map first stream))
     [stream []]
 )
+
+
 
 (defn- parse-event-str [stream]
     (let [[strm parsed] (
@@ -247,15 +257,15 @@
         )
         "uc"
         (fn [l] 
-            (distinct l)
+            (count (distinct l))
         )
         "min"
         (fn [l] 
-            (apply min l)
+            (apply min (map read-string l))
         )        
         "max"
         (fn [l] 
-            (apply max l)
+            (apply max (map read-string l))
         )
         "first"
         (fn [l] 
@@ -267,21 +277,31 @@
         )
         "avg"
         (fn [l]
-            (/  (apply + l) (count l)
+            (float   
+                (/  (apply + (map read-string l)) (count  l))
             )
-        )
+        )        
         "stddev"
         (fn [l]
-            (let [avg (/ (apply + l) (count l))
+            (let [avg (/ (apply + (map read-string l)) (count l))
                 ]
-                (/ 
-                    (reduce 
-                        (fn [a b]
-                            (+ a (* (- b avg) (- b avg)))
+                (float 
+                    (/ 
+                        (reduce 
+                            (fn [a b]
+                                (
+                                    + 
+                                    a 
+                                    (* 
+                                        (-  b avg) 
+                                        (- b avg)
+                                    )
+                                )
+                            )
+                            (map read-string l)
                         )
-                        l
+                        (count l)
                     )
-                    (count l)
                 )
             )
         )
@@ -346,7 +366,6 @@
                         (ups/expect-char \,)
                         (ups/optional whitespaces)
                         parse-static-fun''
-                        (ups/optional whitespaces)
                     )
                 )
             )
