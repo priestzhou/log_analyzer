@@ -148,7 +148,12 @@ my only sunshine.
                     (.close c) ; shutdown consumer to flush its cache
                     (let [m1 (kh/poll! q 500)]
                         (shutdown-agents)
-                        [m0 m1]
+                        (if-not m1
+                            [m0 nil]
+                            (let [{:keys [topic message]} m1]
+                                [m0 {:topic topic :message (helpers/bytes->str message)}]
+                            )
+                        )
                     )
                 )
             )
@@ -256,12 +261,12 @@ my only sunshine.
                     (ArrayBlockingQueue. 16)
                     (.put {
                         :topic "test" 
-                        :message (json/write-str {
+                        :message (helpers/str->bytes (json/write-str {
                             :timestamp -23215049510877
                             :level "INFO"
                             :location "Client"
                             :message "msg1"
-                        })
+                        }))
                     })
                 )
                 existents (kh/scan-existents fs base)
@@ -297,12 +302,12 @@ my only sunshine.
                     (ArrayBlockingQueue. 16)
                     (.put {
                         :topic "test" 
-                        :message (json/write-str {
+                        :message (helpers/str->bytes (json/write-str {
                             :timestamp -23215049510544
                             :level "DEBUG"
                             :location "Client"
                             :message "msg2"
-                        })
+                        }))
                     })
                 )
                 existents (kh/scan-existents fs base)
@@ -340,12 +345,12 @@ my only sunshine.
                     (ArrayBlockingQueue. 16)
                     (.put {
                         :topic "test" 
-                        :message (json/write-str {
+                        :message (helpers/str->bytes (json/write-str {
                             :timestamp -23215049510544
                             :level "DEBUG"
                             :location "Client"
                             :message "msg2"
-                        })
+                        }))
                     })
                 )
                 existents (kh/scan-existents fs base)

@@ -11,7 +11,6 @@
         [kfktools.core :as kfk]
     )
     (:import
-        [java.nio.charset StandardCharsets]
         [java.util.concurrent BlockingQueue TimeUnit]
         [java.util TreeMap NavigableMap Map]
         [java.net URI]
@@ -25,7 +24,6 @@
     (when-not (empty? seq)
         (let [[x & xs] seq
             message (:message x)
-            message (if message (String. message) nil)
             ]
             (.put q {:topic topic :message message})
             (if (= cnt 1000)
@@ -161,24 +159,34 @@
     )
 )
 
+(defn parse-timestamp [^bytes m]
+    (-> m
+        (helpers/bytes->str)
+        (json/read-str :key-fn keyword)
+        (:timestamp)
+    )
+)
+
+(def utf-8-newline (helpers/str->bytes "\n"))
+
 (defn save->hdfs! [fs base timeout queue ^NavigableMap existents]
     (let [m (poll! queue timeout)]
         (when m
             (let [{:keys [topic message]} m
-                jsoned-message (json/read-str message :key-fn keyword)
-                ts (:timestamp jsoned-message)
+                ts (parse-timestamp message)
                 ]
                 (with-open [out (out-stream existents ts 
                         (partial create-file fs 
-                            (partial add-meta existents (count message))
+                            (partial add-meta existents (alength message))
                             (partial gen-uri base topic)
                         )
                         (partial append-file fs
-                            (partial update-meta existents (count message))
+                            (partial update-meta existents (alength message))
                         )
                     )
                     ]
-                    (.write out (.getBytes (format "%s\n" message) StandardCharsets/UTF_8))
+                    (.write out message)
+                    (.write out utf-8-newline)
                 )
             )
         )
