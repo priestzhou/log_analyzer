@@ -63,14 +63,14 @@
     (let [d (date-coerce/from-long ts)
         rfc3339-fulldate (date-format/formatters :date)
         datetime (date-format/formatters :basic-date-time) ; hdfs does not support \:
-        ]
-        (.resolve base 
-            (format "./%s/%s.%s"
-                (date-format/unparse rfc3339-fulldate d)
-                (date-format/unparse datetime d) 
-                topic
-            )
+        relative (format "./%s/%s.%s"
+            (date-format/unparse rfc3339-fulldate d)
+            (date-format/unparse datetime d) 
+            topic
         )
+        final (.resolve base relative)
+        ]
+        final
     )
 )
 
@@ -85,17 +85,19 @@
 )
 
 (defn- scan-existents' [tree-map fs base]
-    (let [xs (.listStatus fs base)]
-        (doseq [x (util/array->lazy-seq xs)
-            :let [p (.getPath x)]
-            ]
-            (cond
-                (.isDirectory x) (scan-existents' tree-map fs p)
-                (.isFile x) (.put tree-map 
-                    (parse-timestamp-from-path p) [(.toUri p) (.getLen x) nil]
-                )
-                :else (throw 
-                    (RuntimeException. (str "unknown file type: " (.toUri p)))
+    (when (.exists fs base)
+        (let [xs (.listStatus fs base)]
+            (doseq [x (util/array->lazy-seq xs)
+                :let [p (.getPath x)]
+                ]
+                (cond
+                    (.isDirectory x) (scan-existents' tree-map fs p)
+                    (.isFile x) (.put tree-map 
+                        (parse-timestamp-from-path p) [(.toUri p) (.getLen x) nil]
+                    )
+                    :else (throw 
+                        (RuntimeException. (str "unknown file type: " (.toUri p)))
+                    )
                 )
             )
         )
@@ -258,7 +260,7 @@
 
 (def utf-8-newline (util/str->bytes "\n"))
 
-(def ^:dynamic timeout 5000)
+(def ^:dynamic timeout 60000)
 (def ^:dynamic max-open-files 100)
 
 (defn- close-timeout-files! [^Deque cache]

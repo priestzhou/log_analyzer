@@ -53,7 +53,7 @@
             (read-string)
         )
         c (new-consumer (:consumer cfg))
-        q (ArrayBlockingQueue. 256)
+        q (ArrayBlockingQueue. 1024)
         stubs (doall
             (for [topic (:topics cfg)]
                 (kh/assign-consumer-to-queue! c topic q)
