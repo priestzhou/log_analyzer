@@ -2,6 +2,7 @@
     (:require 
         unittest.log-collector.log-line-parser
         unittest.log-search.frame
+        unittest.kafka-hdfs.core
     )
     (:use testing.core)
     (:gen-class)
@@ -12,6 +13,7 @@
         (load-cases 
             'unittest.log-collector.log-line-parser 
             'unittest.log-search.frame
+            `unittest.kafka-hdfs.core
         )
         (main args)
     )
