@@ -8,10 +8,13 @@
         [clj-time.core :as date]
         [clojure.data.json :as json]
         [clojure.java.io :as io]
+        [clojure.string :as str]
         [utilities.core :as util]
         [kfktools.core :as kfk]
     )
     (:import
+        [java.nio.charset StandardCharsets]
+        [java.io InputStreamReader BufferedReader]
         [java.util.concurrent BlockingQueue TimeUnit]
         [java.util TreeMap NavigableMap Map Deque Iterator]
         [java.net URI]
@@ -58,13 +61,13 @@
 
 (defn gen-uri [base topic ts]
     (let [d (date-coerce/from-long ts)
-        rfc3339-fulldate (date-format/formatter "yyyy-MM-dd")
-        rfc3339-datetime (date-format/formatters :date-time)
+        rfc3339-fulldate (date-format/formatters :date)
+        datetime (date-format/formatters :basic-date-time) ; hdfs does not support \:
         ]
         (.resolve base 
             (format "./%s/%s.%s"
                 (date-format/unparse rfc3339-fulldate d)
-                (date-format/unparse rfc3339-datetime d) 
+                (date-format/unparse datetime d) 
                 topic
             )
         )
@@ -74,8 +77,8 @@
 (defn- parse-timestamp-from-path [p]
     (let [f (.getName p)]
         (->>
-            (re-find #"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[.]\d{3}Z(?=[.])" f)
-            (date-format/parse (date-format/formatters :date-time))
+            (re-find #"\d{4}\d{2}\d{2}T\d{2}\d{2}\d{2}[.]\d{3}Z(?=[.])" f)
+            (date-format/parse (date-format/formatters :basic-date-time))
             (date-coerce/to-long)
         )
     )
@@ -89,7 +92,7 @@
             (cond
                 (.isDirectory x) (scan-existents' tree-map fs p)
                 (.isFile x) (.put tree-map 
-                    (parse-timestamp-from-path p) [(.toUri p) (.getLen x)]
+                    (parse-timestamp-from-path p) [(.toUri p) (.getLen x) nil]
                 )
                 :else (throw 
                     (RuntimeException. (str "unknown file type: " (.toUri p)))
@@ -99,34 +102,86 @@
     )
 )
 
+(defn- lazy-readlines [^BufferedReader rdr]
+    (if-let [ln (.readLine rdr)]
+        (lazy-seq
+            (cons ln (lazy-readlines rdr))
+        )
+    )
+)
+
+(defn- update-recent-in-last! [existents fs]
+    (if-let [entry (.lastEntry existents)]
+        (let [ts (.getKey entry)
+            [uri size] (.getValue entry)
+            ]
+            (with-open [is (.open fs (uri->hpath uri))]
+                (let [decoded (InputStreamReader. is StandardCharsets/UTF_8)
+                    buffered (BufferedReader. decoded)
+                    recent-ts (->> buffered
+                        (lazy-readlines)
+                        (map #(json/read-str % :key-fn keyword))
+                        (map #(:timestamp %))
+                        (reduce max)
+                    )
+                    ]
+                    (.put existents ts [uri size recent-ts])
+                )
+            )
+        )
+    )
+)
+
 (defn scan-existents [fs base]
     (let [tree-map (TreeMap.)]
         (scan-existents' tree-map fs (uri->hpath base))
+        (update-recent-in-last! tree-map fs)
         tree-map
     )
 )
 
 (def ^:dynamic size-for-new-file (* 60 1024 1024))
 
-(defn- recent? [existents uri]
+(defn- recent? [existents uri ts]
     (let [recent (.lastEntry existents)
-        [recent-uri _] (.getValue recent)
+        [recent-uri _ recent-ts] (.getValue recent)
         ]
-        (= recent-uri uri)
+        (assert (not (nil? recent-ts)))
+        (and
+            (= recent-uri uri)
+            (> ts recent-ts)
+        )
+    )
+)
+
+(defn- within-same-day? [uri ts]
+    (let [d0 (-> uri
+            (uri->hpath)
+            (.getName)
+            (str/split #"[T]" 2)
+            (first)
+        )
+        d1 (->> ts
+            (date-coerce/from-long)
+            (date-format/unparse (date-format/formatters :basic-date))
+        )
+        ]
+        (= d0 d1)
     )
 )
 
 (defn- out-stream! [^NavigableMap existents ^long ts create-file! append-file!]
-    (if (.isEmpty existents)
-        (create-file! ts)
-        (let [kv (.floorEntry existents ts)
-            [uri size] (.getValue kv)
-            ]
-            (if (and (recent? existents uri) (> size size-for-new-file))
+    (if-let [kv (.floorEntry existents ts)]
+        (let [[uri size] (.getValue kv)]
+            (if (and (recent? existents uri ts) (> size size-for-new-file))
                 (create-file! ts)
-                (append-file! uri (.getKey kv))
+                (if (within-same-day? uri ts)
+                    (append-file! uri ts)
+                    (create-file! ts)
+                )
             )
         )
+        (create-file! ts)
     )
 )
 
@@ -146,14 +201,14 @@
 )
 
 (defn- add-meta! [^NavigableMap existents size ts uri]
-    (.put existents ts [uri size])
+    (.put existents ts [uri size ts])
 )
 
 (defn- search-in-cache! [^Iterator cache-iter uri]
     (if-not (.hasNext cache-iter)
         nil
         (let [cache-item (.next cache-iter)]
-            (if (= (.uri cache-item) uri)
+            (if (= (:uri cache-item) uri)
                 (:stream cache-item)
                 (recur cache-iter uri)
             )
@@ -180,8 +235,16 @@
 )
 
 (defn- update-meta! [^NavigableMap existents inc-size ts]
-    (let [[uri size] (.get existents ts)]
-        (.put existents ts [uri (+ size inc-size)])
+    (let [kv (.floorEntry existents ts)
+        _ (assert kv)
+        [uri size recent-ts] (.getValue kv)
+        new-size (+ size inc-size)
+        new-recent-ts (if recent-ts
+            (max recent-ts ts)
+            ts
+        )
+        ]
+        (.put existents (.getKey kv) [uri new-size new-recent-ts])
     )
 )
 

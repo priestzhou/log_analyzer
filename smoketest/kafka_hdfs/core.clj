@@ -257,7 +257,7 @@ my only sunshine.
     (:fact scan-existent-files:one
         (fn [rt fs]
             (sh/spitFile 
-                (sh/getPath rt "1234-05-06/1234-05-06T07:08:09.123Z.test")
+                (sh/getPath rt "1234-05-06/12340506T070809.123Z.test")
                 "0123456789"
             )
             (let [uri (jpath->uri rt)
@@ -268,7 +268,7 @@ my only sunshine.
         )
         :eq
         (fn [rt fs]
-            {-23215049510877 ["1234-05-06/1234-05-06T07:08:09.123Z.test" 10]}
+            {-23215049510877 ["1234-05-06/12340506T070809.123Z.test" 10]}
         )
     )
     (:fact when-hdfs-is-empty
@@ -301,10 +301,10 @@ my only sunshine.
         (fn [rt fs]
             [
                 {
-                    -23215049510877 ["1234-05-06/1234-05-06T07:08:09.123Z.test" 81]
+                    -23215049510877 ["1234-05-06/12340506T070809.123Z.test" 81]
                 }
                 {
-                    "1234-05-06/1234-05-06T07:08:09.123Z.test" 
+                    "1234-05-06/12340506T070809.123Z.test" 
                     "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}\n"
                 }
             ]
@@ -313,7 +313,7 @@ my only sunshine.
     (:fact append-existent-file
         (fn [rt fs]
             (sh/spitFile 
-                (sh/getPath rt "1234-05-06/1234-05-06T07:08:09.123Z.test")
+                (sh/getPath rt "1234-05-06/12340506T070809.123Z.test")
                 "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}\n"
             )
             (let [base (jpath->uri rt)
@@ -344,10 +344,10 @@ my only sunshine.
         (fn [rt fs]
             [
                 {
-                    -23215049510877 ["1234-05-06/1234-05-06T07:08:09.123Z.test" 164]
+                    -23215049510877 ["1234-05-06/12340506T070809.123Z.test" 164]
                 }
                 {
-                    "1234-05-06/1234-05-06T07:08:09.123Z.test" 
+                    "1234-05-06/12340506T070809.123Z.test" 
                     "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}
 {\"timestamp\":-23215049510544,\"location\":\"Client\",\"message\":\"msg2\",\"level\":\"DEBUG\"}
 "
@@ -358,7 +358,7 @@ my only sunshine.
     (:fact create-new-file-because-of-size
         (fn [rt fs]
             (sh/spitFile 
-                (sh/getPath rt "1234-05-06/1234-05-06T07:08:09.123Z.test")
+                (sh/getPath rt "1234-05-06/12340506T070809.123Z.test")
                 "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}\n"
             )
             (let [base (jpath->uri rt)
@@ -391,13 +391,13 @@ my only sunshine.
         (fn [rt fs]
             [
                 {
-                    -23215049510877 ["1234-05-06/1234-05-06T07:08:09.123Z.test" 82]
-                    -23215049510544 ["1234-05-06/1234-05-06T07:08:09.456Z.test" 82]
+                    -23215049510877 ["1234-05-06/12340506T070809.123Z.test" 82]
+                    -23215049510544 ["1234-05-06/12340506T070809.456Z.test" 82]
                 }
                 {
-                    "1234-05-06/1234-05-06T07:08:09.123Z.test" 
+                    "1234-05-06/12340506T070809.123Z.test" 
                     "{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}\n"
-                    "1234-05-06/1234-05-06T07:08:09.456Z.test"
+                    "1234-05-06/12340506T070809.456Z.test"
                     "{\"timestamp\":-23215049510544,\"location\":\"Client\",\"message\":\"msg2\",\"level\":\"DEBUG\"}\n"
                 }
             ]
@@ -433,7 +433,7 @@ my only sunshine.
         :eq
         (fn [rt fs]
             [
-                ["1234-05-06/1234-05-06T07:08:09.123Z.test"]
+                ["1234-05-06/12340506T070809.123Z.test"]
                 []
             ]
         )
@@ -456,7 +456,7 @@ my only sunshine.
                         :topic "test" 
                         :message (util/str->bytes (json/write-str {
                             :timestamp -23215049510544
-                            :level "IFNO"
+                            :level "INFO"
                             :location "Client"
                             :message "msg2"
                         }))
@@ -476,7 +476,148 @@ my only sunshine.
         )
         :eq
         (fn [rt fs]
-            ["1234-05-06/1234-05-06T07:08:09.456Z.test"]
+            ["1234-05-06/12340506T070809.456Z.test"]
+        )
+    )
+    (:fact create-file-because-of-new-day
+        (fn [rt fs]
+            (let [base (jpath->uri rt)
+                q (doto
+                    (ArrayBlockingQueue. 16)
+                    (.put {
+                        :topic "test" 
+                        :message (util/str->bytes (json/write-str {
+                            :timestamp -23215075200001
+                            :level "DEBUG"
+                            :location "Client"
+                            :message "msg1"
+                        }))
+                    })
+                    (.put {
+                        :topic "test" 
+                        :message (util/str->bytes (json/write-str {
+                            :timestamp -23215075200000
+                            :level "INFO"
+                            :location "Client"
+                            :message "msg2"
+                        }))
+                    })
+                )
+                existents (kh/scan-existents fs base)
+                cache (ArrayDeque.)
+                ]
+                (kh/save->hdfs! q base fs existents cache)
+                (kh/save->hdfs! q base fs existents cache)
+                (close-all! cache)
+                (read-fs rt)
+            )
+        )
+        :eq
+        (fn [rt fs]
+            {
+                "1234-05-05/12340505T235959.999Z.test" 
+                "{\"timestamp\":-23215075200001,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"DEBUG\"}\n"
+                "1234-05-06/12340506T000000.000Z.test"
+                "{\"timestamp\":-23215075200000,\"location\":\"Client\",\"message\":\"msg2\",\"level\":\"INFO\"}\n"
+            }
+        )
+    )
+    (:fact suppress-create-file-because-of-not-new:empty
+        (fn [rt fs]
+            (let [base (jpath->uri rt)
+                q (doto
+                    (ArrayBlockingQueue. 16)
+                    (.put {
+                        :topic "test" 
+                        :message (util/str->bytes (json/write-str {
+                            :timestamp -23215049510900
+                            :level "INFO"
+                            :location "Client"
+                            :message "msg1"
+                        }))
+                    })
+                    (.put {
+                        :topic "test" 
+                        :message (util/str->bytes (json/write-str {
+                            :timestamp -23215049510544
+                            :level "INFO"
+                            :location "Client"
+                            :message "msg3"
+                        }))
+                    })
+                    (.put {
+                        :topic "test" 
+                        :message (util/str->bytes (json/write-str {
+                            :timestamp -23215049510877
+                            :level "INFO"
+                            :location "Client"
+                            :message "msg2"
+                        }))
+                    })
+                )
+                existents (kh/scan-existents fs base)
+                cache (ArrayDeque.)
+                ]
+                (binding [kh/size-for-new-file 100]
+                    (kh/save->hdfs! q base fs existents cache)
+                    (kh/save->hdfs! q base fs existents cache)
+                    (kh/save->hdfs! q base fs existents cache)
+                    (close-all! cache)
+                    (read-fs rt)
+                )
+            )
+        )
+        :eq
+        (fn [rt fs]
+            {
+                "1234-05-06/12340506T070809.100Z.test" 
+                "{\"timestamp\":-23215049510900,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}
+{\"timestamp\":-23215049510544,\"location\":\"Client\",\"message\":\"msg3\",\"level\":\"INFO\"}
+{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg2\",\"level\":\"INFO\"}
+"
+            }
+        )
+    )
+    (:fact suppress-create-file-because-of-not-new:nonempty
+        (fn [rt fs]
+            (sh/spitFile 
+                (sh/getPath rt "1234-05-06/12340506T070809.100Z.test")
+                "{\"timestamp\":-23215049510900,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}
+{\"timestamp\":-23215049510544,\"location\":\"Client\",\"message\":\"msg3\",\"level\":\"INFO\"}
+"
+            )
+            (let [base (jpath->uri rt)
+                q (doto
+                    (ArrayBlockingQueue. 16)
+                    (.put {
+                        :topic "test" 
+                        :message (util/str->bytes (json/write-str {
+                            :timestamp -23215049510877
+                            :level "INFO"
+                            :location "Client"
+                            :message "msg2"
+                        }))
+                    })
+                )
+                existents (kh/scan-existents fs base)
+                cache (ArrayDeque.)
+                ]
+                (binding [kh/size-for-new-file 100]
+                    (kh/save->hdfs! q base fs existents cache)
+                    (close-all! cache)
+                    (read-fs rt)
+                )
+            )
+        )
+        :eq
+        (fn [rt fs]
+            {
+                "1234-05-06/12340506T070809.100Z.test" 
+                "{\"timestamp\":-23215049510900,\"location\":\"Client\",\"message\":\"msg1\",\"level\":\"INFO\"}
+{\"timestamp\":-23215049510544,\"location\":\"Client\",\"message\":\"msg3\",\"level\":\"INFO\"}
+{\"timestamp\":-23215049510877,\"location\":\"Client\",\"message\":\"msg2\",\"level\":\"INFO\"}
+"
+            }
         )
     )
 )
