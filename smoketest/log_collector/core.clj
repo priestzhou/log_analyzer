@@ -5,6 +5,7 @@
     (:require
         [clojure.data.json :as json]
         [utilities.shutil :as sh]
+        [utilities.net :as net]
         [zktools.core :as zk]
         [kfktools.core :as kfk]
         [log-collector.core :as lc]
@@ -91,12 +92,14 @@
         (fn [_]
             [
                 {
+                    :host (-> (net/localhost) (first) (.getHostAddress))
                     :timestamp 1370098138466
                     :level "INFO"
                     :location "Client"
                     :message "msg1"
                 }
                 {
+                    :host (-> (net/localhost) (first) (.getHostAddress))
                     :timestamp 1370098139466
                     :level "DEBUG"
                     :location "Client"

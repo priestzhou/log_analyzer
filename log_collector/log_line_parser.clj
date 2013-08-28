@@ -5,6 +5,7 @@
         [clj-time.core :as datetime]
         [clj-time.format :as datetime-fmt]
         [clj-time.coerce :as datetime-coerce]
+        [utilities.net :as net]
     )
     (:import 
         java.io.BufferedReader
@@ -30,6 +31,7 @@
         {:timestamp (parse-timestamp tst), 
             :level lvl, 
             :location loc, 
+            :host (-> (net/localhost) (first) (.getHostAddress))
             :message 
                 (->> (cons msg (rest x))
                     (str/join "\n")
