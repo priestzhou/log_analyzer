@@ -28,8 +28,8 @@
                     (sh/mkdir zkdir)
                     (sh/mkdir kfkdir)
                     (sh/spitFile (sh/getPath rt "xx.log")
-"2013-06-01 22:48:59,466 INFO Client: msg1
-2013-06-01 22:48:60,466 DEBUG Client: msg2
+"2013-06-01 22:48:58,466 INFO Client: msg1
+2013-06-01 22:48:59,466 DEBUG Client: msg2
 "
                     )
                     (sh/spitFile lccfg (format 
@@ -91,13 +91,13 @@
         (fn [_]
             [
                 {
-                    :timestamp 1370098139466
+                    :timestamp 1370098138466
                     :level "INFO"
                     :location "Client"
                     :message "msg1"
                 }
                 {
-                    :timestamp 1370098140466
+                    :timestamp 1370098139466
                     :level "DEBUG"
                     :location "Client"
                     :message "msg2"

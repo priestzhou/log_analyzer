@@ -2,6 +2,9 @@
     (:require
         [clojure.string :as str]
         [clojure.java.io :as io]
+        [clj-time.core :as datetime]
+        [clj-time.format :as datetime-fmt]
+        [clj-time.coerce :as datetime-coerce]
     )
     (:import 
         java.io.BufferedReader
@@ -15,9 +18,10 @@
 )
 
 (defn- parse-timestamp [x]
-    (-> (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss,SSS")
-        (.parse x (ParsePosition. 0))
-        (.getTime)
+    (let [fmt (datetime-fmt/formatter "yyyy-MM-dd HH:mm:ss,SSS" (datetime/default-time-zone))
+        dt (datetime-fmt/parse fmt x)
+        ]
+        (datetime-coerce/to-long dt)
     )
 )
 

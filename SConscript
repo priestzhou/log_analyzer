@@ -3,6 +3,7 @@ Import('env')
 env.install(env.compileAndJar('log_collector.jar', 'log_collector',
     libs=[env['CLOJURE'],
             env.File('$EXTLIB/data.json-0.2.2.jar'),
+            env.File('$EXTLIB/clj-time-0.5.2.jar'),
             env.File('$BUILD_DIR/utilities.jar'),
             env.File('$BUILD_DIR/kfktools.jar'),
             env.File('$BUILD_DIR/argparser.jar'),
