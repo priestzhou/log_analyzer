@@ -70,13 +70,16 @@
 )
 
 (defn- filter-parse [rdd]
-    (k/filter 
+    (->
         rdd
-        (sfn/fn [l]
-            (empty?
-                (filter nil? (vals l))
+        (k/filter 
+            (sfn/fn [l]
+                (empty?
+                    (filter nil? (vals l))
+                )
             )
         )
+        k/cache
     )
 )
 
