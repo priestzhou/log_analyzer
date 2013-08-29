@@ -14,12 +14,25 @@
     )
 )
 
-(def ^:dynamic *raw-log-pattern* 
-    #"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+(TRACE|DEBUG|INFO|WARN|ERROR|FATAL)\s+(.*?):\s*(.*)"
+(def ^:private raw-log-pattern
+    #"(?sx) # dot matches all and ignore whitespaces and comments
+    ^(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2},\d{3}) # timestamp
+    \s+
+    (TRACE|DEBUG|INFO|WARN|ERROR|FATAL) # logging level
+    \s+
+    (.*?) # location in code
+    :\s*
+    (.*) # log message"
 )
 
+(defn- default-time-format' []
+    (datetime-fmt/formatter "yyyy-MM-dd HH:mm:ss,SSS" (datetime/default-time-zone))
+)
+
+(def ^:private default-time-format (memoize default-time-format'))
+
 (defn- parse-timestamp [x]
-    (let [fmt (datetime-fmt/formatter "yyyy-MM-dd HH:mm:ss,SSS" (datetime/default-time-zone))
+    (let [fmt (default-time-format)
         dt (datetime-fmt/parse fmt x)
         ]
         (datetime-coerce/to-long dt)
@@ -27,63 +40,80 @@
 )
 
 (defn- parse-log-line [x]
-    (let [[_ tst lvl loc msg] (re-find *raw-log-pattern* (first x))]
-        {:timestamp (parse-timestamp tst), 
+    (if-let [parsed (re-find raw-log-pattern x)]
+        (let [[_ tst lvl loc msg] parsed]
+            [(parse-timestamp tst) lvl loc (str/trim msg)]
+        )
+    )
+)
+
+(def ^:dynamic *parse-log-line* parse-log-line)
+
+(defn- format-log-line [x]
+    (let [[tst lvl loc msg] (*parse-log-line* x)]
+        {
+            :timestamp tst, 
             :level lvl, 
             :location loc, 
             :host (-> (net/localhost) (first) (.getHostAddress))
-            :message 
-                (->> (cons msg (rest x))
-                    (str/join "\n")
-                    (str/trim-newline)
-                )
+            :message msg
         }
     )
 )
 
-(defn- next-log-event [rdr init]
-    (let [raw-text (transient (if init [init] []))]
-        (loop [ln (.readLine rdr)]
-            (if-not ln
-                [(persistent! raw-text) nil]
-                (if (re-find *raw-log-pattern* ln)
-                    [(persistent! raw-text) ln]
-                    (do
-                        (conj! raw-text ln)
-                        (recur (.readLine rdr))
+(defn- new-log-line? [ln]
+    (*parse-log-line* ln)
+)
+
+(defn- reader->lazyseq! [rdr]
+    (if-let [ln (.readLine rdr)]
+        (lazy-seq
+            (cons ln (reader->lazyseq! rdr))
+        )
+    )
+)
+
+(defn- partition-by-log-events' [dealed rst]
+{
+    :pre [
+        (not (empty? dealed))
+    ]
+}
+    (if (empty? rst)
+        [(str/join "\n" dealed)]
+        (let [[x & xs] rst]
+            (if (new-log-line? x)
+                (lazy-seq
+                    (cons
+                        (str/join "\n" dealed)
+                        (partition-by-log-events' [x] xs)
                     )
                 )
+                (partition-by-log-events' (conj dealed x) xs)
             )
         )
     )
 )
 
-(defn- parse-log-raw' [rdr init]
-    (let [[raw-text nxt-header] (next-log-event rdr init)]
-        (if nxt-header
-            (lazy-seq 
-                (cons 
-                    raw-text
-                    (parse-log-raw' rdr nxt-header)
-                )
-            )
-            (if (= 0 (count raw-text))
-                []
-                [raw-text]
-            )
+(defn- partition-by-log-events [lns]
+    (when-not (empty? lns)
+        (let [[x & xs] lns]
+            (partition-by-log-events' [x] xs)
         )
     )
 )
 
-(defn parse-log-raw [rdr]
-    (map parse-log-line 
-        (rest (parse-log-raw' rdr nil))
+(defn parse-log-events [rdr]
+    (->> rdr
+        (reader->lazyseq!)
+        (partition-by-log-events)
+        (map format-log-line)
     )
 )
 
 (defn parse-log-with-path [p]
     (with-open [rdr (io/reader (.toFile p))]
-        (doall (parse-log-raw rdr))
+        (doall (parse-log-events rdr))
     )
 )
 
