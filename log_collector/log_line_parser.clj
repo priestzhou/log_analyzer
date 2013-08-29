@@ -1,7 +1,6 @@
 (ns log-collector.log-line-parser
     (:require
         [clojure.string :as str]
-        [clojure.java.io :as io]
         [clj-time.core :as datetime]
         [clj-time.format :as datetime-fmt]
         [clj-time.coerce :as datetime-coerce]
@@ -39,7 +38,7 @@
     )
 )
 
-(defn- parse-log-line [x]
+(defn parse-log-line [x]
     (if-let [parsed (re-find raw-log-pattern x)]
         (let [[_ tst lvl loc msg] parsed]
             [(parse-timestamp tst) lvl loc (str/trim msg)]
@@ -47,10 +46,8 @@
     )
 )
 
-(def ^:dynamic *parse-log-line* parse-log-line)
-
-(defn- format-log-line [x]
-    (let [[tst lvl loc msg] (*parse-log-line* x)]
+(defn- format-log-line [parse-log-line x]
+    (let [[tst lvl loc msg] (parse-log-line x)]
         {
             :timestamp tst, 
             :level lvl, 
@@ -61,8 +58,8 @@
     )
 )
 
-(defn- new-log-line? [ln]
-    (*parse-log-line* ln)
+(defn- new-log-line? [parse-log-line ln]
+    (parse-log-line ln)
 )
 
 (defn- reader->lazyseq! [rdr]
@@ -77,7 +74,7 @@
     )
 )
 
-(defn- partition-by-log-events' [dealed rst]
+(defn- partition-by-log-events' [new-log-line? dealed rst]
 {
     :pre [
         (not (empty? dealed))
@@ -90,34 +87,30 @@
                 (lazy-seq
                     (cons
                         (str/join "\n" dealed)
-                        (partition-by-log-events' [x] xs)
+                        (partition-by-log-events' new-log-line? [x] xs)
                     )
                 )
-                (partition-by-log-events' (conj dealed x) xs)
+                (partition-by-log-events' new-log-line? (conj dealed x) xs)
             )
         )
     )
 )
 
-(defn- partition-by-log-events [lns]
+(defn- partition-by-log-events [new-log-line? lns]
     (when-not (empty? lns)
         (let [[x & xs] lns]
-            (partition-by-log-events' [x] xs)
+            (partition-by-log-events' new-log-line? [x] xs)
         )
     )
 )
 
-(defn parse-log-events! [rdr]
+(defn parse-log-events! [parse-log-line rdr]
     (->> rdr
         (reader->lazyseq!)
-        (partition-by-log-events)
-        (map format-log-line)
-    )
-)
-
-(defn parse-log-with-path [p]
-    (let [rdr (io/reader (.toFile p))]
-        (parse-log-events! rdr)
+        (partition-by-log-events
+            (partial new-log-line? parse-log-line)
+        )
+        (map (partial format-log-line parse-log-line))
     )
 )
 

@@ -37,6 +37,15 @@
     )
 )
 
+(defn- read-logs [opts f]
+    (let [parser (:parser opts)
+        parser (if parser parser llp/parse-log-line)
+        rdr (io/reader (.toFile f))
+        ]
+        (llp/parse-log-events! parser rdr)
+    )
+)
+
 (defn- main-loop [producer opts]
     (while true
         (try
@@ -46,7 +55,7 @@
                         (take 2)
                         (reverse)
                     )
-                    ln (llp/parse-log-with-path f)
+                    ln (read-logs v f)
                     :let [not-cached-ln (llp/cache-log-line ln)]
                     :when not-cached-ln
                     :let [message (-> not-cached-ln
@@ -74,7 +83,6 @@
 
 (defn main [opts]
     (while true
-        (prn opts)
         (try
             (with-open [producer (kfk/newProducer (:kafka opts))]
                 (main-loop producer (dissoc opts :kafka))
