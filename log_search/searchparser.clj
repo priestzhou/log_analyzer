@@ -481,6 +481,36 @@
     )
 )
 
+(defn- parse-group-sort [stream]
+    (let [[strm parsed]((ups/chain
+                    parse-split
+                    (ups/expect-string "sort")
+                    whitespaces
+                    parse-event-str
+                )
+                stream
+            )
+            sortkey (last parsed)
+        ]
+        [strm {:groupSort sortkey}]
+    )
+)
+
+(defn- parse-group-limit [stream]
+    (let [[strm parsed]((ups/chain
+                    parse-split
+                    (ups/expect-string "limit")
+                    whitespaces
+                    parse-event-str
+                )
+                stream
+            )
+            limitnum (read-string (last parsed))
+        ]
+        [strm {:groupLimit limitnum} ]
+    )
+)
+
 (defn parse-all [inStr]
     (let [stream (ups/positional-stream inStr)
             [strm rst](
@@ -493,6 +523,10 @@
                     (ups/optional parse-where)
                     (ups/optional whitespaces)
                     (ups/optional parse-group)
+                    (ups/optional whitespaces)
+                    (ups/optional parse-group-sort)
+                    (ups/optional whitespaces)
+                    (ups/optional parse-group-limit)
                     (ups/optional whitespaces)
                     (ups/expect-eof)
                 )
@@ -512,7 +546,6 @@
         
     )
 )
-
 
 (def ^:private wheresym #"=|<>|>|>=|<|<=|where")
 (def ^:private wheresym2 #" = | <> | > | >= | < | <= ")
