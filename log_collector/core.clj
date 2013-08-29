@@ -33,7 +33,7 @@
             (let [logs (->>
                     (for [[k v] opts
                             f (->>
-                                    (ds/scan sort (:base v) (re-pattern (:pattern v)))
+                                    (ds/scan (:base v) (re-pattern (:pattern v)))
                                     (take 2)
                                     (reverse)
                             )
