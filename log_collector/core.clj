@@ -10,7 +10,7 @@
         [log-collector.log-line-parser :as llp]
     )
     (:import
-        [java.nio.charset Charset]
+        [java.nio.charset StandardCharsets]
         [kafka.common KafkaException]
         [java.io IOException]
     )
@@ -30,28 +30,25 @@
 (defn- main-loop [producer opts]
     (while true
         (try
-            (let [logs (->>
-                    (for [[k v] opts
-                            f (->>
-                                    (ds/scan (:base v) (re-pattern (:pattern v)))
-                                    (take 2)
-                                    (reverse)
-                            )
-                            ln (llp/parse-log-with-path f)
-                            :let [not-cached-ln (llp/cache-log-line ln)]
-                            :when not-cached-ln
-                            :let [message 
-                                (-> not-cached-ln
-                                    (json/write-str)
-                                    (.getBytes (Charset/forName "UTF-8"))
-                                )
-                            ]
-                        ]
-                        {:topic (name k) :message message}
+            (let [logs (for [
+                    [k v] opts
+                    f (->>
+                            (ds/scan (:base v) (re-pattern (:pattern v)))
+                            (take 2)
+                            (reverse)
                     )
-                    (doall)
-                )]
-                (info "Find new logs" :count (count logs))
+                    ln (llp/parse-log-with-path f)
+                    :let [not-cached-ln (llp/cache-log-line ln)]
+                    :when not-cached-ln
+                    :let [message (-> not-cached-ln
+                        (json/write-str)
+                        (.getBytes (StandardCharsets/UTF_8))
+                    )]
+                    ]
+                    {:topic (name k) :message message}
+                )
+                ]
+                (info "Find new logs")
                 (doseq [plogs (partition-all 1000 logs)]
                     (kfk/produce producer plogs)
                     (info "Sent logs" :count (count plogs))

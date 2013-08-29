@@ -12,7 +12,7 @@
     (->> s
         (StringReader.)
         (reader)
-        (parse-log-events)
+        (parse-log-events!)
         (map #(dissoc % :host))
     )
 )

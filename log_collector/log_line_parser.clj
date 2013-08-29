@@ -70,6 +70,10 @@
         (lazy-seq
             (cons ln (reader->lazyseq! rdr))
         )
+        (do
+            (.close rdr)
+            []
+        )
     )
 )
 
@@ -103,7 +107,7 @@
     )
 )
 
-(defn parse-log-events [rdr]
+(defn parse-log-events! [rdr]
     (->> rdr
         (reader->lazyseq!)
         (partition-by-log-events)
@@ -112,8 +116,8 @@
 )
 
 (defn parse-log-with-path [p]
-    (with-open [rdr (io/reader (.toFile p))]
-        (doall (parse-log-events rdr))
+    (let [rdr (io/reader (.toFile p))]
+        (parse-log-events! rdr)
     )
 )
 
