@@ -34,7 +34,7 @@
 (defn -main [& args]
     (-> (parseArgs args)
         (slurp)
-        (read-string)
+        (load-string)
         (lc/main)
     )
 )
