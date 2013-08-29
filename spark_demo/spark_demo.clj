@@ -16,9 +16,9 @@
     (let [sc (k/spark-context 
                 :master "spark://192.168.1.100:7077" :job-name "Simple Job" 
                 :spark-home "/home/admin/spark-0.7.3" 
-                :jars ["./spark_demo.jar"]
+                :jars ["./log_search.jar"]
                 )
-            input-rdd (.textFile sc "/logfile"
+            input-rdd (.textFile sc "hdfs://192.168.1.100/logfile"
                 )
             ]
         (k/map 
@@ -38,7 +38,7 @@
         testrdd
         (spe/do-search tp)
         println
-    )        
+    )    
     )
 )
 
@@ -47,7 +47,7 @@
         ;(run-test "*hdfs*")
         (run-test 
             "*hdfs_* | parse-re \"(?<=HDFS_)[a-zA-Z]*\" as type 
-            | parse \"bytes: *,\" as size | last size ,min size,stddev size ,max size , avg size by type " 
+            | parse \"bytes: *,\" as size | last size ,min size,uc size ,max size by type " 
             "86400"
             1377018378063
         )                
