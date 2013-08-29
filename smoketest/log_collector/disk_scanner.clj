@@ -30,7 +30,7 @@
     (:testbench tb1)
     (:fact disk-scanner-1 
         (fn [rt]
-            (dsks/scan rt #"haha[.]log.*")
+            (dsks/scan dsks/sort-daily-rolling rt #"haha[.]log.*")
         )
         :eq
         (fn [rt] 

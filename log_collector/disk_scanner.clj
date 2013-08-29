@@ -25,13 +25,11 @@
     )
 )
 
-(defn- sort-daily-rolling [files]
+(defn sort-daily-rolling [files]
     (sort-by identity compare-daily-rolling files)
 )
 
-(def ^:dynamic sorter sort-daily-rolling)
-
-(defn scan [base pat]
+(defn scan [sorter base pat]
     (with-open [files (Files/newDirectoryStream (sh/getPath base))]
         (let [logs (->> files
                 (filter #(Files/isRegularFile % (into-array LinkOption [])))

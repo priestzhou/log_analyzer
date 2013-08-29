@@ -27,15 +27,24 @@
     )
 )
 
+(defn- scan [opts]
+    (let [base (:base opts)
+        pattern (:pattern opts)
+        sorter (:sorter opts)
+        sorter (if sorter sorter ds/sort-daily-rolling)
+        ]
+        (ds/scan sorter base pattern)
+    )
+)
+
 (defn- main-loop [producer opts]
     (while true
         (try
             (let [logs (for [
                     [k v] opts
-                    f (->>
-                            (ds/scan (:base v) (re-pattern (:pattern v)))
-                            (take 2)
-                            (reverse)
+                    f (->> (scan v)
+                        (take 2)
+                        (reverse)
                     )
                     ln (llp/parse-log-with-path f)
                     :let [not-cached-ln (llp/cache-log-line ln)]
@@ -65,6 +74,7 @@
 
 (defn main [opts]
     (while true
+        (prn opts)
         (try
             (with-open [producer (kfk/newProducer (:kafka opts))]
                 (main-loop producer (dissoc opts :kafka))
