@@ -36,7 +36,7 @@
                 (filter #(re-find pat (str (.getFileName %))))
                 (sorter)
             )]
-            (info "Scanned logs." :count (count logs))
+            (info "Scanned logs." :count (count logs) :first (str (first logs)))
             logs
         )
     )

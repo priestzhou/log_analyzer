@@ -30,16 +30,14 @@
 (defn- scan [opts]
     (let [base (:base opts)
         pattern (:pattern opts)
-        sorter (:sorter opts)
-        sorter (if sorter sorter ds/sort-daily-rolling)
+        sorter (get opts :sorter ds/sort-daily-rolling)
         ]
         (ds/scan sorter base pattern)
     )
 )
 
 (defn- read-logs [opts f]
-    (let [parser (:parser opts)
-        parser (if parser parser llp/parse-log-line)
+    (let [parser (get opts :parser llp/parse-log-line)
         rdr (io/reader (.toFile f))
         ]
         (llp/parse-log-events! parser rdr)
@@ -69,8 +67,19 @@
                 (info "Find new logs")
                 (doseq [plogs (partition-all 1000 logs)]
                     (kfk/produce producer plogs)
-                    (info "Sent logs" :count (count plogs))
-                    (Thread/sleep 500)
+                    (if-let [{:keys [topic message]} (first plogs)]
+                        (info "Sent logs" 
+                            :count (count plogs)
+                            :first {
+                                :topic topic 
+                                :message (-> message
+                                    (String. StandardCharsets/UTF_8)
+                                    (json/read-str)
+                                )
+                            }
+                        )
+                    )
+                    (Thread/sleep 100)
                 )
                 (info "Sent all new logs. Wait for 5 secs.")
             )
