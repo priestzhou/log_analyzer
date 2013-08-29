@@ -1,4 +1,7 @@
 (ns log-search.webserver
+    (:import 
+         spark.api.java.JavaSparkContext
+    )    
     (:use 
         [ring.middleware.params :only (wrap-params)]
         [logging.core :only [defloggers]]
@@ -9,11 +12,14 @@
         [compojure.handler :as handler]
         [compojure.route :as route]
         [log-search.consumer :as lc]
-        [log-search.frame :as fr]
+        [spark-demo.spark-engine :as se]
         [log-search.searchparser :as sp]
         [argparser.core :as arg]
         [utilities.core :as util]
         [clojure.data.json :as js]
+        [clj-spark.api :as k]
+        [serializable.fn :as sfn]
+        [clojure.data.json :as json]
     )
     (:gen-class)
 )
@@ -30,17 +36,41 @@
     (atom [])
 )
 
+(defn- get-test-rdd []
+    (println "testrdd1")
+    (debug "get-test-rdd1")
+    (let [sc (k/spark-context 
+                :master "spark://192.168.1.100:7077" :job-name "Simple Job" 
+                :spark-home "/home/admin/spark-0.7.3" 
+                :jars ["./log_search.jar"]
+                )
+            t1 (println "get sc")
+            input-rdd (.textFile sc "hdfs://192.168.1.100/logfile"
+                )
+            ]
+        (debug "get-test-rdd")
+        (println "testrdd2")
+        [sc  (k/map 
+            input-rdd
+            (sfn/fn f [log]
+                (json/read-str log :key-fn keyword)
+            )
+        )]
+    )
+)
+
 (defn- run-query [psr log-atom query-atom]
     (info "query run " :inputlogcount (count @log-atom))
-    (reset! 
-        query-atom
-        (assoc (fr/do-search psr @log-atom) 
-            :query-time (str (System/currentTimeMillis) )
+    (let [[sc rdd] (get-test-rdd) ]
+        (reset! 
+            query-atom
+            (assoc (doall (se/do-search psr rdd) )
+                :query-time (str (System/currentTimeMillis) )
+            )
         )
+        (info " next query running")
+        (.stop sc)
     )
-    (Thread/sleep 5000)
-    (info " next query running")
-    (recur psr log-atom query-atom)
 )
 
 (defn- gen-query-id []
@@ -72,7 +102,6 @@
                 :body 
                 (js/write-str @(get-in @futurMap [query-id :output]) )
             }
-            
         )
     )
 )
@@ -115,7 +144,7 @@
                         :future 
                             (future 
                                 (run-query 
-                                    (sp/sparser qStr timewindow) 
+                                    (sp/sparser qStr "86400" 1377018378063) 
                                     logdata 
                                     output
                                 )
@@ -217,10 +246,6 @@
             (println (arg/default-doc arg-spec))
             (System/exit 0)            
         )
-        (util/throw-if-not (:zkp opts-with-default)
-            IllegalArgumentException. 
-            "the zookeeper info is needed"
-        )  
         (rj/run-jetty #'app 
             {
                 :port 
@@ -230,12 +255,6 @@
         )
         (add-watch logdata :max-log-watch max-log-watch)
         (future (check-query futurMap))
-        (lc/consumer-from-kfk 
-            (first (:zkp opts-with-default))
-            (first (:topic opts-with-default))
-            (first (:group opts-with-default))
-            logdata
-        )
     )
 )
 

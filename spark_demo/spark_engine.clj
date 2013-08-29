@@ -6,7 +6,12 @@
         [serializable.fn :as sfn]
         [clj-spark.api :as k]
     )
+    (:use
+        [logging.core :only [defloggers]]
+    )
 )
+
+(defloggers debug info warn error)
 
 (defn- event-search [fitlers rdd startTime endTime]
     (k/filter rdd
@@ -103,8 +108,9 @@
             )
         )
         (k/sort-by-key compare false)
-        (k/take 10)
+        (k/take 100)
         (#(map last %))
+        doall
     )
 )
 
@@ -123,7 +129,7 @@
 )
 
 (defn- showlog [rdd]
-    (println "showlog" )
+    (info "showlog" )
     (let [limitLog (get-newest-log
                 rdd
             )
@@ -215,17 +221,19 @@
             :time-series 
             gTimeList
             :search-count 
-            (map  
-                #(->
-                    ll
-                    (k/filter
-                        (sfn/fn [log]
-                            (= log %)
+            (doall
+                (map  
+                    #(->
+                        ll
+                        (k/filter
+                            (sfn/fn [log]
+                                (= log %)
+                            )
                         )
+                        k/count  
                     )
-                    k/count  
+                    gTimeList
                 )
-                gTimeList
             )
         }
     )
@@ -285,7 +293,7 @@
 
 (defn- do-statistic [statRules rdd]
     (if (nil? statRules)
-        rdd
+        []
         (->
             rdd
             (k/map 
@@ -303,11 +311,13 @@
             )
             (k/map first)
             (k/collect)
+            doall
         )
     )
 )
 
 (defn do-search [searchrules rdd]
+    (info "do-search run")
    (let [eventFilter (:eventRules searchrules)
             timeRule (:timeRule searchrules)
             startTime (eval (:startTime timeRule))
@@ -325,11 +335,9 @@
             timeRule (:timeRule searchrules)
             groupKeys (get searchrules :groupKeys)
             logGrouped (do-group groupKeys whereResult nil)
-
             logGroupWithTime (do-group groupKeys parseResult timeRule)
             statRules (:statRules searchrules)
             statResult (do-statistic statRules logGrouped)
-;            limitStatResult (map #(dissoc % :gVal) statResult)
             statWithTimeResult (do-statistic statRules logGroupWithTime)
             limitResultWithTime (showLimitResult 
                statWithTimeResult
@@ -338,9 +346,10 @@
                 gTimeList
             )
         ]
+        (info "do-search sucessful")
         {
             :logtable limitResult
-            :grouptable limitResultWithTime,
+            :grouptable limitResultWithTime
             :meta statResult
             :matchchart matchchart
         }
