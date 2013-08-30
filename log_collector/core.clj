@@ -27,23 +27,6 @@
     )
 )
 
-(defn- scan [opts]
-    (let [base (:base opts)
-        pattern (:pattern opts)
-        sorter (get opts :sorter ds/sort-daily-rolling)
-        ]
-        (ds/scan sorter base pattern)
-    )
-)
-
-(defn- read-logs [opts f]
-    (let [parser (get opts :parser llp/parse-log-line)
-        rdr (io/reader (.toFile f))
-        ]
-        (llp/parse-log-events! parser rdr)
-    )
-)
-
 (defn- produce 
     ([producer logs cnt]
         (if (empty? logs)
@@ -87,24 +70,23 @@
 
 (defn- fetch-logs [opts file-info]
     (try
-        (let [logs (for [
-                [k v] opts
-                f (->> (scan v)
-                    (take 2)
-                    (reverse)
-                )
-                ln (read-logs v f)
-                :let [not-cached-ln (llp/cache-log-line ln)]
-                :when not-cached-ln
-                :let [message (-> not-cached-ln
-                    (json/write-str)
-                    (.getBytes (StandardCharsets/UTF_8))
-                )]
-                ]
-                {:topic (name k) :message message}
-            )
+        (let [files (ds/scan opts)
+            [new-file-info files] (ds/filter-files file-info files)
             ]
-            [logs {}]
+            [
+                new-file-info
+                (for [[opt f offset] files
+                    msg (llp/read-logs opt f offset)
+                    ]
+                    {
+                        :topic (name (:topic opt))
+                        :message (-> msg
+                            (json/write-str)
+                            (.getBytes StandardCharsets/UTF_8)
+                        )
+                    }
+                )
+            ]
         )
     (catch IOException ex
         (error "IO error. Wait for 5 secs." :exception ex)
@@ -113,7 +95,7 @@
 )
 
 (defn- main-loop [producer opts file-info]
-    (if-let [[logs new-file-info] (fetch-logs opts file-info)]
+    (if-let [[new-file-info logs] (fetch-logs opts file-info)]
         (do
             (produce producer logs)
             (Thread/sleep 5000)

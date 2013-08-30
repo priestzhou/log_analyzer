@@ -4,6 +4,7 @@
     )
     (:require 
         [utilities.shutil :as sh]
+        [clojure.java.io :as io]
     )
     (:import 
         [java.nio.file Files LinkOption]
@@ -13,31 +14,100 @@
 (defloggers debug info warn error)
 
 (defn- compare-daily-rolling [a b]
-    (let [a (str a)
-        b (str b)
-        ]
-        (cond
-            (= a b) 0
-            (.endsWith a ".log") -1
-            (.endsWith b ".log") 1
-            :else (.compareTo b a)
-        )
+    (cond
+        (= a b) 0
+        (.endsWith a ".log") 1
+        (.endsWith b ".log") -1
+        :else (.compareTo a b)
     )
 )
 
 (defn sort-daily-rolling [files]
-    (sort-by identity compare-daily-rolling files)
+    (sort-by str compare-daily-rolling files)
 )
 
-(defn scan [sorter base pat]
+(defn scan-files [sorter base pat]
     (with-open [files (Files/newDirectoryStream (sh/getPath base))]
         (let [logs (->> files
                 (filter #(Files/isRegularFile % (into-array LinkOption [])))
                 (filter #(re-find pat (str (.getFileName %))))
                 (sorter)
             )]
-            (info "Scanned logs." :count (count logs) :first (str (first logs)))
+            (info "updated log files" :count (count logs) :1st (str (first logs)))
             logs
         )
+    )
+)
+
+(defn scan [opts]
+    (for [[topic opt] opts
+        :let [base (:base opt)]
+        :let [pattern (:pattern opt)]
+        :let [sorter (get opts :sorter sort-daily-rolling)]
+        f (scan-files sorter base pattern)
+        ]
+        [(assoc opt :topic topic) f]
+    )
+)
+
+
+(defn- first-line [f]
+    (with-open [rdr (-> f (.toFile) (io/reader))]
+        (.readLine rdr)
+    )
+)
+
+(defn- file-infos [files result]
+    (if (empty? files)
+        result
+        (let [[[opt f] & fs] files]
+            (if-let [ln (first-line f)]
+                (do
+                    (if-let [[f'] (get result ln)]
+                        (error "duplicated logs found" :1st (str f') :2nd (str f))
+                    )
+                    (recur fs (assoc result ln [opt f (Files/size f)]))
+                )
+                (recur fs result)
+            )
+        )
+    )
+)
+
+(defn- filter-updated-files [old-file-info new-file-info files result]
+    (if (empty? files)
+        result
+        (let [[[opt f] & fs] files
+            ln (first-line f)
+            ]
+            (if-let [[_ _ new-size] (new-file-info ln)]
+                (if-let [[_ _ old-size] (old-file-info ln)]
+                    (do
+                        (when (> old-size new-size)
+                            (error "new size should be larger than old one"
+                                :file f
+                            )
+                        )
+                        (if (> new-size old-size)
+                            (recur old-file-info new-file-info fs 
+                                (conj result [opt f old-size])
+                            )
+                            (recur old-file-info new-file-info fs result)
+                        )
+                    )
+                    (recur old-file-info new-file-info fs (conj result [opt f 0]))
+                )
+                (do
+                    (error "file without info" :file f)
+                    (recur old-file-info new-file-info fs result)
+                )
+            )
+        )
+    )
+)
+
+(defn filter-files [file-info files]
+    (let [new-file-info (file-infos files {})]
+        [new-file-info (filter-updated-files file-info new-file-info files [])]
     )
 )
