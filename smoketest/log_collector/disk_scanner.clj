@@ -37,23 +37,21 @@
             (sh/spitFile (sh/getPath rt "haha.log.2014-07-01") "include")
             (sh/spitFile (sh/getPath rt "haha.log") "include")
             (sh/spitFile (sh/getPath rt "others/haha.log") "exclude")
-            (dsks/scan {
-                :topic {
-                    :base (str (.toAbsolutePath rt))
-                    :pattern #"haha[.]log.*"
-                }
-            })
+            (->>
+                (dsks/scan {
+                    :topic {
+                        :base (str (.toAbsolutePath rt))
+                        :pattern #"haha[.]log.*"
+                    }
+                })
+                (map #(get % 1))
+            )
         )
         :eq
         (fn [rt] 
-            (let [rt-str (str (.toAbsolutePath rt))]
-                (->>
-                    ["haha.log.2014-07-01" "haha.log.2014-07-02" "haha.log"]
-                    (map #(sh/getPath rt %))
-                    (util/zip 
-                        (repeat {:topic :topic :base rt-str :pattern #"haha[.]log.*"})
-                    )
-                )
+            (->>
+                ["haha.log.2014-07-01" "haha.log.2014-07-02" "haha.log"]
+                (map #(sh/getPath rt %))
             )
         )
     )

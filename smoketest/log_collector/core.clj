@@ -155,7 +155,7 @@
                 )
                 ]
                 (Thread/sleep 5000)
-                (let [cseq (take 2 (kfk/listenTo c "hdfs.data-node"))]
+                (let [cseq (take 3 (kfk/listenTo c "hdfs.data-node"))]
                     (for [{message :message} (doall cseq)]
                         (-> message
                             (String. (StandardCharsets/UTF_8))
@@ -170,6 +170,13 @@
             [
                 {
                     :host (-> (net/localhost) (first) (.getHostAddress))
+                    :timestamp 1370188800000
+                    :level "INFO"
+                    :location "Client"
+                    :message "msg3"
+                }
+                {
+                    :host (-> (net/localhost) (first) (.getHostAddress))
                     :timestamp 1370016000000
                     :level "INFO"
                     :location "Client"
@@ -177,10 +184,10 @@
                 }
                 {
                     :host (-> (net/localhost) (first) (.getHostAddress))
-                    :timestamp 1370188800000
+                    :timestamp 1370102400000
                     :level "INFO"
                     :location "Client"
-                    :message "msg3"
+                    :message "msg2"
                 }
             ]
         )
@@ -225,7 +232,7 @@
                 )
                 ]
                 (Thread/sleep 5000)
-                (let [cseq (take 2 (kfk/listenTo c "hdfs.data-node"))]
+                (let [cseq (take 3 (kfk/listenTo c "hdfs.data-node"))]
                     (for [{message :message} (doall cseq)]
                         (-> message
                             (String. (StandardCharsets/UTF_8))
@@ -238,6 +245,13 @@
         :eq
         (fn [_ _]
             [
+                {
+                    :host (-> (net/localhost) (first) (.getHostAddress))
+                    :timestamp 1
+                    :level "A"
+                    :location "AA"
+                    :message "AAA"
+                }
                 {
                     :host (-> (net/localhost) (first) (.getHostAddress))
                     :timestamp 2

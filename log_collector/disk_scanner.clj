@@ -43,7 +43,7 @@
     (for [[topic opt] opts
         :let [base (:base opt)]
         :let [pattern (:pattern opt)]
-        :let [sorter (get opts :sorter sort-daily-rolling)]
+        :let [sorter (get opt :sorter sort-daily-rolling)]
         f (scan-files sorter base pattern)
         ]
         [(assoc opt :topic topic) f]
