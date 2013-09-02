@@ -43,8 +43,10 @@
 )
 
 (defn assign-consumer-to-queue! [consumer topic queue]
-    (future-call 
-        (partial lazyseq->queue! topic (kfk/listenTo consumer topic) queue 0)
+    (let [xs (kfk/listenTo consumer topic)]
+        (future
+            (lazyseq->queue! topic xs queue 0)
+        )
     )
 )
 
