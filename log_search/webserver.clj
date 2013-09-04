@@ -21,6 +21,7 @@
         [serializable.fn :as sfn]
         [clojure.data.json :as json]
         [clj-json.core :as clj ]
+        [clojure.edn :as ce]
     )
     (:gen-class)
 )
@@ -45,14 +46,14 @@
                 :jars ["./log_search.jar"]
                 )
             input-rdd (.textFile sc 
-                "hdfs://192.168.1.100//namenode1/*/*"
+                "hdfs://192.168.1.100//namenode-edn/*/*"
                 )
             ]
         (info "get-test-rdd2")
         [sc  (k/map 
             input-rdd
             (sfn/fn f [log]
-                (clj/parse-string log)
+                (ce/read-string log)
             )
         )]
     )

@@ -26,10 +26,10 @@
             (comment and
                 (<
                     startTime
-                    (get log "timestamp")
+                    (:timestamp log)
                     endTime
                 )
-                ((first fitlers) (get log "message"))
+                ((first fitlers) (:message log))
             )
 
 (defn- where-filter [fitlers rdd]
@@ -64,7 +64,7 @@
     (k/map rdd
         (sfn/fn [log]
             (let [psr (map 
-                            #(do-parse % (get log "message")) 
+                            #(do-parse % (:message log)) 
                             parseRules
                         )
                 ]
@@ -98,7 +98,7 @@
 )
 
 (defn- change-time [log]
-    (update-in log ["timestamp"] dateformat)
+    (update-in log [:timestamp] dateformat)
 )
 
 (defn- get-newest-log [rdd]
@@ -119,13 +119,13 @@
 (defn- get-header [logkeys]
     (let [userkeys (filter string? logkeys)
             syskeys (filter keyword? logkeys)
-            usedkeys (remove #{"message" "timestamp"} syskeys)
+            usedkeys (remove #{:message :timestamp} syskeys)
         ]
         (concat 
-            ["timestamp"]
+            [:timestamp]
             usedkeys
             userkeys
-            ["message"]
+            [:message]
         )
     )
 )
@@ -217,7 +217,7 @@
     (let [ll (k/map 
                 rdd 
                 (sfn/fn [log] 
-                    [((:tf timeRule) (get log "timestamp")) 1]
+                    [((:tf timeRule) (:timestamp log )) 1]
                 ) 
             )
         ]
@@ -251,7 +251,7 @@
                     (println timeRule)
                     {:groupTime
                         ((:tf timeRule)
-                            (get log "timestamp")
+                            (:timestamp log )
                         )
                     }
                 )
