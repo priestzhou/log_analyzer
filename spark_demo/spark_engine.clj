@@ -1,6 +1,7 @@
 (ns spark-demo.spark-engine
     (:import 
          spark.api.java.JavaSparkContext
+         spark.storage.StorageLevel
     )    
     (:require 
         [serializable.fn :as sfn]
@@ -14,25 +15,22 @@
 (defloggers debug info warn error)
 
 (defn- event-search [fitlers rdd startTime endTime]
+    (println "event-search")
     (k/filter rdd
         (sfn/fn f [log]
-            (reduce 
-                (sfn/fn f1 [a b]
-                    (and a b)
-                )
-                (<
-                    startTime
-                    (:timestamp log)
-                    endTime
-                )
-                (map
-                    (sfn/fn f1 [a](a(:message log)))
-                    fitlers
-                )
-            )
+            false
         )        
     )
 )
+
+            (comment and
+                (<
+                    startTime
+                    (get log "timestamp")
+                    endTime
+                )
+                ((first fitlers) (get log "message"))
+            )
 
 (defn- where-filter [fitlers rdd]
     (k/filter rdd
@@ -52,6 +50,7 @@
 )
 
 (defn- do-parse [parseRule log]
+    (println "do-parse")
     (let [pkey (get parseRule :key)
             tparser (get parseRule :parser)
         ]
@@ -61,10 +60,11 @@
 
 
 (defn- apply-parse [parseRules rdd]
+    (println "apply-parse")
     (k/map rdd
         (sfn/fn [log]
             (let [psr (map 
-                            #(do-parse % (:message log)) 
+                            #(do-parse % (get log "message")) 
                             parseRules
                         )
                 ]
@@ -75,6 +75,7 @@
 )
 
 (defn- filter-parse [rdd]
+    (println "filter-parse")
     (->
         rdd
         (k/filter 
@@ -84,7 +85,8 @@
                 )
             )
         )
-        k/cache
+        (k/persist (StorageLevel/MEMORY_AND_DISK))
+        ;k/cache
     )
 )
 
@@ -96,20 +98,20 @@
 )
 
 (defn- change-time [log]
-    (update-in log [:timestamp] dateformat)
+    (update-in log ["timestamp"] dateformat)
 )
 
 (defn- get-newest-log [rdd]
+    (println "get-newest-log")
     (->
         rdd
         (k/map
             (sfn/fn [log]
-                [(:timestamp log)  (change-time log)]
+                (change-time log)
             )
         )
-        (k/sort-by-key compare false)
-        (k/take 100)
-        (#(map last %))
+        ;(k/sort-by-key compare false)
+        (k/takeSample 100)
         doall
     )
 )
@@ -117,13 +119,13 @@
 (defn- get-header [logkeys]
     (let [userkeys (filter string? logkeys)
             syskeys (filter keyword? logkeys)
-            usedkeys (remove #{:message :timestamp} syskeys)
+            usedkeys (remove #{"message" "timestamp"} syskeys)
         ]
         (concat 
-            [:timestamp]
+            ["timestamp"]
             usedkeys
             userkeys
-            [:message]
+            ["message"]
         )
     )
 )
@@ -172,6 +174,7 @@
 )
 
 (defn- showLimitResult [loglist timeRule metaData gTimeList]
+    (println "showLimitResult")
     (let [ll (map #(dissoc % :gVal) loglist)
             sortlist (sort-by #(get-in % [:gKeys :groupTime]) ll)
             metaValue (map #(:gKeys %) metaData)
@@ -210,10 +213,11 @@
 )
 
 (defn- get-matchart [gTimeList rdd timeRule]
+    (println "get-matchart")
     (let [ll (k/map 
                 rdd 
                 (sfn/fn [log] 
-                    ((:tf timeRule) (:timestamp log))
+                    [((:tf timeRule) (get log "timestamp")) 1]
                 ) 
             )
         ]
@@ -221,19 +225,19 @@
             :time-series 
             gTimeList
             :search-count 
-            (doall
-                (map  
-                    #(->
-                        ll
-                        (k/filter
-                            (sfn/fn [log]
-                                (= log %)
-                            )
-                        )
-                        k/count  
+            (->
+                ll
+                (k/reduce-by-key +)
+                k/collect
+                ((sfn/fn [cl]
+                    (map  
+                        (sfn/fn [gt]
+                            (last(last (filter #(= gt (first %)) cl)))
+                        )  
+                        gTimeList
                     )
-                    gTimeList
-                )
+                )  )
+                doall
             )
         }
     )
@@ -247,7 +251,7 @@
                     (println timeRule)
                     {:groupTime
                         ((:tf timeRule)
-                            (:timestamp log)
+                            (get log "timestamp")
                         )
                     }
                 )
@@ -264,6 +268,7 @@
 )
 
 (defn- do-group [groupKeys rdd timeRule]
+    (println "do-group")
     (let [keyFunc (get-key-func groupKeys timeRule)]        
         (-> rdd
             (k/map  
@@ -292,6 +297,7 @@
 )
 
 (defn- do-statistic [statRules rdd]
+    (println "do-statistic")
     (if (nil? statRules)
         []
         (->
@@ -324,13 +330,14 @@
             endTime (+ startTime (:tw timeRule))
             gTimeList (get-time-list timeRule startTime)            
             logFilted (event-search eventFilter rdd startTime endTime)
+
             whereRules (:whereRules searchrules)
             parseRules (:parseRules searchrules)
             parseResult (filter-parse 
                     (apply-parse parseRules logFilted)
                 )
-            matchchart (get-matchart gTimeList parseResult timeRule)
             limitResult (showlog parseResult)
+            matchchart (get-matchart gTimeList parseResult timeRule)
             whereResult (where-filter whereRules parseResult)
             timeRule (:timeRule searchrules)
             groupKeys (get searchrules :groupKeys)

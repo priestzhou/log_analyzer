@@ -20,6 +20,7 @@
         [clj-spark.api :as k]
         [serializable.fn :as sfn]
         [clojure.data.json :as json]
+        [clj-json.core :as clj ]
     )
     (:gen-class)
 )
@@ -37,30 +38,28 @@
 )
 
 (defn- get-test-rdd []
-    (println "testrdd1")
-    (debug "get-test-rdd1")
+    (info "get-test-rdd1")
     (let [sc (k/spark-context 
                 :master "spark://192.168.1.100:7077" :job-name "Simple Job" 
                 :spark-home "/home/admin/spark-0.7.3" 
                 :jars ["./log_search.jar"]
                 )
-            t1 (println "get sc")
-            input-rdd (.textFile sc "hdfs://192.168.1.100/logfile"
+            input-rdd (.textFile sc 
+                "hdfs://192.168.1.100//namenode1/*/*"
                 )
             ]
-        (debug "get-test-rdd")
-        (println "testrdd2")
+        (info "get-test-rdd2")
         [sc  (k/map 
             input-rdd
             (sfn/fn f [log]
-                (json/read-str log :key-fn keyword)
+                (clj/parse-string log)
             )
         )]
     )
 )
 
 (defn- run-query [psr log-atom query-atom]
-    (info "query run " :inputlogcount (count @log-atom))
+    (println "query run " )
     (let [[sc rdd] (get-test-rdd) ]
         (reset! 
             query-atom
@@ -68,7 +67,7 @@
                 :query-time (str (System/currentTimeMillis) )
             )
         )
-        (info " next query running")
+        (println " next query running")
         (.stop sc)
     )
 )
@@ -132,21 +131,24 @@
 )
 
 (defn- create-query-t [qStr timewindow]
-    (debug "create-query-t " :string qStr  :timewindow timewindow)
+    (info "create-query-t " :string qStr  :timewindow timewindow)
     (if  (> maxQueryCount (count (keys @futurMap)))
         (let [query-id (gen-query-id)
                 output (atom [])
+                srule (sp/sparser qStr "86400" 1376755200130) 
             ]
-            (debug "create-query-t into let")
+            (info "create-query-t into let")
             (swap! futurMap
                 #(assoc % query-id 
                     {
                         :future 
                             (future 
+                                (do (println "future in ")
                                 (run-query 
-                                    (sp/sparser qStr "86400" 1377018378063) 
+                                    srule              
                                     logdata 
                                     output
+                                )
                                 )
                             )
                         :time (System/currentTimeMillis)
@@ -154,6 +156,7 @@
                     }
                 )
             )
+            (info "create-query-t swap end")
             (str "{\"query-id\":\"" query-id "\"}")
         )
         (str "the max query count is " maxQueryCount)
@@ -170,7 +173,7 @@
     )
     (cp/POST "/query/create" {params :params}
         (do
-            (debug "get a query create post" (:query params))
+            (info "get a query create post" (:query params))
             {:status 202
                 :headers {
                     "Access-Control-Allow-Origin" "*"

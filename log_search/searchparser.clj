@@ -86,14 +86,15 @@
                 )
                 stream
             )
+            t0 (println "parse-event")
             pStr (first (filter string? parsed))
             leftFlag (= :star (first parsed))
             rightFlag (= :star (last parsed))
             rstr (cond
                     (and leftFlag rightFlag) pStr
-                    leftFlag (str pStr "(\\s|$)+")
-                    rightFlag (str "(^|\\s)+" pStr)
-                    :else (str "(^|\\s)+" pStr "(\\s|$)+")
+                    leftFlag (str pStr " ")
+                    rightFlag (str " " pStr)
+                    :else (str " " pStr " ")
                 )
             t1 (println rstr)
             efunc  (sfn/fn [inStr]

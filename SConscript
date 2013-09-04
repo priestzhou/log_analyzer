@@ -67,7 +67,11 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
     env.File('$BUILD_DIR/argparser.jar'),
     env.File('$EXTLIB/data.json-0.2.2.jar'),
     env.File('$EXTLIB/serializable-fn-0.0.3.jar'),
-    env.File('$BUILD_DIR/logging.jar')    
+    env.File('$BUILD_DIR/logging.jar'),
+    env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'),
+    env.File('$BUILD_DIR/spark_demo.jar'),
+    env.File('$EXTLIB/jackson-core-asl-1.9.9.jar'),
+    env.File('$EXTLIB/clj-json-0.5.3.jar'),
     ],
     install={
         env.File('$BUILD_DIR/front/log_monitor.js'): '@/resources/js',
@@ -92,16 +96,25 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
         env.File('#front/resources/image/splIcons.gif'): '@/resources/image',
         env.File('#front/resources/image/sprite_button_icons.png'): '@/resources/image',
     },
+    standalone=True, manifest={'Main-Class': 'log_search.websever'}
 ))
 
 env.install(env.compileAndJar('spark_demo.jar', 'spark_demo',
     libs=[env['CLOJURE'],
+    env.File('$EXTLIB/spark-core_2.9.3-0.8.0-SNAPSHOT.jar'),
     env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'),
-    env.File('$BUILD_DIR/log_search.jar'),
+    env.File('$EXTLIB/spark-streaming_2.9.3-0.8.0-SNAPSHOT.jar'),
     env.File('$BUILD_DIR/clj_spark_rebuild.jar'),
-    ]))
+    env.File('$BUILD_DIR/logging.jar'),
+    env.File('$BUILD_DIR/utilities.jar'),
+    env.File('$EXTLIB/data.json-0.2.2.jar'),
+    env.File('$EXTLIB/clj-json-0.5.3.jar'),
+    env.File('$EXTLIB/lib-for-spark/akka-zeromq-2.0.3.jar'),
+    env.File('$EXTLIB/jackson-core-asl-1.9.9.jar'),
+    env.File('$EXTLIB/lib-for-spark/twitter4j-core-3.0.3.jar'),
+    ]
+))
 env.install(env.compileAndJar('clj_spark_rebuild.jar', 'clj_spark',
     libs=[env['CLOJURE'],
     env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar')
-    ],
-    standalone=True, manifest={'Main-Class': 'clj_spark.api'}))
+    ]))
