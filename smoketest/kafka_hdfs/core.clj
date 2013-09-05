@@ -202,7 +202,7 @@ my only sunshine.
 
 (defn format-existents [^NavigableMap existents base]
     (into (sorted-map)
-        (for [k (util/iterable->lazy-seq (.keySet existents))
+        (for [k (seq (.keySet existents))
             :let [[uri size] (.get existents k)]
             ]
             [k [(str (.relativize base uri)) size]]
@@ -222,7 +222,7 @@ my only sunshine.
 (defn show-cache [cache base]
     (vec 
         (map #(str (.relativize base (:uri %)))
-            (util/iterable->lazy-seq cache)
+            (seq cache)
         )
     )
 )
