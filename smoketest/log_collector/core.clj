@@ -9,14 +9,16 @@
         [zktools.core :as zk]
         [kfktools.core :as kfk]
         [log-collector.core :as lc]
+        [kafka-hdfs.core :as kfk->hdfs]
     )
     (:import
         [java.nio.charset StandardCharsets]
         [java.nio.file Path]
+        [java.util.concurrent BlockingQueue TimeUnit ArrayBlockingQueue]
     )
 )
 
-(defn- tb [test]
+(defn- tb1 [test]
     (let [rt (sh/tempdir "log_collector_st")
             zkdir (sh/getPath rt "zk")
             kfkdir (sh/getPath rt "kfk")
@@ -56,7 +58,7 @@
 )
 
 (suite "main entry"
-    (:testbench tb)
+    (:testbench tb1)
     (:fact main:without-cpt
         (fn [rt lccfg]
             (sh/spitFile lccfg (format 
@@ -331,6 +333,151 @@
                     :location "CC"
                     :message "CCC"
                 }
+            ]
+        )
+    )
+)
+
+(defn tb2 [test]
+    (let [rt (sh/tempdir "log_collector_st")
+            zkdir (sh/getPath rt "zk")
+            kfkdir (sh/getPath rt "kfk")
+            kfkprp (sh/getPath rt "kafka.properties")
+            lccfg (sh/getPath rt "yy.cfg")
+        ]
+        (try
+            (sh/mkdir zkdir)
+            (sh/mkdir kfkdir)
+            (sh/spitFile lccfg (format 
+"
+{
+    :myself {
+        :checkpoint \"%s\"
+    }
+    :hdfs.data-node {
+        :base \"%s\"
+        :pattern #\"^xx[.]log.*\" 
+    }
+    :kafka {
+        :metadata.broker.list \"localhost:6667\"
+    }
+}
+" (str (sh/getPath rt "log_collector.cpt")) (str rt))
+            )
+            (with-open [z (zk/start 10240 zkdir)
+                k (kfk/start 
+                    :zookeeper.connect "localhost:10240"
+                    :broker.id 0
+                    :log.dirs (.toAbsolutePath kfkdir)
+                )
+                ]
+                (kfk/createTopic "localhost:10240" "hdfs.data-node")
+                (test rt lccfg)
+            )
+        (finally
+            (sh/rmtree rt)
+            (sh/rmtree kfkprp)
+        ))
+    )
+)
+
+(defn read-msg [q]
+    (if-let [msg (kfk->hdfs/poll! q 5000)]
+        (let [{:keys [message]} msg]
+            (-> message
+                (String. (StandardCharsets/UTF_8))
+                (json/read-str :key-fn keyword)
+            )
+        )
+    )
+)
+
+(defn new-consumer []
+    (kfk/newConsumer 
+        :zookeeper.connect "localhost:10240" 
+        :group.id "alone" 
+        :auto.offset.reset "smallest"
+    )
+)
+
+(defn start-log-collector [lccfg]
+    (sh/newCloseableProcess 
+        (sh/popen 
+            ["java" "-cp" ".:build/log_collector.jar" 
+                "log_collector.main" (str lccfg)
+            ]
+        )
+    )
+)
+
+(defn read-until-nothing' [q result]
+    (if-let [x (read-msg q)]
+        (recur q (conj result x))
+        (conj result nil)
+    )
+)
+
+(defn read-until-nothing [lccfg q]
+    (with-open [
+        lc (start-log-collector lccfg)
+        c (new-consumer)
+        ]
+        (let [stubs (kfk->hdfs/assign-consumer-to-queue! c "hdfs.data-node" q)]
+            (Thread/sleep 1000)
+            (.close c)
+            (Thread/sleep 1000)
+            (read-until-nothing' q [])
+        )
+    )
+)
+
+(suite "checkpoint: which logs have been sent"
+    (:testbench tb2)
+    (:fact main:cpt-effect
+        (fn [rt lccfg]
+            (let [q (ArrayBlockingQueue. 16)
+                _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-01")
+                    "2013-06-01 00:00:00,000 INFO Client: msg1\n"
+                )
+                _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
+                    "2013-06-02 00:00:00,000 INFO Client: msg2\n"
+                )
+                ms1 (read-until-nothing lccfg q)
+                _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
+                    "2013-06-02 00:00:00,000 INFO Client: msg2\n2013-06-03 00:00:00,000 INFO Client: msg3\n"
+                )
+                ms2 (read-until-nothing lccfg q)
+                ]
+                (shutdown-agents)
+                (concat ms1 ms2)
+            )
+        )
+        :eq
+        (fn [rt lccfg]
+            [
+                {
+                    :host (-> (net/localhost) (first) (.getHostAddress))
+                    :timestamp 1370016000000
+                    :level "INFO"
+                    :location "Client"
+                    :message "msg1"
+                }
+                {
+                    :host (-> (net/localhost) (first) (.getHostAddress))
+                    :timestamp 1370102400000
+                    :level "INFO"
+                    :location "Client"
+                    :message "msg2"
+                }
+                nil
+                {
+                    :host (-> (net/localhost) (first) (.getHostAddress))
+                    :timestamp 1370188800000
+                    :level "INFO"
+                    :location "Client"
+                    :message "msg3"
+                }
+                nil
             ]
         )
     )

@@ -97,10 +97,36 @@
     ))
 )
 
+(defn- get-checkpoint-path [opts]
+    (if-let [cpt-filename (:checkpoint opts)]
+        (sh/getPath cpt-filename)
+        (Paths/get "." (into-array String ["log_collector.cpt"]))
+    )
+)
+
+(defn- write-checkpoint [opts file-info]
+    (let [my-opts (get opts :myself {})
+        p (get-checkpoint-path my-opts)
+        cpt (into (sorted-map)
+            (for [[ln [_ fp size]] (seq file-info)]
+                [ln [(str fp) size]]
+            )
+        )
+        to-write (-> cpt
+            (prn-str)
+        )
+        ]
+        (with-open [f (io/writer (.toFile p) :encode "UTF-8")]
+            (.write f to-write)
+        )
+    )
+)
+
 (defn- main-loop [producer opts file-info]
-    (if-let [[new-file-info logs] (fetch-logs opts file-info)]
+    (if-let [[new-file-info logs] (fetch-logs (dissoc opts :myself) file-info)]
         (do
             (produce producer logs)
+            (write-checkpoint opts new-file-info)
             (Thread/sleep 5000)
             (recur producer opts new-file-info)
         )
@@ -111,32 +137,21 @@
     )
 )
 
-(defn- get-checkpoint-path [opts]
-    (if-let [cpt-filename (:checkpoint opts)]
-        (sh/getPath cpt-filename)
-        (Paths/get "." (into-array String ["log_collector.cpt"]))
-    )
-)
-
 (defn- read-file-info [opts]
     (let [
         my-opts (get opts :myself {})
-        opts (dissoc opts :myself)
         cpt (get-checkpoint-path my-opts)
         cpt-file (.toFile cpt)
         ]
         (if-not (.exists cpt-file)
-            [opts {}]
+            {}
             (with-open [rdr (PushbackReader. (io/reader cpt-file))]
                 (let [file-info (edn/read rdr)]
-                    [
-                        opts
-                        (into {}
-                            (for [[first-line [filename size]] (seq file-info)]
-                                [first-line [{} (sh/getPath filename) size]]
-                            )
+                    (into {}
+                        (for [[first-line [filename size]] (seq file-info)]
+                            [first-line [{} (sh/getPath filename) size]]
                         )
-                    ]
+                    )
                 )
             )
         )
@@ -144,7 +159,7 @@
 )
 
 (defn main [opts]
-    (let [[opts file-info] (read-file-info opts)]
+    (let [file-info (read-file-info opts)]
         (try
             (with-open [producer (kfk/newProducer (:kafka opts))]
                 (main-loop producer (dissoc opts :kafka) file-info)

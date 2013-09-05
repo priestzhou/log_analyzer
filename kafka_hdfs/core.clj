@@ -37,7 +37,6 @@
                 )
                 (recur topic xs q (inc cnt))
             )
-            
         )
     )
 )
@@ -45,7 +44,7 @@
 (defn assign-consumer-to-queue! [consumer topic queue]
     (let [xs (kfk/listenTo consumer topic)]
         (future
-            (lazyseq->queue! topic xs queue 0)
+            (lazyseq->queue! topic xs queue 1)
         )
     )
 )
