@@ -58,7 +58,7 @@
 )
 
 (defn- get-sorter [opt]
-    (if-let [sorter (get opt :sorter)]
+    (let [sorter (get opt :sorter :daily-rolling)]
         (cond
             (= sorter :daily-rolling) sort-daily-rolling
             (= sorter :numeric) sort-numeric
@@ -67,14 +67,15 @@
                 ":sorter requires :daily-rolling, :numeric or a sorting function"
             )
         )
-        sort-daily-rolling
     )
 )
 
 (defn scan [opts]
     (for [[topic opt] opts
         :let [base (:base opt)]
+        :let [_ (assert base)]
         :let [pattern (:pattern opt)]
+        :let [_ (assert pattern)]
         :let [sorter (get-sorter opt)]
         f (scan-files sorter base pattern)
         ]
@@ -118,11 +119,17 @@
                         )
                     )
                     (if (> new-size old-size)
-                        (recur old-file-info fs (conj result [opt f old-size]))
-                        (recur old-file-info fs result)
+                        (do
+                            (recur old-file-info fs (conj result [opt f old-size]))
+                        )
+                        (do
+                            (recur old-file-info fs result)
+                        )
                     )
                 )
-                (recur old-file-info fs (conj result [opt f 0]))
+                (do
+                    (recur old-file-info fs (conj result [opt f 0]))
+                )
             )
         )
     )

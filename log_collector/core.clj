@@ -6,6 +6,7 @@
         [clojure.java.io :as io]
         [clojure.edn :as edn]
         [clojure.data.json :as json]
+        [utilities.core :as util]
         [utilities.shutil :as sh]
         [kfktools.core :as kfk]
         [log-collector.disk-scanner :as ds]
@@ -98,15 +99,24 @@
 )
 
 (defn- get-checkpoint-path [opts]
-    (if-let [cpt-filename (:checkpoint opts)]
-        (sh/getPath cpt-filename)
-        (Paths/get "." (into-array String ["log_collector.cpt"]))
+    (let [myself (:myself opts)]
+        (util/throw-if-not myself
+            IllegalArgumentException.
+            "expect :myself in my config file"
+        )
+        (let [cpt-filename (:checkpoint myself)]
+            (util/throw-if-not cpt-filename
+                IllegalArgumentException.
+                "expect :checkpoint under :myself in my config file"
+            )
+            (sh/getPath cpt-filename)
+        )
     )
 )
 
 (defn- write-checkpoint [opts file-info]
-    (let [my-opts (get opts :myself {})
-        p (get-checkpoint-path my-opts)
+    (let [
+        p (get-checkpoint-path opts)
         cpt (into (sorted-map)
             (for [[ln [_ fp size]] (seq file-info)]
                 [ln [(str fp) size]]
@@ -139,8 +149,7 @@
 
 (defn- read-file-info [opts]
     (let [
-        my-opts (get opts :myself {})
-        cpt (get-checkpoint-path my-opts)
+        cpt (get-checkpoint-path opts)
         cpt-file (.toFile cpt)
         ]
         (if-not (.exists cpt-file)

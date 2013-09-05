@@ -24,18 +24,20 @@
 
 (defloggers debug info warn error)
 
-(defn- lazyseq->queue! [topic seq ^BlockingQueue q cnt]
-    (when-not (empty? seq)
-        (let [[x & xs] seq
+(defn- lazyseq->queue! [topic xs ^BlockingQueue q cnt]
+    (when-not (empty? xs)
+        (let [
+            x (first xs)
+            nxs (rest xs)
             message (:message x)
             ]
             (.put q {:topic topic :message message})
             (if (= cnt 1000)
                 (do
                     (info "consume 1000 messages")
-                    (recur topic xs q 1)
+                    (recur topic nxs q 1)
                 )
-                (recur topic xs q (inc cnt))
+                (recur topic nxs q (inc cnt))
             )
         )
     )

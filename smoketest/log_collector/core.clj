@@ -63,6 +63,9 @@
         (fn [rt lccfg]
             (sh/spitFile lccfg (format 
 "{
+    :myself {
+        :checkpoint \"%s\"
+    }
     :hdfs.data-node {
         :base \"%s\"
         :pattern #\"^xx[.]log.*\" 
@@ -71,7 +74,7 @@
         :metadata.broker.list \"localhost:6667\"
     }
 }
-" (str rt))
+" (str (sh/getPath rt "log_collector.cpt")) (str rt))
             )
             (with-open [c (kfk/newConsumer 
                     :zookeeper.connect "localhost:10240" 
@@ -87,8 +90,8 @@
                 )
                 ]
                 (Thread/sleep 5000)
-                (let [cseq (take 3 (kfk/listenTo c "hdfs.data-node"))]
-                    (for [{message :message} (doall cseq)]
+                (let [cseq (doall (take 3 (kfk/listenTo c "hdfs.data-node")))]
+                    (for [{message :message} cseq]
                         (-> message
                             (String. (StandardCharsets/UTF_8))
                             (json/read-str :key-fn keyword)
@@ -197,6 +200,9 @@
 (defn my-sorter [files] (sort files))
 
 {
+    :myself {
+        :checkpoint \"%s\"
+    }
     :hdfs.data-node {
         :base \"%s\"
         :pattern #\"^xx[.]log.*\" 
@@ -206,7 +212,7 @@
         :metadata.broker.list \"localhost:6667\"
     }
 }
-" (str rt))
+" (str (sh/getPath rt "cpt")) (str rt))
             )
             (with-open [c (kfk/newConsumer 
                     :zookeeper.connect "localhost:10240" 
@@ -274,6 +280,9 @@
 )
 
 {
+    :myself {
+        :checkpoint \"%s\"
+    }
     :hdfs.data-node {
         :base \"%s\"
         :pattern #\"^xx[.]log.*\" 
@@ -283,7 +292,7 @@
         :metadata.broker.list \"localhost:6667\"
     }
 }
-" (str rt))
+" (str (sh/getPath rt "cpt")) (str rt))
             )
             (with-open [c (kfk/newConsumer 
                     :zookeeper.connect "localhost:10240" 
@@ -417,16 +426,22 @@
     )
 )
 
+(defn wait-until-something [q]
+    (if-let [x (read-msg q)]
+        x
+        (do
+            (Thread/sleep 500)
+            (recur q)
+        )
+    )
+)
+
 (defn read-until-nothing [lccfg q]
     (with-open [
         lc (start-log-collector lccfg)
-        c (new-consumer)
         ]
-        (let [stubs (kfk->hdfs/assign-consumer-to-queue! c "hdfs.data-node" q)]
-            (Thread/sleep 1000)
-            (.close c)
-            (Thread/sleep 1000)
-            (read-until-nothing' q [])
+        (let [x (wait-until-something q)]
+            (read-until-nothing' q [x])
         )
     )
 )
@@ -435,21 +450,25 @@
     (:testbench tb2)
     (:fact main:cpt-effect
         (fn [rt lccfg]
-            (let [q (ArrayBlockingQueue. 16)
-                _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-01")
-                    "2013-06-01 00:00:00,000 INFO Client: msg1\n"
+            (with-open [c (new-consumer)]
+                (let [q (ArrayBlockingQueue. 16)
+                    stub (kfk->hdfs/assign-consumer-to-queue! c "hdfs.data-node" q)
+                    _ (Thread/sleep 100)
+                    _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-01")
+                        "2013-06-01 00:00:00,000 INFO Client: msg1\n"
+                    )
+                    _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
+                        "2013-06-02 00:00:00,000 INFO Client: msg2\n"
+                    )
+                    ms1 (read-until-nothing lccfg q)
+                    _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
+                        "2013-06-02 00:00:00,000 INFO Client: msg2\n2013-06-03 00:00:00,000 INFO Client: msg3\n"
+                    )
+                    ms2 (read-until-nothing lccfg q)
+                    ]
+                    (shutdown-agents)
+                    (concat ms1 ms2)
                 )
-                _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
-                    "2013-06-02 00:00:00,000 INFO Client: msg2\n"
-                )
-                ms1 (read-until-nothing lccfg q)
-                _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
-                    "2013-06-02 00:00:00,000 INFO Client: msg2\n2013-06-03 00:00:00,000 INFO Client: msg3\n"
-                )
-                ms2 (read-until-nothing lccfg q)
-                ]
-                (shutdown-agents)
-                (concat ms1 ms2)
             )
         )
         :eq
