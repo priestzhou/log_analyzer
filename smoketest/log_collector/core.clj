@@ -57,7 +57,7 @@
 
 (suite "main entry"
     (:testbench tb)
-    (:fact main 
+    (:fact main:without-cpt
         (fn [rt lccfg]
             (sh/spitFile lccfg (format 
 "{
@@ -105,6 +105,71 @@
                     :location "Client"
                     :message "msg1"
                 }
+                {
+                    :host (-> (net/localhost) (first) (.getHostAddress))
+                    :timestamp 1370102400000
+                    :level "INFO"
+                    :location "Client"
+                    :message "msg2"
+                }
+                {
+                    :host (-> (net/localhost) (first) (.getHostAddress))
+                    :timestamp 1370188800000
+                    :level "INFO"
+                    :location "Client"
+                    :message "msg3"
+                }
+            ]
+        )
+    )
+    (:fact main:with-cpt
+        (fn [rt lccfg]
+            (sh/spitFile lccfg (format 
+"{
+    :myself {
+        :checkpoint \"%s\"
+    }
+    :kafka {
+        :metadata.broker.list \"localhost:6667\"
+    }
+    :hdfs.data-node {
+        :base \"%s\"
+        :pattern #\"^xx[.]log.*\" 
+    }
+}
+" (str (sh/getPath rt "log_collector.cpt")) (str rt)))
+            (sh/spitFile (sh/getPath rt "log_collector.cpt")
+"{
+    \"2013-06-01 00:00:00,000 INFO Client: msg1\" [\"xx.log.2013-06-01\" 42]
+}
+")
+            (with-open [c (kfk/newConsumer 
+                    :zookeeper.connect "localhost:10240" 
+                    :group.id "alone" 
+                    :auto.offset.reset "smallest"
+                )
+                lc (sh/newCloseableProcess 
+                    (sh/popen 
+                        ["java" "-cp" ".:build/log_collector.jar" 
+                            "log_collector.main" (str lccfg)
+                        ]
+                    )
+                )
+                ]
+                (Thread/sleep 5000)
+                (let [cseq (take 2 (kfk/listenTo c "hdfs.data-node"))]
+                    (for [{message :message} (doall cseq)]
+                        (-> message
+                            (String. (StandardCharsets/UTF_8))
+                            (json/read-str :key-fn keyword)
+                        )
+                    )
+                )
+            )
+        )
+        :eq
+        (fn [_ _]
+            [
                 {
                     :host (-> (net/localhost) (first) (.getHostAddress))
                     :timestamp 1370102400000

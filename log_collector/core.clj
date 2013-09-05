@@ -4,7 +4,9 @@
     )
     (:require
         [clojure.java.io :as io]
+        [clojure.edn :as edn]
         [clojure.data.json :as json]
+        [utilities.shutil :as sh]
         [kfktools.core :as kfk]
         [log-collector.disk-scanner :as ds]
         [log-collector.log-line-parser :as llp]
@@ -12,7 +14,8 @@
     (:import
         [java.nio.charset StandardCharsets]
         [kafka.common KafkaException]
-        [java.io IOException]
+        [java.io IOException PushbackReader]
+        [java.nio.file Paths]
     )
 )
 
@@ -108,11 +111,43 @@
     )
 )
 
+(defn- get-checkpoint-path [opts]
+    (if-let [cpt-filename (:checkpoint opts)]
+        (sh/getPath cpt-filename)
+        (Paths/get "." (into-array String ["log_collector.cpt"]))
+    )
+)
+
+(defn- read-file-info [opts]
+    (let [
+        my-opts (get opts :myself {})
+        opts (dissoc opts :myself)
+        cpt (get-checkpoint-path my-opts)
+        cpt-file (.toFile cpt)
+        ]
+        (if-not (.exists cpt-file)
+            [opts {}]
+            (with-open [rdr (PushbackReader. (io/reader cpt-file))]
+                (let [file-info (edn/read rdr)]
+                    [
+                        opts
+                        (into {}
+                            (for [[first-line [filename size]] (seq file-info)]
+                                [first-line [{} (sh/getPath filename) size]]
+                            )
+                        )
+                    ]
+                )
+            )
+        )
+    )
+)
+
 (defn main [opts]
-    (while true
+    (let [[opts file-info] (read-file-info opts)]
         (try
             (with-open [producer (kfk/newProducer (:kafka opts))]
-                (main-loop producer (dissoc opts :kafka) {})
+                (main-loop producer (dissoc opts :kafka) file-info)
             )
         (catch KafkaException ex
             (error "Cannot create kafka producer. Wait for 15 secs." :exception ex)
