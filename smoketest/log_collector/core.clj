@@ -4,6 +4,7 @@
     )
     (:require
         [clojure.data.json :as json]
+        [utilities.core :as util]
         [utilities.shutil :as sh]
         [utilities.net :as net]
         [zktools.core :as zk]
@@ -15,6 +16,14 @@
         [java.nio.charset StandardCharsets]
         [java.nio.file Path]
         [java.util.concurrent BlockingQueue TimeUnit ArrayBlockingQueue]
+    )
+)
+
+(defn new-consumer []
+    (kfk/newConsumer 
+        :zookeeper.connect "localhost:10240" 
+        :group.id "alone" 
+        :auto.offset.reset "smallest"
     )
 )
 
@@ -48,11 +57,12 @@
                 )
                 ]
                 (kfk/createTopic "localhost:10240" "hdfs.data-node")
-                (test rt lccfg)
+                (with-open [c (new-consumer)]
+                    (test rt lccfg (kfk/listenTo c "hdfs.data-node"))
+                )
             )
         (finally
             (sh/rmtree rt)
-            (sh/rmtree kfkprp)
         ))
     )
 )
@@ -60,7 +70,7 @@
 (suite "main entry"
     (:testbench tb1)
     (:fact main:without-cpt
-        (fn [rt lccfg]
+        (fn [rt lccfg consumer]
             (sh/spitFile lccfg (format 
 "{
     :myself {
@@ -76,11 +86,7 @@
 }
 " (str (sh/getPath rt "log_collector.cpt")) (str rt))
             )
-            (with-open [c (kfk/newConsumer 
-                    :zookeeper.connect "localhost:10240" 
-                    :group.id "alone" 
-                    :auto.offset.reset "smallest"
-                )
+            (with-open [
                 lc (sh/newCloseableProcess 
                     (sh/popen 
                         ["java" "-cp" ".:build/log_collector.jar" 
@@ -90,10 +96,10 @@
                 )
                 ]
                 (Thread/sleep 5000)
-                (let [cseq (doall (take 3 (kfk/listenTo c "hdfs.data-node")))]
+                (let [cseq (doall (take 3 consumer))]
                     (for [{message :message} cseq]
                         (-> message
-                            (String. (StandardCharsets/UTF_8))
+                            (util/bytes->str)
                             (json/read-str :key-fn keyword)
                         )
                     )
@@ -101,7 +107,7 @@
             )
         )
         :eq
-        (fn [_ _]
+        (fn [& _]
             [
                 {
                     :host (-> (net/localhost) (first) (.getHostAddress))
@@ -128,7 +134,7 @@
         )
     )
     (:fact main:with-cpt
-        (fn [rt lccfg]
+        (fn [rt lccfg consumer]
             (sh/spitFile lccfg (format 
 "{
     :myself {
@@ -148,11 +154,7 @@
     \"2013-06-01 00:00:00,000 INFO Client: msg1\" [\"xx.log.2013-06-01\" 42]
 }
 ")
-            (with-open [c (kfk/newConsumer 
-                    :zookeeper.connect "localhost:10240" 
-                    :group.id "alone" 
-                    :auto.offset.reset "smallest"
-                )
+            (with-open [
                 lc (sh/newCloseableProcess 
                     (sh/popen 
                         ["java" "-cp" ".:build/log_collector.jar" 
@@ -162,10 +164,10 @@
                 )
                 ]
                 (Thread/sleep 5000)
-                (let [cseq (take 2 (kfk/listenTo c "hdfs.data-node"))]
-                    (for [{message :message} (doall cseq)]
+                (let [cseq (doall (take 2 consumer))]
+                    (for [{message :message} cseq]
                         (-> message
-                            (String. (StandardCharsets/UTF_8))
+                            (util/bytes->str)
                             (json/read-str :key-fn keyword)
                         )
                     )
@@ -173,7 +175,7 @@
             )
         )
         :eq
-        (fn [_ _]
+        (fn [& _]
             [
                 {
                     :host (-> (net/localhost) (first) (.getHostAddress))
@@ -194,7 +196,7 @@
     )
 
     (:fact customized-sorter
-        (fn [rt lccfg]
+        (fn [rt lccfg consumer]
             (sh/spitFile lccfg (format 
 "
 (defn my-sorter [files] (sort files))
@@ -214,11 +216,7 @@
 }
 " (str (sh/getPath rt "cpt")) (str rt))
             )
-            (with-open [c (kfk/newConsumer 
-                    :zookeeper.connect "localhost:10240" 
-                    :group.id "alone" 
-                    :auto.offset.reset "smallest"
-                )
+            (with-open [
                 lc (sh/newCloseableProcess 
                     (sh/popen 
                         ["java" "-cp" ".:build/log_collector.jar" 
@@ -228,10 +226,10 @@
                 )
                 ]
                 (Thread/sleep 5000)
-                (let [cseq (take 3 (kfk/listenTo c "hdfs.data-node"))]
-                    (for [{message :message} (doall cseq)]
+                (let [cseq (doall (take 3 consumer))]
+                    (for [{message :message} cseq]
                         (-> message
-                            (String. (StandardCharsets/UTF_8))
+                            (util/bytes->str)
                             (json/read-str :key-fn keyword)
                         )
                     )
@@ -239,7 +237,7 @@
             )
         )
         :eq
-        (fn [_ _]
+        (fn [& _]
             [
                 {
                     :host (-> (net/localhost) (first) (.getHostAddress))
@@ -267,7 +265,7 @@
     )
 
     (:fact customized-parser
-        (fn [rt lccfg]
+        (fn [rt lccfg consumer]
             (sh/spitFile lccfg (format 
 "
 (defn my-parser [ln]
@@ -294,11 +292,7 @@
 }
 " (str (sh/getPath rt "cpt")) (str rt))
             )
-            (with-open [c (kfk/newConsumer 
-                    :zookeeper.connect "localhost:10240" 
-                    :group.id "alone" 
-                    :auto.offset.reset "smallest"
-                )
+            (with-open [
                 lc (sh/newCloseableProcess 
                     (sh/popen 
                         ["java" "-cp" ".:build/log_collector.jar" 
@@ -308,10 +302,10 @@
                 )
                 ]
                 (Thread/sleep 5000)
-                (let [cseq (take 3 (kfk/listenTo c "hdfs.data-node"))]
-                    (for [{message :message} (doall cseq)]
+                (let [cseq (doall (take 3 consumer))]
+                    (for [{message :message} cseq]
                         (-> message
-                            (String. (StandardCharsets/UTF_8))
+                            (util/bytes->str)
                             (json/read-str :key-fn keyword)
                         )
                     )
@@ -319,7 +313,7 @@
             )
         )
         :eq
-        (fn [_ _]
+        (fn [& _]
             [
                 {
                     :host (-> (net/localhost) (first) (.getHostAddress))
@@ -379,9 +373,10 @@
                     :broker.id 0
                     :log.dirs (.toAbsolutePath kfkdir)
                 )
+                c (new-consumer)
                 ]
                 (kfk/createTopic "localhost:10240" "hdfs.data-node")
-                (test rt lccfg)
+                (test rt lccfg c)
             )
         (finally
             (sh/rmtree rt)
@@ -398,14 +393,6 @@
                 (json/read-str :key-fn keyword)
             )
         )
-    )
-)
-
-(defn new-consumer []
-    (kfk/newConsumer 
-        :zookeeper.connect "localhost:10240" 
-        :group.id "alone" 
-        :auto.offset.reset "smallest"
     )
 )
 
@@ -449,30 +436,28 @@
 (suite "checkpoint: which logs have been sent"
     (:testbench tb2)
     (:fact main:cpt-effect
-        (fn [rt lccfg]
-            (with-open [c (new-consumer)]
-                (let [q (ArrayBlockingQueue. 16)
-                    stub (kfk->hdfs/assign-consumer-to-queue! c "hdfs.data-node" q)
-                    _ (Thread/sleep 100)
-                    _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-01")
-                        "2013-06-01 00:00:00,000 INFO Client: msg1\n"
-                    )
-                    _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
-                        "2013-06-02 00:00:00,000 INFO Client: msg2\n"
-                    )
-                    ms1 (read-until-nothing lccfg q)
-                    _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
-                        "2013-06-02 00:00:00,000 INFO Client: msg2\n2013-06-03 00:00:00,000 INFO Client: msg3\n"
-                    )
-                    ms2 (read-until-nothing lccfg q)
-                    ]
-                    (shutdown-agents)
-                    (concat ms1 ms2)
+        (fn [rt lccfg consumer]
+            (let [q (ArrayBlockingQueue. 16)
+                stub (kfk->hdfs/assign-consumer-to-queue! consumer "hdfs.data-node" q)
+                _ (Thread/sleep 100)
+                _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-01")
+                    "2013-06-01 00:00:00,000 INFO Client: msg1\n"
                 )
+                _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
+                    "2013-06-02 00:00:00,000 INFO Client: msg2\n"
+                )
+                ms1 (read-until-nothing lccfg q)
+                _ (sh/spitFile (sh/getPath rt "xx.log.2013-06-02")
+                    "2013-06-02 00:00:00,000 INFO Client: msg2\n2013-06-03 00:00:00,000 INFO Client: msg3\n"
+                )
+                ms2 (read-until-nothing lccfg q)
+                ]
+                (shutdown-agents)
+                (concat ms1 ms2)
             )
         )
         :eq
-        (fn [rt lccfg]
+        (fn [& _]
             [
                 {
                     :host (-> (net/localhost) (first) (.getHostAddress))

@@ -63,13 +63,13 @@
 )
 
 (defn- reader->lazyseq! [rdr]
-    (if-let [ln (.readLine rdr)]
-        (lazy-seq
+    (lazy-seq
+        (if-let [ln (.readLine rdr)]
             (cons ln (reader->lazyseq! rdr))
-        )
-        (do
-            (.close rdr)
-            []
+            (do
+                (.close rdr)
+                []
+            )
         )
     )
 )
