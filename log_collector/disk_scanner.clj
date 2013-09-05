@@ -22,8 +22,26 @@
     )
 )
 
-(defn sort-daily-rolling [files]
+(defn- sort-daily-rolling [files]
     (sort-by str compare-daily-rolling files)
+)
+
+(def ^:private numeric-pattern #".*[.]log[.](\d+)")
+
+(defn- extract-num [a]
+    (let [a (str a)]
+        (cond
+            (.endsWith a ".log") 0
+            :else (let [ma (re-find numeric-pattern a)]
+                (assert ma)
+                (read-string (get ma 1))
+            )
+        )
+    )
+)
+
+(defn- sort-numeric [files]
+    (reverse (sort-by extract-num files))
 )
 
 (defn scan-files [sorter base pat]
@@ -39,11 +57,25 @@
     )
 )
 
+(defn- get-sorter [opt]
+    (if-let [sorter (get opt :sorter)]
+        (cond
+            (= sorter :daily-rolling) sort-daily-rolling
+            (= sorter :numeric) sort-numeric
+            (ifn? sorter) sorter
+            :else (assert false 
+                ":sorter requires :daily-rolling, :numeric or a sorting function"
+            )
+        )
+        sort-daily-rolling
+    )
+)
+
 (defn scan [opts]
     (for [[topic opt] opts
         :let [base (:base opt)]
         :let [pattern (:pattern opt)]
-        :let [sorter (get opt :sorter sort-daily-rolling)]
+        :let [sorter (get-sorter opt)]
         f (scan-files sorter base pattern)
         ]
         [(assoc opt :topic topic) f]

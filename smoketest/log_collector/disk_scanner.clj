@@ -31,7 +31,7 @@
 
 (suite "find log files"
     (:testbench tb1)
-    (:fact scan-files
+    (:fact scan-files:daily-rolling
         (fn [rt]
             (sh/spitFile (sh/getPath rt "haha.log.2014-07-02") "include")
             (sh/spitFile (sh/getPath rt "haha.log.2014-07-01") "include")
@@ -51,6 +51,30 @@
         (fn [rt] 
             (->>
                 ["haha.log.2014-07-01" "haha.log.2014-07-02" "haha.log"]
+                (map #(sh/getPath rt %))
+            )
+        )
+    )
+    (:fact scan-files:numeric
+        (fn [rt]
+            (sh/spitFile (sh/getPath rt "haha.log.2") "include")
+            (sh/spitFile (sh/getPath rt "haha.log.1") "include")
+            (sh/spitFile (sh/getPath rt "haha.log") "include")
+            (->>
+                (dsks/scan {
+                    :topic {
+                        :base (str (.toAbsolutePath rt))
+                        :pattern #"haha[.]log.*"
+                        :sorter :numeric
+                    }
+                })
+                (map #(get % 1))
+            )
+        )
+        :eq
+        (fn [rt] 
+            (->>
+                ["haha.log.2" "haha.log.1" "haha.log"]
                 (map #(sh/getPath rt %))
             )
         )
