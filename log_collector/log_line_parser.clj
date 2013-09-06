@@ -1,15 +1,15 @@
 (ns log-collector.log-line-parser
     (:require
         [clojure.string :as str]
+        [clojure.java.io :as io]
         [clj-time.core :as datetime]
         [clj-time.format :as datetime-fmt]
         [clj-time.coerce :as datetime-coerce]
         [utilities.net :as net]
     )
     (:import 
-        java.io.BufferedReader
-        java.util.Date
-        [java.text SimpleDateFormat ParsePosition]
+        [java.io BufferedReader InputStream]
+        [java.nio.file Files OpenOption StandardOpenOption]
     )
 )
 
@@ -47,7 +47,7 @@
 )
 
 (defn- format-log-line [parse-log-line x]
-    (let [[tst lvl loc msg] (parse-log-line x)]
+    (if-let [[tst lvl loc msg] (parse-log-line x)]
         {
             :timestamp tst, 
             :level lvl, 
@@ -63,13 +63,13 @@
 )
 
 (defn- reader->lazyseq! [rdr]
-    (if-let [ln (.readLine rdr)]
-        (lazy-seq
+    (lazy-seq
+        (if-let [ln (.readLine rdr)]
             (cons ln (reader->lazyseq! rdr))
-        )
-        (do
-            (.close rdr)
-            []
+            (do
+                (.close rdr)
+                []
+            )
         )
     )
 )
@@ -111,14 +111,19 @@
             (partial new-log-line? parse-log-line)
         )
         (map (partial format-log-line parse-log-line))
+        (filter #(not (nil? %)))
     )
 )
 
-(def ^:private cache (atom 0))
-
-(defn cache-log-line [l]
-    (when (> (:timestamp l) @cache )
-        (swap! cache (constantly (:timestamp l)))
-        l
+(defn read-logs [opts f offset]
+    (let [parser (get opts :parser parse-log-line)
+        is (Files/newInputStream f 
+            (into-array OpenOption [StandardOpenOption/READ])
+        )
+        _ (.skip is offset)
+        rdr (io/reader is)
+        ]
+        (parse-log-events! parser rdr)
     )
 )
+
