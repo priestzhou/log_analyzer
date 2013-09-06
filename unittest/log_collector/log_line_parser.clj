@@ -8,9 +8,18 @@
     )
 )
 
+(defn- testme [s]
+    (->> s
+        (StringReader.)
+        (reader)
+        (parse-log-events! parse-log-line)
+        (map #(dissoc % :host))
+    )
+)
+
 (suite "parse raw log events from lines"
     (:fact log-line-real
-        (parse-log-raw (reader (StringReader. 
+        (testme
 "2013-06-01 22:48:58,464 WARN org.apache.hadoop.hdfs.server.datanode.DataNode: java.net.ConnectException: Call to 10.144.44.18/10.144.44.18:8020 failed on connection exception: java.net.ConnectException: Connection refused
         at org.apache.hadoop.ipc.Client.wrapException(Client.java:1136)
         at org.apache.hadoop.ipc.Client.call(Client.java:1112)
@@ -38,7 +47,7 @@ Caused by: java.net.ConnectException: Connection refused
 SHUTDOWN_MSG: Shutting down DataNode at AY130510232353680d9aZ/10.144.44.181
 ************************************************************/
 "
-        )))
+        )
         :is
         [
             {:timestamp 1370098138464,
@@ -86,30 +95,28 @@ SHUTDOWN_MSG: Shutting down DataNode at AY130510232353680d9aZ/10.144.44.181
 
 (suite "parse raw log"
     (:fact parse-single-line 
-        (parse-log-raw (reader (StringReader.
-"1970-01-01 08:00:01,000 INFO Class.func: hello world!"
-        )))
+        (testme "1970-01-01 08:00:01,000 INFO Class.func: hello world!")
         :is
         [{:timestamp 1000, :level "INFO", :location "Class.func",
             :message "hello world!"
         }]
     )
     (:fact parse-multi-line
-        (parse-log-raw (reader (StringReader.
+        (testme
 "1970-01-01 08:00:01,000 INFO Class.func: hello
 world!"
-        )))
+        )
         :is
         [{:timestamp 1000, :level "INFO", :location "Class.func",
             :message "hello\nworld!"
         }]
     )
     (:fact parse-sl-ml
-        (parse-log-raw (reader (StringReader.
+        (testme
 "1970-01-01 08:00:00,001 INFO Class.func: xixi
 1970-01-01 08:00:00,010 INFO Class.func: hello
 world!"
-        )))
+        )
         :is
         [{:timestamp 1, :level "INFO", :location "Class.func",
                 :message "xixi"
@@ -120,11 +127,11 @@ world!"
         ]
     )
     (:fact parse-ml-sl
-        (parse-log-raw (reader (StringReader.
+        (testme
 "1970-01-01 08:00:00,001 INFO Class.func: hello
 world!
 1970-01-01 08:00:00,010 INFO Class.func: xixi"
-        )))
+        )
         :is
         [{:timestamp 1, :level "INFO", :location "Class.func",
                 :message "hello\nworld!"
@@ -135,11 +142,11 @@ world!
         ]
     )
     (:fact parse-trailing-blank-line
-        (parse-log-raw (reader (StringReader.
+        (testme
 "1970-01-01 08:00:01,000 INFO Class.func: hello world!
 
 "
-        )))
+        )
         :is
         [{:timestamp 1000, :level "INFO", :location "Class.func",
             :message "hello world!"

@@ -10,7 +10,7 @@
         [log-collector.log-line-parser :as llp]
     )
     (:import
-        [java.nio.charset Charset]
+        [java.nio.charset StandardCharsets]
         [kafka.common KafkaException]
         [java.io IOException]
     )
@@ -27,35 +27,59 @@
     )
 )
 
+(defn- scan [opts]
+    (let [base (:base opts)
+        pattern (:pattern opts)
+        sorter (get opts :sorter ds/sort-daily-rolling)
+        ]
+        (ds/scan sorter base pattern)
+    )
+)
+
+(defn- read-logs [opts f]
+    (let [parser (get opts :parser llp/parse-log-line)
+        rdr (io/reader (.toFile f))
+        ]
+        (llp/parse-log-events! parser rdr)
+    )
+)
+
 (defn- main-loop [producer opts]
     (while true
         (try
-            (let [logs (->>
-                    (for [[k v] opts
-                            f (->>
-                                    (ds/scan sort (:base v) (re-pattern (:pattern v)))
-                                    (take 2)
-                                    (reverse)
-                            )
-                            ln (llp/parse-log-with-path f)
-                            :let [not-cached-ln (llp/cache-log-line ln)]
-                            :when not-cached-ln
-                            :let [message 
-                                (-> not-cached-ln
-                                    (json/write-str)
-                                    (.getBytes (Charset/forName "UTF-8"))
-                                )
-                            ]
-                        ]
-                        {:topic (name k) :message message}
+            (let [logs (for [
+                    [k v] opts
+                    f (->> (scan v)
+                        (take 2)
+                        (reverse)
                     )
-                    (doall)
-                )]
-                (info "Find new logs" :count (count logs))
+                    ln (read-logs v f)
+                    :let [not-cached-ln (llp/cache-log-line ln)]
+                    :when not-cached-ln
+                    :let [message (-> not-cached-ln
+                        (json/write-str)
+                        (.getBytes (StandardCharsets/UTF_8))
+                    )]
+                    ]
+                    {:topic (name k) :message message}
+                )
+                ]
+                (info "Find new logs")
                 (doseq [plogs (partition-all 1000 logs)]
                     (kfk/produce producer plogs)
-                    (info "Sent logs" :count (count plogs))
-                    (Thread/sleep 500)
+                    (if-let [{:keys [topic message]} (first plogs)]
+                        (info "Sent logs" 
+                            :count (count plogs)
+                            :first {
+                                :topic topic 
+                                :message (-> message
+                                    (String. StandardCharsets/UTF_8)
+                                    (json/read-str)
+                                )
+                            }
+                        )
+                    )
+                    (Thread/sleep 100)
                 )
                 (info "Sent all new logs. Wait for 5 secs.")
             )

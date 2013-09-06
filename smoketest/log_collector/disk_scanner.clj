@@ -15,6 +15,7 @@
     (let [path "st_dsks"]
         (sh/rmtree path)
         (try
+            (sh/spitFile (sh/getPath path "haha.log.2014-07-02") "include")
             (sh/spitFile (sh/getPath path "haha.log.2014-07-01") "include")
             (sh/spitFile (sh/getPath path "haha.log") "include")
             (sh/spitFile (sh/getPath path "others/haha.log") "exclude")
@@ -28,13 +29,13 @@
 (suite "find log files"
     (:testbench tb1)
     (:fact disk-scanner-1 
-        (fn [base]
-            (dsks/scan sort base #"haha[.]log.*")
+        (fn [rt]
+            (dsks/scan dsks/sort-daily-rolling rt #"haha[.]log.*")
         )
         :eq
-        (fn [_] 
-            (map sh/getPath 
-                ["st_dsks/haha.log" "st_dsks/haha.log.2014-07-01"]
+        (fn [rt] 
+            (map #(sh/getPath rt %)
+                ["haha.log" "haha.log.2014-07-02" "haha.log.2014-07-01"]
             )
         )
     )
