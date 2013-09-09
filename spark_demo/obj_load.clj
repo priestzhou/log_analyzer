@@ -1,4 +1,4 @@
-(ns spark-demo.spark-demo
+(ns spark-demo.obj-load
     (:import 
          spark.api.java.JavaSparkContext         
     )
@@ -22,15 +22,10 @@
                 :spark-home "/home/hadoop/spark/" 
                 :jars ["./log_search.jar"]
                 )
-            input-rdd (.textFile sc "/home/hadoop/build/namenodelog"
+            input-rdd (.objectFile sc "/home/hadoop/build/obtfile/*"
                 )
             ]
-        (k/map 
             input-rdd
-            (sfn/fn f [log]
-                (json/read-str log)
-            )
-        )
     )
 )
 
@@ -40,8 +35,8 @@
         ]
     (->
         testrdd
-        ;(k/map (sfn/fn [log] [(count log) log]))
-        (.saveAsObjectFile  "/home/hadoop/build/obtfile/")
+        (k/map (sfn/fn [log] (keys log)))
+        (.count )
         println
     )    
     )
@@ -68,3 +63,14 @@
         ) 
     )
 )
+
+
+    (comment do
+        ;(run-test "*hdfs*")
+        (run-test 
+            "*hdfs_* | parse-re \"(?<=HDFS_)[a-zA-Z]*\" as type 
+            | parse \"bytes: *,\" as size | last size ,min size,uc size ,max size by type " 
+            "86400"
+            1377018378063
+        )                
+    )

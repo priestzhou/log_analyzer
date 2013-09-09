@@ -1,4 +1,4 @@
-(ns spark-demo.spark-demo
+(ns spark-demo.txt-load-raw
     (:import 
          spark.api.java.JavaSparkContext         
     )
@@ -15,22 +15,17 @@
 ;spark.streaming.api.java.JavaStreamingContext
 ;spark.streaming.Duration
 (defn- get-test-rdd []
-    (let [
-            setp1 (System/setProperty "spark.serializer" "spark.KryoSerializer")
-            sc (k/spark-context 
+    (let [sc (k/spark-context 
                 :master "spark://10.144.44.18:7077" :job-name "Simple Job" 
                 :spark-home "/home/hadoop/spark/" 
-                :jars ["./log_search.jar"]
+                :jars ["./spark_demo.jar" "./log_search.jar"]
                 )
-            input-rdd (.textFile sc "/home/hadoop/build/namenodelog"
+            input-rdd (.textFile sc "/home/hadoop/build/namenodelog_all"
                 )
             ]
-        (k/map 
+        
             input-rdd
-            (sfn/fn f [log]
-                (json/read-str log)
-            )
-        )
+        
     )
 )
 
@@ -40,8 +35,7 @@
         ]
     (->
         testrdd
-        ;(k/map (sfn/fn [log] [(count log) log]))
-        (.saveAsObjectFile  "/home/hadoop/build/obtfile/")
+        (.count )
         println
     )    
     )
@@ -68,3 +62,14 @@
         ) 
     )
 )
+
+
+    (comment do
+        ;(run-test "*hdfs*")
+        (run-test 
+            "*hdfs_* | parse-re \"(?<=HDFS_)[a-zA-Z]*\" as type 
+            | parse \"bytes: *,\" as size | last size ,min size,uc size ,max size by type " 
+            "86400"
+            1377018378063
+        )                
+    )
