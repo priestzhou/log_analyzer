@@ -18,12 +18,7 @@
     (println "event-search")
     (k/filter rdd
         (sfn/fn f [log]
-            false
-        )        
-    )
-)
-
-            (comment and
+            (and
                 (<
                     startTime
                     (get log "timestamp")
@@ -31,6 +26,11 @@
                 )
                 ((first fitlers) (get log "message"))
             )
+        )        
+    )
+)
+
+            
 
 (defn- where-filter [fitlers rdd]
     (k/filter rdd
@@ -117,19 +117,19 @@
 )
 
 (defn- get-header [logkeys]
-    (let [userkeys (filter string? logkeys)
+    (let [  userkeys (filter string? logkeys)
             syskeys (filter keyword? logkeys)
-            usedkeys (remove #{"message" "timestamp"} syskeys)
+            usedkeys (remove #{"message" "timestamp"} userkeys)
         ]
         (concat 
             ["timestamp"]
+            syskeys
             usedkeys
-            userkeys
             ["message"]
         )
     )
 )
-
+ 
 (defn- showlog [rdd]
     (info "showlog" )
     (let [limitLog (get-newest-log
