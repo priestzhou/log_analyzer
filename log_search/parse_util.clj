@@ -14,9 +14,9 @@
 
 (def whitespace #{\space \tab})
 
-(def usersym #{\- \_ \= \.})
+(def usersym #{\- \_ \= \. \/ \: })
 
-(def parsersym #{\- \_ \= \. \\ \" \: \, \? \< \( \) \] \[ \} \{ \+ \|})
+(def parsersym #{\/ \- \_ \= \. \\ \" \: \, \? \< \( \) \] \[ \} \{ \+ \|})
 
 (defn whitespaces [stream]
     (let [[strm parsed] (

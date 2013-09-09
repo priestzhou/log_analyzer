@@ -20,7 +20,6 @@
         [clj-spark.api :as k]
         [serializable.fn :as sfn]
         [clojure.data.json :as json]
-        [clj-json.core :as clj ]
     )
     (:gen-class)
 )
@@ -40,19 +39,19 @@
 (defn- get-test-rdd []
     (info "get-test-rdd1")
     (let [sc (k/spark-context 
-                :master "spark://192.168.1.100:7077" :job-name "Simple Job" 
-                :spark-home "/home/admin/spark-0.7.3" 
+                :master "spark://10.144.44.18:7077" :job-name "Simple Job" 
+                :spark-home "/home/hadoop/spark/" 
                 :jars ["./log_search.jar"]
                 )
             input-rdd (.textFile sc 
-                "hdfs://192.168.1.100//namenode1/*/*"
+                "/home/hadoop/build/namenodelog"
                 )
             ]
         (info "get-test-rdd2")
         [sc  (k/map 
             input-rdd
             (sfn/fn f [log]
-                (clj/parse-string log)
+                (json/read-str log)
             )
         )]
     )
@@ -135,7 +134,7 @@
     (if  (> maxQueryCount (count (keys @futurMap)))
         (let [query-id (gen-query-id)
                 output (atom [])
-                srule (sp/sparser qStr "86400" 1376755200130) 
+                srule (sp/sparser qStr "14400" 1376813000267) 
             ]
             (info "create-query-t into let")
             (swap! futurMap

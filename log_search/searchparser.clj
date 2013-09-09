@@ -13,6 +13,8 @@
     )    
 )
 
+(set! *warn-on-reflection* true)
+
 (defloggers debug info warn error)
 
 (defn- numberchar [stream]
@@ -538,6 +540,7 @@
     ;    (ups/extract-string-between stream strm) 
     ;    rst
     ;] 
+    (println strm)
     (->>
         rst
         flatten
