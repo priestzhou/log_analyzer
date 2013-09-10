@@ -44,7 +44,6 @@
         f (if (instance? array-of-bytes-type fn-or-serfn)
             (deserialize-fn fn-or-serfn)
             fn-or-serfn)
-        t1 (println "defn -call")
         ]
     (apply f xs)
     ))
@@ -54,7 +53,17 @@
   [this & xs]
   ; A little ugly that I have to do the deser here, but I tried in the -init fn and it failed.  Maybe it would work in a :post-init?
   (let [
-        f (.state this)
+        fn-or-serfn @(.state this)
+        f (if (instance? array-of-bytes-type fn-or-serfn)
+            (do
+              (println "defn -call")
+              (let [f1 (deserialize-fn fn-or-serfn)]
+                (set! (.state this) f1)
+                f1
+              )
+            )
+            fn-or-serfn)
+        
         ]
     (apply f xs)
     ))
@@ -90,7 +99,7 @@
 (println "===end")
 
 (do 
-  (def Function1-init clj-spark.spark.functions/-init1) 
+  (def Function1-init clj-spark.spark.functions/-init) 
   (def Function1-call clj-spark.spark.functions/-call1) 
   (clojure.core/gen-class 
     :name clj_spark.spark.functions.Function1 
@@ -134,7 +143,6 @@
       clj_spark.spark.functions.Function 
       (if (clj-spark.spark.functions/serfn? f__133__auto__) 
         (do 
-          (println "test in function")
           (clj-spark.spark.functions/serialize-fn f__133__auto__)
         )
         f__133__auto__
