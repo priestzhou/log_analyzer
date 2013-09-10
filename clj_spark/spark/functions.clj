@@ -93,11 +93,6 @@
         (new ~new-class-sym
           (if (serfn? f#) (serialize-fn f#) f#))))))
 
-(println "start===")
-(println (macroexpand-1 '(gen-function Function function)))
-
-(println "===end")
-
 (do 
   (def Function1-init clj-spark.spark.functions/-init) 
   (def Function1-call clj-spark.spark.functions/-call1) 
