@@ -36,30 +36,39 @@
     (atom [])
 )
 
+(def ^:private rddData 
+    (atom [])
+)
+
 (defn- get-test-rdd []
     (info "get-test-rdd1")
     (let [sc (k/spark-context 
-                :master "spark://10.144.44.18:7077" :job-name "Simple Job" 
+                :master "spark://10.144.44.181:7077" :job-name "Simple Job" 
                 :spark-home "/home/hadoop/spark/" 
                 :jars ["./log_search.jar"]
                 )
             input-rdd (.textFile sc 
-                "/home/hadoop/build/namenodelog"
+                "/home/hadoop/build/namenodelog_all"
                 )
             ]
         (info "get-test-rdd2")
-        [sc  (k/map 
-            input-rdd
-            (sfn/fn f [log]
-                (json/read-str log)
+        [sc  
+            (->
+                input-rdd
+                (k/map 
+                    (sfn/fn f [log]
+                        (json/read-str log)
+                    )
+                )
+                k/cache
             )
-        )]
+        ]
     )
 )
 
-(defn- run-query [psr log-atom query-atom]
+(defn- run-query [psr log-atom query-atom rdd]
     (println "query run " )
-    (let [[sc rdd] (get-test-rdd) ]
+    (try
         (reset! 
             query-atom
             (assoc (doall (se/do-search psr rdd) )
@@ -67,7 +76,9 @@
             )
         )
         (println " next query running")
-        (.stop sc)
+        (catch Exception error
+            (println error)
+        )
     )
 )
 
@@ -147,6 +158,7 @@
                                     srule              
                                     logdata 
                                     output
+                                    @rddData
                                 )
                                 )
                             )
@@ -243,7 +255,10 @@
                     :webport ["8086"]
                 }
             opts-with-default (merge default-args opts)
+            [sc rdd] (get-test-rdd)
         ]
+        (println (k/count rdd))
+        (reset! rddData rdd)
         (when (:help opts-with-default)
             (println (arg/default-doc arg-spec))
             (System/exit 0)            
