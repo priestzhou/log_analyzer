@@ -18,6 +18,12 @@
     (println "event-search")
     (k/filter rdd
         (sfn/fn f [log]
+                ((first fitlers) (get log "message"))
+        )     
+    )
+)
+
+        (comment sfn/fn f [log]
             (and
                 (<
                     startTime
@@ -26,11 +32,7 @@
                 )
                 ((first fitlers) (get log "message"))
             )
-        )        
-    )
-)
-
-            
+        )             
 
 (defn- where-filter [fitlers rdd]
     (k/filter rdd
