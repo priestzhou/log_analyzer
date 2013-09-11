@@ -69,7 +69,8 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
     env.File('$EXTLIB/serializable-fn-0.0.3.jar'),
     env.File('$BUILD_DIR/logging.jar'),
     env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'),
-    env.File('$BUILD_DIR/spark_demo.jar'),
+    env.File('$BUILD_DIR/spark_demo.jar'), 
+    env.File('$BUILD_DIR/spark_engine.jar'), 
     ],
     install={
         env.File('$BUILD_DIR/front/log_monitor.js'): '@/resources/js',
@@ -104,6 +105,13 @@ env.install(env.compileAndJar('spark_demo.jar', 'spark_demo',
     env.File('$BUILD_DIR/logging.jar'),
     env.File('$BUILD_DIR/utilities.jar'),
     env.File('$EXTLIB/data.json-0.2.2.jar'),
+    ]
+))
+
+env.install(env.compileAndJar('spark_engine.jar', 'spark_engine',
+    libs=[env['SCALA'],
+    env.File('$EXTLIB/lib-for-spark/scala-2.9.3-library.jar'),
+    env.File('$EXTLIB/lift-json_2.8.0-2.1.jar'),  
     ]
 ))
 env.install(env.compileAndJar('clj_spark_rebuild.jar', 'clj_spark',
