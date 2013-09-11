@@ -103,17 +103,11 @@ class Spark_engine (
     rdd3.persist(StorageLevel.MEMORY_AND_DISK)
     val groupKeys = searchRule.get("groupKeys").asInstanceOf[List[String]]
     val statRules = searchRule.get("statRules")
-    //var statRdd:RDD[]=_
-    //if(groupKeys !=null){
-        val gk = new GenGroupkey(groupKeys)
-        val groupRdd = rdd3.map(x=> (gk.getKey(x),x)).groupByKey
-       //val statRdd = groupRdd.reduceByKey((x,y) => if(x) +1)
-       //val sv = new StatValue()
-       val statRdd = groupRdd.map(x=>(x._1,2) )
-   // }
-   // else{
-   //     statRdd = null
-   // }
+
+    val gk = new GenGroupkey(groupKeys)
+    val groupRdd = rdd3.map(x=> (gk.getKey(x),x)).groupByKey
+
+    val statRdd = groupRdd.map(x=>(x._1,2) )
 
     def getFilterResult()={ rdd3 }
     def getGroupResult() = { statRdd }
@@ -130,11 +124,8 @@ class Spark_init (
     jarStrings.update(0,"./spark_scala_engine-0.1.jar") 
     jarStrings.update(1,"../demo1/target/lib/lift-json_2.8.0-2.1.jar") 
     
-       val sc = new SparkContext(master,jobname,sparkhome,jarStrings)
+    val sc = new SparkContext(master,jobname,sparkhome,jarStrings)
     val rdd1 = sc.textFile(input).map(x=> new java.util.HashMap[String,Any](JsonParser.parse(x).values.asInstanceOf[smap[String,Any]].toMap) );
-
-    rdd1.cache
-    println(rdd1.count)
 
     def getInitRdd() = { rdd1 }
 }
