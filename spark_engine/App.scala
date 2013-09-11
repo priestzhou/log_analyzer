@@ -34,15 +34,9 @@ object App
 
         println(  t4.count() );
         */
-    val master ="spark://10.144.44.18:7077"
-    val jobname ="spark_engine"
-    val sparkhome="/home/hadoop/spark/"
-    val input = "/home/hadoop/build/namenodelog_all"
-   val jarStrings = new Array[String](2)
-    jarStrings.update(0,"./spark_scala_engine-0.1.jar") 
-    jarStrings.update(1,"../demo1/target/lib/lift-json_2.8.0-2.1.jar") 
-    val sc = new SparkContext(master,jobname,sparkhome,jarStrings)
-    val rdd1 = sc.textFile(input).map(x=> new java.util.HashMap[String,Any](JsonParser.parse(x).values.asInstanceOf[smap[String,Any]].toMap.asJava) );
+ 
+    val sc = new Spark_init()
+    val rdd1 = sc.getInitRdd()
 
     rdd1.cache
     println(rdd1.count)

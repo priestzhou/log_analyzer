@@ -10,6 +10,7 @@ import spark.rdd._
 import spark.storage.StorageLevel
 import scala.util.matching.Regex
 import net.liftweb.json._
+import scala.collection.immutable.{HashMap=>smap }
 import scala.collection.JavaConversions._
 
 
@@ -116,4 +117,24 @@ class Spark_engine (
 
     def getFilterResult()={ rdd3 }
     def getGroupResult() = { statRdd }
+}
+
+class Spark_init (
+    val master:String ="spark://10.144.44.18:7077",
+    val jobname:String ="spark_engine",
+    val sparkhome:String ="/home/hadoop/spark/",
+    val input:String = "/home/hadoop/build/namenodelog_all"
+    ) extends java.io.Serializable 
+{
+    val jarStrings = new Array[String](2)
+    jarStrings.update(0,"./spark_scala_engine-0.1.jar") 
+    jarStrings.update(1,"../demo1/target/lib/lift-json_2.8.0-2.1.jar") 
+    
+       val sc = new SparkContext(master,jobname,sparkhome,jarStrings)
+    val rdd1 = sc.textFile(input).map(x=> new java.util.HashMap[String,Any](JsonParser.parse(x).values.asInstanceOf[smap[String,Any]].toMap) );
+
+    rdd1.cache
+    println(rdd1.count)
+
+    def getInitRdd() = { rdd1 }
 }
