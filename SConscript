@@ -108,12 +108,6 @@ env.install(env.compileAndJar('spark_demo.jar', 'spark_demo',
     ]
 ))
 
-env.install(env.compileAndJar('spark_engine.jar', 'spark_engine',
-    libs=[env['SCALA'],
-    env.File('$EXTLIB/lib-for-spark/scala-2.9.3-library.jar'),
-    env.File('$EXTLIB/lift-json_2.8.0-2.1.jar'),  
-    ]
-))
 env.install(env.compileAndJar('clj_spark_rebuild.jar', 'clj_spark',
     libs=[env['CLOJURE'],
     env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar')
