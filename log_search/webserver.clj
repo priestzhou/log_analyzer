@@ -13,7 +13,7 @@
         [compojure.handler :as handler]
         [compojure.route :as route]
         [log-search.consumer :as lc]
-        [spark-demo.spark-engine :as se]
+        [log-search.search-driver :as sd]
         [log-search.searchparser :as sp]
         [argparser.core :as arg]
         [utilities.core :as util]
@@ -52,18 +52,15 @@
     ) 
 )
 
-(defn- run-query [psr log-atom query-atom rdd]
+(defn- run-query [psr query-atom rdd]
     (println "query run " )
     (try
-        (reset! 
-            query-atom
-            (assoc (doall (se/do-search psr rdd) )
-                :query-time (str (System/currentTimeMillis) )
-            )
-        )
-        (println " next query running")
+        (sd/do-search psr rdd query-atom)
+
+        (println " query done")
         (catch Exception error
             (println error)
+            (println (.printStackTrace error))
         )
     )
 )
@@ -141,8 +138,7 @@
                             (future 
                                 (do (println "future in ")
                                 (run-query 
-                                    srule              
-                                    logdata 
+                                    srule
                                     output
                                     @rddData
                                 )

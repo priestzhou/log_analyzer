@@ -29,7 +29,7 @@ object T_regex extends java.io.Serializable  {
       }
 }
 
-object Filter extends java.io.Serializable 
+class Filter extends java.io.Serializable 
 {
     def eventFitler(s:String,str:String):Boolean={
         val flag = T_regex.process(str,s)
@@ -85,11 +85,15 @@ class Spark_engine (
     val rdd:RDD[HashMap[String, Any]]
     ) extends java.io.Serializable 
 {
+
+    println(searchRule.keySet)
+    println(rdd)
     val eventRule = searchRule.get("eventRules").toString
-    //val nf = new Filter(eventRule.toString)
+    val nf = new Filter()
+    println(eventRule)
     val rdd2 = rdd.filter(x=> 
             //x.get("message").toString.contains(eventRule)
-            Filter.eventFitler( x.get("message").toString,eventRule.toString )
+            nf.eventFitler( x.get("message").toString,eventRule.toString )
         ) 
     val parseRules = searchRule.get("parseRules").asInstanceOf[List[java.util.Map[String,String]]]
     var rdd3 :RDD[HashMap[String,Any]] =_

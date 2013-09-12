@@ -1,7 +1,6 @@
 (ns log-search.search-driver
     (:import 
-         spark.api.java.JavaSparkContext
-         spark.storage.StorageLevel
+        com.flyingsand.spark.Spark_engine
     )    
     (:require 
         [serializable.fn :as sfn]
@@ -26,21 +25,6 @@
     (update-in log ["timestamp"] dateformat)
 )
 
-(defn- get-newest-log [rdd]
-    (println "get-newest-log")
-    (->
-        rdd
-        (k/map
-            (sfn/fn [log]
-                (change-time log)
-            )
-        )
-        ;(k/sort-by-key compare false)
-        (k/takeSample 100)
-        doall
-    )
-)
-
 (defn- get-header [logkeys]
     (let [  userkeys (filter string? logkeys)
             syskeys (filter keyword? logkeys)
@@ -55,11 +39,14 @@
     )
 )
  
-(defn- showlog [rdd]
+(defn- showlog [inlog]
     (info "showlog" )
-    (let [limitLog (get-newest-log
-                rdd
-            )
+    (let [
+            limitLog (->> 
+                    inlog
+                    (map #(into {} %) )
+                    (map change-time)
+                )
             logkeys (keys (first limitLog))
             header (get-header logkeys)
         ]
@@ -170,8 +157,16 @@
 
 
 
-(defn do-search [searchrules rdd]
+(defn do-search [searchrules rdd output]
     (info "do-search run")
+
+    (let [se (Spark_engine. searchrules rdd)
+            fr (.getFilterResult se)
+            llog (.takeSample fr false 100 9)
+            loglist (showlog llog)
+            p1 (reset! output loglist)
+        ]
+    )
    (comment let [eventFilter (:eventRules searchrules)
             timeRule (:timeRule searchrules)
             startTime (eval (:startTime timeRule))

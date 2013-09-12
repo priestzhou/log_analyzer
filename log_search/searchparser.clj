@@ -110,7 +110,7 @@
                 )
             )
         ]
-        [strm {:eventRules rstr}]
+        [strm {"eventRules" rstr}]
     )
 )
 
@@ -194,14 +194,14 @@
         ]
     (debug "parser key" tKey)
     [strm  
-        (
+        
             {            
-                :key
+                "key"
                 tKey
-                :parser
+                "parser"
                 preg
             }
-        )
+        
     ]
     )
 )
@@ -216,7 +216,7 @@
         [strm 
             (if (empty? parsed)
                 []
-                {:parseRules parsed}
+                {"parseRules" parsed}
             )
         ]
     )
@@ -504,7 +504,7 @@
         flatten
         (filter map?)
         (apply merge)
-        (java.util.HashMap.)
+        (java.util.HashMap. )
     )
         
     )
@@ -599,10 +599,12 @@
         )
     )
    ([sStr timeWindow startTime]
+        (println "test in sparser")
         (let [psr (parse-all sStr)
                 timeRule (assoc (get timeMap timeWindow) :startTime startTime)
             ]
-            (assoc psr :timeRule timeRule)
+            ;(assoc psr :timeRule timeRule)
+            psr
         )
     )
 )
