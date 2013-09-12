@@ -89,31 +89,38 @@ class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Seri
     def getFunc( fun:String) ={
         fun match {
             case "count" => countfun _ 
+            case "sum" => sumfun _
+            case "uc" => ucfun _
+            case "min" => minfun _
+            case "max" => maxfun _
+            case "first" => firstfun _
+            case "last" => lastfun _
+            case "avg" => avgfun _
         }     
     } 
     def countfun(t:List[Any]) = {
         t.length
     }
     def sumfun(t:List[Any]) = {
-        t.map(_.toInt).reduce(+)
+        t.map(_.asInstanceOf[Int]).reduce( _ + _ )
     }
     def ucfun(t:List[Any]) = {
-        
+        t.distinct.length
     }
     def minfun(t:List[Any]) = {
-        t.length
+        t.map(_.asInstanceOf[Int]).min   
     }
     def maxfun(t:List[Any]) = {
-        t.length
+        t.map(_.asInstanceOf[Int]).max
     }
     def firstfun(t:List[Any]) = {
-        t.length
+        t.init
     }
     def lastfun(t:List[Any]) = {
-        t.length
+        t.last
     }
     def avgfun(t:List[Any]) = {
-        t.length
+        sumfun(t)/countfun(t)
     }    
 } 
 

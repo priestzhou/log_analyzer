@@ -310,7 +310,7 @@
             fStr (first (first parsed))
             sKey (last parsed)
         ]
-        
+
         [strm 
             (java.util.HashMap. {
                 "statInKey" sKey,
@@ -336,11 +336,11 @@
             )
             stream
         )
-        t2 (println parsed)
+        t2 (println (flatten parsed))
         maps (->>
                 parsed
                 flatten
-                (remove empty?)
+                (filter #(instance? java.util.HashMap %))
                 ;(map #(java.util.HashMap. %) )
                 doall
                 java.util.ArrayList.
