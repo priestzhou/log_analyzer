@@ -1,4 +1,4 @@
-(ns log-search.spark-driver
+(ns log-search.search-driver
     (:import 
          spark.api.java.JavaSparkContext
          spark.storage.StorageLevel
@@ -14,83 +14,6 @@
 
 (defloggers debug info warn error)
 
-(defn- event-search [fitlers rdd startTime endTime]
-    (println "event-search")
-    (k/filter rdd
-        (sfn/fn f [log]
-                ((first fitlers) (get log "message"))
-        )     
-    )
-)
-
-        (comment sfn/fn f [log]
-            (and
-                (<
-                    startTime
-                    (get log "timestamp")
-                    endTime
-                )
-                ((first fitlers) (get log "message"))
-            )
-        )             
-
-(defn- where-filter [fitlers rdd]
-    (k/filter rdd
-        (sfn/fn f [log]
-            (reduce 
-                (sfn/fn f1 [a b]
-                    (and a b)
-                )
-                true
-                (map
-                    (sfn/fn f1 [a](a log))
-                    fitlers
-                )
-            )
-        ) 
-    )
-)
-
-(defn- do-parse [parseRule log]
-    (println "do-parse")
-    (let [pkey (get parseRule :key)
-            tparser (get parseRule :parser)
-        ]
-        {pkey (tparser log)}
-    )
-)
-
-
-(defn- apply-parse [parseRules rdd]
-    (println "apply-parse")
-    (k/map rdd
-        (sfn/fn [log]
-            (let [psr (map 
-                            #(do-parse % (get log "message")) 
-                            parseRules
-                        )
-                ]
-                (reduce merge log psr)
-            )
-        )
-    )
-)
-
-(defn- filter-parse [rdd]
-    (println "filter-parse")
-    (->
-        rdd
-        (k/filter 
-            (sfn/fn [l]
-                (empty?
-                    (filter nil? (vals l))
-                )
-            )
-        )
-        (k/persist (StorageLevel/MEMORY_AND_DISK))
-        ;k/cache
-    )
-)
 
 (defn- dateformat [t]
     (.format 
@@ -245,88 +168,11 @@
     )
 )
 
-(defn- get-key-func [groupKeys timeRule]
-    (let [startmap (if (nil? timeRule)
-                (sfn/fn ft1 [log] {})
-                (sfn/fn ft2 [log]
-                    (println log)
-                    (println timeRule)
-                    {:groupTime
-                        ((:tf timeRule)
-                            (get log "timestamp")
-                        )
-                    }
-                )
-            )
-        ]
-        (sfn/fn gk [log]
-            (reduce
-                #(assoc %1 %2 (get log %2))
-                (startmap log)                
-                groupKeys
-            )
-        )
-    )
-)
 
-(defn- do-group [groupKeys rdd timeRule]
-    (println "do-group")
-    (let [keyFunc (get-key-func groupKeys timeRule)]        
-        (-> rdd
-            (k/map  
-                (sfn/fn gen-key [log]
-                    [{:gKeys (keyFunc log)} log]
-                )
-            )
-            (k/group-by-key)
-        )
-    )
-)
-
-(defn- static-fun [stRule log]
-    (let [logVal (second log)
-            inKey (:statInKey stRule)
-            statFun (:statFun stRule)
-        ]
-        (->>
-            logVal
-            (map 
-                (sfn/fn f [l](get l inKey) )
-            )
-            statFun
-        )
-    )
-)
-
-(defn- do-statistic [statRules rdd]
-    (println "do-statistic")
-    (if (nil? statRules)
-        []
-        (->
-            rdd
-            (k/map 
-                (sfn/fn fs [log]
-                    [(reduce
-                        (sfn/fn f [a b]
-                            (assoc a 
-                            (:statOutKey b)
-                            (static-fun b log))
-                        )
-                        (first log)
-                        statRules
-                    ) (second log)]
-                )
-            )
-            (k/map first)
-            (k/collect)
-            doall
-        )
-    )
-)
 
 (defn do-search [searchrules rdd]
     (info "do-search run")
-   (let [eventFilter (:eventRules searchrules)
+   (comment let [eventFilter (:eventRules searchrules)
             timeRule (:timeRule searchrules)
             startTime (eval (:startTime timeRule))
             endTime (+ startTime (:tw timeRule))

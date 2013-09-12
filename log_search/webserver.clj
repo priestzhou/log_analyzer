@@ -1,6 +1,7 @@
 (ns log-search.webserver
     (:import 
-         spark.api.java.JavaSparkContext
+        spark.SparkContext
+        com.flyingsand.spark.Spark_init
     )    
     (:use 
         [ring.middleware.params :only (wrap-params)]
@@ -40,30 +41,15 @@
     (atom [])
 )
 
-(defn- get-test-rdd []
+(defn- get-test-rdd [master jobname sparkhome input]
     (info "get-test-rdd1")
-    (let [sc (k/spark-context 
-                :master "spark://10.144.44.181:7077" :job-name "Simple Job" 
-                :spark-home "/home/hadoop/spark/" 
-                :jars ["./log_search.jar"]
-                )
-            input-rdd (.textFile sc 
-                "/home/hadoop/build/namenodelog_all"
-                )
-            ]
-        (info "get-test-rdd2")
-        [sc  
-            (->
-                input-rdd
-                (k/map 
-                    (sfn/fn f [log]
-                        (json/read-str log)
-                    )
-                )
-                k/cache
-            )
+    (let
+        [
+            si (Spark_init. master jobname sparkhome input)
+            rdd (.getInitRdd si)
         ]
-    )
+        rdd
+    ) 
 )
 
 (defn- run-query [psr log-atom query-atom rdd]
@@ -233,36 +219,54 @@
 (defn -main [& args]
     (let [arg-spec 
             {
-                :usage "Usage: zookeeper [topic] [group] exejar"
+                :usage "Usage: master sparkhome input [jobname] exejar"
                 :args [
                     (arg/opt :help
                         "-h|--help" "show this help")
-                    (arg/opt :zkp 
-                        "-zkp <ip:port>" "the zookeeper ip & port")
-                    (arg/opt :topic
-                        "-topic <topic>" "the kafka topic")
-                    (arg/opt :group
-                        "-group <group>" "the consumer group")
                     (arg/opt :webport
                         "-webport <webport>" "jetty web port")
+                    (arg/opt :master
+                        "-master <master>" "spark master")
+                    (arg/opt :jobname
+                        "-jobname <jobname>" "spark jobname")
+                    (arg/opt :sparkhome
+                        "-sparkhome <sparkhome>" "spark home path")
+                    (arg/opt :input
+                        "-input <input>" "spark input file path")
                     ]
             }
             opts (arg/transform->map (arg/parse arg-spec args))
             default-args 
                 {
-                    :topic ["hdfs.data-node"]
-                    :group ["log_search"]
+                    :jobname ["log search"]
                     :webport ["8086"]
                 }
             opts-with-default (merge default-args opts)
-            [sc rdd] (get-test-rdd)
+            rdd (get-test-rdd 
+                    (first (:master opts-with-default)) 
+                    (first (:jobname opts-with-default))
+                    (first (:sparkhome opts-with-default))
+                    (first (:input opts-with-default))
+                )
         ]
-        (println (k/count rdd))
-        (reset! rddData rdd)
         (when (:help opts-with-default)
             (println (arg/default-doc arg-spec))
             (System/exit 0)            
         )
+        (util/throw-if-not (:master opts-with-default)
+            IllegalArgumentException. 
+            "the master info is needed"
+        )
+        (util/throw-if-not (:sparkhome opts-with-default)
+            IllegalArgumentException. 
+            "the sparkhome info is needed"
+        )
+        (util/throw-if-not (:input opts-with-default)
+            IllegalArgumentException. 
+            "the input info is needed"
+        )        
+        (println (k/count rdd))
+        (reset! rddData rdd)          
         (rj/run-jetty #'app 
             {
                 :port 
