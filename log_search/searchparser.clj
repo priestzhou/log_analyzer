@@ -93,10 +93,10 @@
             leftFlag (= :star (first parsed))
             rightFlag (= :star (last parsed))
             rstr (cond
-                    (and leftFlag rightFlag) pStr
-                    leftFlag (str pStr " ")
-                    rightFlag (str " " pStr)
-                    :else (str " " pStr " ")
+                    (and leftFlag rightFlag) (str "(" pStr ")" )
+                    leftFlag (str "(" pStr ") ")
+                    rightFlag (str " (" pStr ")")
+                    :else (str " (" pStr ") ")
                 )
             t1 (println rstr)
             efunc  (sfn/fn [inStr]
@@ -110,7 +110,7 @@
                 )
             )
         ]
-        [strm {:eventRules [efunc]}]
+        [strm {:eventRules rstr}]
     )
 )
 
@@ -136,15 +136,15 @@
                 stream
             )
             leftStr (if (string? (first parsed))
-                    (str "(?<=" (first parsed) ")")
+                     (first parsed)
                     ""
                 )
             rightStr (if (string? (last parsed))
-                    (str "(?=" (last parsed) ")" )
+                    (last parsed)
                     ""
                 )
         ]
-        (re-pattern (str  leftStr "[\\S]*" rightStr))
+        (str  leftStr "([\\S]*)" rightStr)
     )
  
 )
@@ -169,7 +169,7 @@
                 stream
             )
         ]
-        [strm re-pattern]
+        [strm identity]
     )
 )
 
@@ -194,14 +194,14 @@
         ]
     (debug "parser key" tKey)
     [strm  
-        {            
-            :key
-            tKey
-            :parser
-            (sfn/fn [inStr] 
-                (re-find preg inStr)
-            )
-        }
+        (
+            {            
+                :key
+                tKey
+                :parser
+                preg
+            }
+        )
     ]
     )
 )
@@ -251,63 +251,21 @@
 (def ^:private static-rules
     {
         "sum"
-        (fn [l] 
-            (reduce #(+ %1 (read-string %2)) 0 l)
-        )
+        "sum"
         "count"
-        (fn [l] 
-            (reduce (fn [a b] (+ a 1)) 0 l)
-        )
+        "count"
         "uc"
-        (fn [l] 
-            (count (distinct l))
-        )
+        "uc"
         "min"
-        (fn [l] 
-            (apply min (map read-string l))
-        )        
+        "min"        
         "max"
-        (fn [l] 
-            (apply max (map read-string l))
-        )
+        "max"
         "first"
-        (fn [l] 
-            (first l)
-        )        
+        "first"        
         "last"
-        (fn [l]
-            (last l)
-        )
+        "last"
         "avg"
-        (fn [l]
-            (float   
-                (/  (apply + (map read-string l)) (count  l))
-            )
-        )        
-        "stddev"
-        (fn [l]
-            (let [avg (/ (apply + (map read-string l)) (count l))
-                ]
-                (float 
-                    (/ 
-                        (reduce 
-                            (fn [a b]
-                                (
-                                    + 
-                                    a 
-                                    (* 
-                                        (-  b avg) 
-                                        (- b avg)
-                                    )
-                                )
-                            )
-                            (map read-string l)
-                        )
-                        (count l)
-                    )
-                )
-            )
-        )
+        "avg"
     }
 )
 
@@ -350,11 +308,11 @@
             sKey (last parsed)
         ]
         [strm 
-            {
+            (java.util.HashMap. {
                 :statInKey sKey,
                 :statFun sFun,
                 :statOutKey (str fStr "_" sKey)
-            }
+            })
         ]
     )
 )
@@ -546,6 +504,7 @@
         flatten
         (filter map?)
         (apply merge)
+        (java.util.HashMap.)
     )
         
     )
