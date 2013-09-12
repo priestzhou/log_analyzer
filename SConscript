@@ -68,9 +68,8 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
     env.File('$EXTLIB/data.json-0.2.2.jar'),
     env.File('$EXTLIB/serializable-fn-0.0.3.jar'),
     env.File('$BUILD_DIR/logging.jar'),
-    env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'),
-    env.File('$BUILD_DIR/spark_demo.jar'), 
-    env.File('$BUILD_DIR/spark_engine.jar'), 
+    env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'), 
+    env.File('$EXTLIB/spark_scala_engine-0.1.jar'),
     ],
     install={
         env.File('$BUILD_DIR/front/log_monitor.js'): '@/resources/js',
@@ -98,15 +97,6 @@ env.install(env.compileAndJar('log_search.jar', 'log_search',
     standalone=True, manifest={'Main-Class': 'log_search.webserver'}
 ))
 
-env.install(env.compileAndJar('spark_demo.jar', 'spark_demo',
-    libs=[env['CLOJURE'],
-    env.File('$EXTLIB/spark-core_2.9.3-0.7.3.jar'),
-    env.File('$BUILD_DIR/clj_spark_rebuild.jar'),
-    env.File('$BUILD_DIR/logging.jar'),
-    env.File('$BUILD_DIR/utilities.jar'),
-    env.File('$EXTLIB/data.json-0.2.2.jar'),
-    ]
-))
 
 env.install(env.compileAndJar('clj_spark_rebuild.jar', 'clj_spark',
     libs=[env['CLOJURE'],
