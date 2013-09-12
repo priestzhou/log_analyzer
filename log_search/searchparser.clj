@@ -242,6 +242,8 @@
                 parsed
                 flatten
                 (filter string?)
+                doall
+                java.util.ArrayList.
             )
         ]
         [strm keyStr]
@@ -291,6 +293,7 @@
     )
 )
 
+
 (defn- parse-static-fun'' [stream]
     (let [[strm parsed] (
                 (ups/chain
@@ -302,16 +305,17 @@
                     parse-event-str
                 )
                 stream
-            )
+            )    
             sFun (last (first parsed))
             fStr (first (first parsed))
             sKey (last parsed)
         ]
+        
         [strm 
             (java.util.HashMap. {
-                :statInKey sKey,
-                :statFun sFun,
-                :statOutKey (str fStr "_" sKey)
+                "statInKey" sKey,
+                "statFun" sFun,
+                "statOutKey" (str fStr "_" sKey)
             })
         ]
     )
@@ -332,7 +336,15 @@
             )
             stream
         )
-        maps (filter  map? (flatten parsed))
+        t2 (println parsed)
+        maps (->>
+                parsed
+                flatten
+                (remove empty?)
+                ;(map #(java.util.HashMap. %) )
+                doall
+                java.util.ArrayList.
+            )
         ]
         [strm maps]
     )
@@ -353,8 +365,8 @@
             gKeys (last parsed)
             statRules (nth parsed 1)
         ]
-        [strm {:groupKeys gKeys :statRules statRules}]
-        )
+        [strm {"groupKeys" gKeys "statRules" statRules}]
+    )
 )
 
 

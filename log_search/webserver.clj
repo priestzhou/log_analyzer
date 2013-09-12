@@ -131,6 +131,7 @@
                 srule (sp/sparser qStr "14400" 1376813000267) 
             ]
             (info "create-query-t into let")
+            (println "srule - " srule)
             (swap! futurMap
                 #(assoc % query-id 
                     {

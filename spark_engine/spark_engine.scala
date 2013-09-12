@@ -66,6 +66,7 @@ class Tparse(val parseRules:List[Map[String,String]]) extends java.io.Serializab
 class GenGroupkey(val groupKeys:List[String]) extends java.io.Serializable {
     def getKey(log:HashMap[String,Any]) = {
         var kmap = new HashMap[String,String]()
+
         for( key <- groupKeys) {
             val v = log.get(key).toString
             kmap.put(key,v)
@@ -73,13 +74,49 @@ class GenGroupkey(val groupKeys:List[String]) extends java.io.Serializable {
         kmap
     }
 }
-/*
-class StatValue() extends java.io.Serializable {
-    def getStat( (key, value)) ={
-        (key,1)
+
+class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Serializable {
+    def getStat( groupKeys:HashMap[String,String],loglist:List[HashMap[String,Any]]) ={
+      for( sr <- statRules) {
+            val inkey = sr.get("statInKey").toString
+            val vList = loglist.map(x=>x.get("inkey"))
+            val outkey = sr.get("statOutKey").toString
+            val funStr = sr.get("statFun").toString
+            groupKeys.put(outkey,getFunc(funStr)(vList).toString)
+        }
+        groupKeys  
+    }
+    def getFunc( fun:String) ={
+        fun match {
+            case "count" => countfun _ 
+        }     
     } 
+    def countfun(t:List[Any]) = {
+        t.length
+    }
+    def sumfun(t:List[Any]) = {
+        t.map(_.toInt).reduce(+)
+    }
+    def ucfun(t:List[Any]) = {
+        
+    }
+    def minfun(t:List[Any]) = {
+        t.length
+    }
+    def maxfun(t:List[Any]) = {
+        t.length
+    }
+    def firstfun(t:List[Any]) = {
+        t.length
+    }
+    def lastfun(t:List[Any]) = {
+        t.length
+    }
+    def avgfun(t:List[Any]) = {
+        t.length
+    }    
 } 
-*/
+
 class Spark_engine (
     val searchRule: Map[String,Any],
     val rdd:RDD[HashMap[String, Any]]
@@ -106,15 +143,18 @@ class Spark_engine (
     }
     rdd3.persist(StorageLevel.MEMORY_AND_DISK)
     val groupKeys = searchRule.get("groupKeys").asInstanceOf[List[String]]
-    val statRules = searchRule.get("statRules")
+    val statRules = searchRule.get("statRules").asInstanceOf[List[HashMap[String,String]]]
 
     val gk = new GenGroupkey(groupKeys)
     val groupRdd = rdd3.map(x=> (gk.getKey(x),x)).groupByKey
 
-    val statRdd = groupRdd.map(x=>(x._1,2) )
+    val sv = new StatValue(statRules)
+    val statRdd = groupRdd.map(x=>sv.getStat(x._1,x._2))
 
     def getFilterResult()={ rdd3 }
-    def getGroupResult() = { statRdd }
+    def getGroupResult() = { 
+        statRdd 
+    }
 }
 
 class Spark_init (

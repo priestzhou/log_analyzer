@@ -164,7 +164,13 @@
             fr (.getFilterResult se)
             llog (.takeSample fr false 100 9)
             loglist (showlog llog)
-            p1 (reset! output loglist)
+            logtable {:logtable loglist}
+            p1 (reset! output logtable)
+            sr (.getGroupResult se)
+            statResult (.collect sr)
+            p2Result (assoc logtable :meta statResult)
+            t2 (println statResult )
+            p2 (reset! output p2Result)
         ]
     )
    (comment let [eventFilter (:eventRules searchrules)
