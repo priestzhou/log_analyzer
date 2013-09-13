@@ -157,15 +157,16 @@
 
 
 
-(defn do-search [searchrules rdd output]
+(defn do-search [searchrules rdd logout groupout]
     (info "do-search run")
 
     (let [se (Spark_engine. searchrules rdd)
             fr (.getFilterResult se)
             llog (.takeSample fr false 100 9)
             loglist (showlog llog)
-            logtable {:logtable loglist}
-            p1 (reset! output logtable)
+            lc (.count fr)
+            logtable {:logtable loglist :total lc}
+            p1 (reset! logout logtable)
             gk (.get searchrules "groupKeys")
         ]
         (if (nil? gk)
@@ -174,8 +175,8 @@
                 se
                 .getGroupResult
                 .collect
-                (assoc logtable :meta )
-                (reset! output)
+                (assoc {} "results" )
+                (reset! groupout)
             )
         )
     )
