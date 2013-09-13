@@ -21,7 +21,6 @@
 
 )
 
-
 (defn- testparse' [instr]
     (fn [stream]
         (println "test" instr (map first stream))
@@ -33,8 +32,6 @@
     (println "test" (map first stream))
     [stream []]
 )
-
-
 
 (defn- parse-event-str [stream]
     (let [[strm parsed] (
@@ -570,7 +567,6 @@
     )
 )
 
-
 (defn- get-group-time [timeStep timeValue]
     (let [modTime (mod timeValue timeStep)
             groupTime (- timeValue modTime)
@@ -613,7 +609,6 @@
    ([sStr timeWindow startTime]
         (println "test in sparser")
         (let [psr (parse-all sStr)
-                timeRule (assoc (get timeMap timeWindow) :startTime startTime)
             ]
             ;(assoc psr :timeRule timeRule)
             psr

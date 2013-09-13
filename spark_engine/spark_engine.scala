@@ -32,9 +32,9 @@ object T_regex extends java.io.Serializable  {
 
 class Filter extends java.io.Serializable 
 {
-    def eventFitler(s:String,str:String):Boolean={
+    def eventFitler(s:String,ts:Long , str:String,st:Long,et:Long):Boolean={
         val flag = T_regex.process(str,s)
-        if(""==flag){
+        if((ts < st) || (ts > et) || (""==flag)){
             false
         }else{
             true
@@ -89,8 +89,8 @@ class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Seri
             println(vList)
             groupValue.put(outkey,getFunc(funStr)(vList).toString)
         }
-        statResult.put("gkey",groupKeys)
-        statResult.put("gvalue",groupValue)
+        statResult.put("gKeys",groupKeys)
+        statResult.put("gValues",groupValue)
         statResult  
     }
     def getFunc( fun:String) ={
@@ -109,7 +109,7 @@ class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Seri
         t.length
     }
     def sumfun(t:List[Any]) = {
-        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x =>Integer.valueOf(x.toString)).reduce( _ + _ )
+        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x =>Integer.valueOf(x.toString).longValue).reduce( _ + _ )
     }
     def ucfun(t:List[Any]) = {
         t.toList.distinct.length
@@ -121,7 +121,7 @@ class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Seri
         t.filter(x=>StringUtils.isNumeric(x.toString)).map(x => Integer.valueOf(x.toString)).max
     }
     def firstfun(t:List[Any]) = {
-        t.init
+        t.head
     }
     def lastfun(t:List[Any]) = {
         t.last
@@ -140,11 +140,13 @@ class Spark_engine (
     println(searchRule.keySet)
     println(rdd)
     val eventRule = searchRule.get("eventRules").toString
+    val st = java.lang.Long.parseLong(searchRule.get("startTime").toString)
+    val et = java.lang.Long.parseLong(searchRule.get("endTime").toString)
     val nf = new Filter()
     println(eventRule)
     val rdd2 = rdd.filter(x=> 
             //x.get("message").toString.contains(eventRule)
-            nf.eventFitler( x.get("message").toString,eventRule.toString )
+            nf.eventFitler( x.get("message").toString,x.get("timestamp").asInstanceOf[BigInt].longValue,eventRule.toString,st,et)
         ) 
     val parseRules = searchRule.get("parseRules").asInstanceOf[List[java.util.Map[String,String]]]
     var rdd3 :RDD[HashMap[String,Any]] =_

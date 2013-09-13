@@ -74,7 +74,7 @@
 )
 
 (defn- wait-result [query-id kw]
-    (Thread/sleep 5000)
+    (Thread/sleep 1000)
     (let [flag (get-in @futurMap [query-id kw])]
         (if (= @flag [])
             (recur query-id kw)
@@ -134,13 +134,15 @@
     (recur fMap)
 )
 
-(defn- create-query-t [qStr timewindow]
-    (info "create-query-t " :string qStr  :timewindow timewindow)
+(defn- create-query-t [qStr start end]
+    (info "create-query-t " :string qStr  :start start :end end)
     (if  (> maxQueryCount (count (keys @futurMap)))
         (let [query-id (gen-query-id)
                 logout (atom [])
                 groupout (atom [])
-                srule (sp/sparser qStr "14400" 1376813000267) 
+                srule  (sp/sparser qStr "14400" 1376813000267) 
+                t1rule (.put srule "startTime" start)
+                t2rule (.put srule "endTime" end)    
             ]
             (info "create-query-t into let")
             (println "srule - " srule)
@@ -187,7 +189,7 @@
                     "Access-Control-Allow-Origin" "*"
                     "content-type" "application/json"
                 }
-                :body (create-query-t (:query params ) (:timewindow params))
+                :body (create-query-t (:query params ) (:start params) (:end params))
             }
             
         )

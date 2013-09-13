@@ -170,7 +170,10 @@
             gk (.get searchrules "groupKeys")
         ]
         (if (nil? gk)
-            (println "no groupKeys")
+            (do
+                (println "no groupKeys")
+                (reset! groupout {"key" "no results"})
+            )
             (->>
                 se
                 .getGroupResult
