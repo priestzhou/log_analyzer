@@ -166,12 +166,18 @@
             loglist (showlog llog)
             logtable {:logtable loglist}
             p1 (reset! output logtable)
-            sr (.getGroupResult se)
-            statResult (.collect sr)
-            p2Result (assoc logtable :meta statResult)
-            t2 (println statResult )
-            p2 (reset! output p2Result)
+            gk (.get searchrules "groupKeys")
         ]
+        (if (nil? gk)
+            (println "no groupKeys")
+            (->>
+                se
+                .getGroupResult
+                .collect
+                (assoc logtable :meta )
+                (reset! output)
+            )
+        )
     )
    (comment let [eventFilter (:eventRules searchrules)
             timeRule (:timeRule searchrules)
