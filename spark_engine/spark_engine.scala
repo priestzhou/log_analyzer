@@ -77,14 +77,19 @@ class GenGroupkey(val groupKeys:List[String]) extends java.io.Serializable {
 
 class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Serializable {
     def getStat( groupKeys:HashMap[String,String],loglist:List[HashMap[String,Any]]) ={
+      println(statRules)
+      var statResult = new HashMap[String,HashMap[String,String]]() 
+      var groupValue = new HashMap[String,String]()
       for( sr <- statRules) {
             val inkey = sr.get("statInKey").toString
             val vList = loglist.map(x=>x.get("inkey"))
             val outkey = sr.get("statOutKey").toString
             val funStr = sr.get("statFun").toString
-            groupKeys.put(outkey,getFunc(funStr)(vList).toString)
+            groupValue.put(outkey,getFunc(funStr)(vList).toString)
         }
-        groupKeys  
+        statResult.put("gkey",groupKeys)
+        statResult.put("gvalue",groupValue)
+        statResult  
     }
     def getFunc( fun:String) ={
         fun match {
@@ -105,7 +110,7 @@ class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Seri
         t.map(_.asInstanceOf[Int]).reduce( _ + _ )
     }
     def ucfun(t:List[Any]) = {
-        t.distinct.length
+        t.toList.removeDuplicates.length
     }
     def minfun(t:List[Any]) = {
         t.map(_.asInstanceOf[Int]).min   
