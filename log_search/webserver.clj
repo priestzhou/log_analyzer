@@ -52,10 +52,10 @@
     ) 
 )
 
-(defn- run-query [psr query-atom rdd]
+(defn- run-query [psr rdd log-atom  group-atom]
     (println "query run " )
     (try
-        (sd/do-search psr rdd query-atom)
+        (sd/do-search psr rdd log-atom group-atom)
 
         (println " query done")
         (catch Exception error
@@ -73,7 +73,17 @@
     )
 )
 
-(defn- get-query-result [query-id]
+(defn- wait-result [query-id kw]
+    (Thread/sleep 5000)
+    (let [flag (get-in @futurMap [query-id kw])]
+        (if (= @flag [])
+            (recur query-id kw)
+            (debug "result ready")
+        )
+    )
+)
+
+(defn- get-query-result [query-id kw]
     (if (nil? (get @futurMap query-id))
         (do
             (debug "the query is invalid " :query-id query-id)
@@ -86,13 +96,14 @@
                     (fn [a] (System/currentTimeMillis))
                 )
             )
+            (wait-result query-id kw)
             {:status 202
                 :headers {
                     "Access-Control-Allow-Origin" "*"
                     "content-type" "application/json"
                 }
                 :body 
-                (js/write-str @(get-in @futurMap [query-id :output]) )
+                (js/write-str @(get-in @futurMap [query-id kw]) )
             }
         )
     )
@@ -107,7 +118,7 @@
 
 (defn- check-query [fMap]
     (let [curtime (System/currentTimeMillis)
-            lastTime (- curtime  30000)
+            lastTime (- curtime  300000)
             query-List (keys @fMap)
         ]
         (->>
@@ -127,7 +138,8 @@
     (info "create-query-t " :string qStr  :timewindow timewindow)
     (if  (> maxQueryCount (count (keys @futurMap)))
         (let [query-id (gen-query-id)
-                output (atom [])
+                logout (atom [])
+                groupout (atom [])
                 srule (sp/sparser qStr "14400" 1376813000267) 
             ]
             (info "create-query-t into let")
@@ -140,13 +152,15 @@
                                 (do (println "future in ")
                                 (run-query 
                                     srule
-                                    output
                                     @rddData
+                                    logout
+                                    groupout
                                 )
                                 )
                             )
                         :time (System/currentTimeMillis)
-                        :output output
+                        :logout logout
+                        :groupout groupout
                     }
                 )
             )
@@ -178,11 +192,16 @@
             
         )
     )
-    (cp/GET "/query/get" {params :params} 
+    (cp/GET "/query/log" {params :params} 
         (do
-            (get-query-result (:query-id params))    
+            (get-query-result (:query-id params) :logout)    
         )       
     )
+    (cp/GET "/query/result" {params :params} 
+        (do
+            (get-query-result (:query-id params) :groupout)    
+        )       
+    )    
     (cp/GET "/testlog/first" []
         (get-log-example)
     )
