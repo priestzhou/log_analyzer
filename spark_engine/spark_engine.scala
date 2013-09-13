@@ -12,6 +12,7 @@ import scala.util.matching.Regex
 import net.liftweb.json._
 import scala.collection.immutable.{HashMap=>smap }
 import scala.collection.JavaConversions._
+import org.apache.commons.lang.StringUtils
 
 
 /**
@@ -82,9 +83,10 @@ class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Seri
       var groupValue = new HashMap[String,String]()
       for( sr <- statRules) {
             val inkey = sr.get("statInKey").toString
-            val vList = loglist.map(x=>x.get("inkey"))
+            val vList = loglist.map(x=>x.get(inkey))
             val outkey = sr.get("statOutKey").toString
             val funStr = sr.get("statFun").toString
+            println(vList)
             groupValue.put(outkey,getFunc(funStr)(vList).toString)
         }
         statResult.put("gkey",groupKeys)
@@ -107,16 +109,16 @@ class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Seri
         t.length
     }
     def sumfun(t:List[Any]) = {
-        t.map(_.asInstanceOf[Int]).reduce( _ + _ )
+        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x =>Integer.parseInt(x.toString)).reduce( _ + _ )
     }
     def ucfun(t:List[Any]) = {
-        t.toList.removeDuplicates.length
+        t.toList.distinct.length
     }
     def minfun(t:List[Any]) = {
-        t.map(_.asInstanceOf[Int]).min   
+        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x => Integer.parseInt(x.toString)).min   
     }
     def maxfun(t:List[Any]) = {
-        t.map(_.asInstanceOf[Int]).max
+        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x => Integer.parseInt(x.toString)).max
     }
     def firstfun(t:List[Any]) = {
         t.init
@@ -125,7 +127,7 @@ class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Seri
         t.last
     }
     def avgfun(t:List[Any]) = {
-        sumfun(t)/countfun(t)
+        sumfun(t)/countfun(t.filter(x=>StringUtils.isNumeric(x.toString)))
     }    
 } 
 
