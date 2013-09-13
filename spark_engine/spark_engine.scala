@@ -109,16 +109,16 @@ class StatValue(val statRules:List[HashMap[String,String]]) extends java.io.Seri
         t.length
     }
     def sumfun(t:List[Any]) = {
-        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x =>Integer.parseInt(x.toString)).reduce( _ + _ )
+        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x =>Integer.valueOf(x.toString)).reduce( _ + _ )
     }
     def ucfun(t:List[Any]) = {
         t.toList.distinct.length
     }
     def minfun(t:List[Any]) = {
-        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x => Integer.parseInt(x.toString)).min   
+        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x => Integer.valueOf(x.toString)).min   
     }
     def maxfun(t:List[Any]) = {
-        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x => Integer.parseInt(x.toString)).max
+        t.filter(x=>StringUtils.isNumeric(x.toString)).map(x => Integer.valueOf(x.toString)).max
     }
     def firstfun(t:List[Any]) = {
         t.init
