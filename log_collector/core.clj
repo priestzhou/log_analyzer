@@ -4,7 +4,10 @@
     )
     (:require
         [clojure.java.io :as io]
+        [clojure.edn :as edn]
         [clojure.data.json :as json]
+        [utilities.core :as util]
+        [utilities.shutil :as sh]
         [kfktools.core :as kfk]
         [log-collector.disk-scanner :as ds]
         [log-collector.log-line-parser :as llp]
@@ -12,7 +15,8 @@
     (:import
         [java.nio.charset StandardCharsets]
         [kafka.common KafkaException]
-        [java.io IOException]
+        [java.io IOException PushbackReader]
+        [java.nio.file Paths]
     )
 )
 
@@ -27,74 +31,147 @@
     )
 )
 
-(defn- scan [opts]
-    (let [base (:base opts)
-        pattern (:pattern opts)
-        sorter (get opts :sorter ds/sort-daily-rolling)
-        ]
-        (ds/scan sorter base pattern)
+(defn- produce 
+    ([producer logs cnt]
+        (if (empty? logs)
+            cnt
+            (let [[bulk remains] (split-at 1000 logs)]
+                (kfk/produce producer bulk)
+                (if-let [{:keys [topic message]} (first bulk)]
+                    (info "Sent logs" 
+                        :count (count bulk)
+                        :first {
+                            :topic topic 
+                            :message (-> message
+                                (String. StandardCharsets/UTF_8)
+                                (json/read-str)
+                            )
+                        }
+                    )
+                )
+                (Thread/sleep 100)
+                (recur producer remains (+ cnt (count bulk)))
+            )
+        )
     )
-)
 
-(defn- read-logs [opts f]
-    (let [parser (get opts :parser llp/parse-log-line)
-        rdr (io/reader (.toFile f))
-        ]
-        (llp/parse-log-events! parser rdr)
-    )
-)
-
-(defn- main-loop [producer opts]
-    (while true
+    ([producer logs]
         (try
-            (let [logs (for [
-                    [k v] opts
-                    f (->> (scan v)
-                        (take 2)
-                        (reverse)
+            (if (empty? logs)
+                (info "Find no new logs")
+                (do
+                    (info "Find new logs")
+                    (let [total (produce producer logs 0)]
+                        (info "Sent all new logs. Wait for 5 secs." :total total)
                     )
-                    ln (read-logs v f)
-                    :let [not-cached-ln (llp/cache-log-line ln)]
-                    :when not-cached-ln
-                    :let [message (-> not-cached-ln
-                        (json/write-str)
-                        (.getBytes (StandardCharsets/UTF_8))
-                    )]
-                    ]
-                    {:topic (name k) :message message}
                 )
-                ]
-                (info "Find new logs")
-                (doseq [plogs (partition-all 1000 logs)]
-                    (kfk/produce producer plogs)
-                    (if-let [{:keys [topic message]} (first plogs)]
-                        (info "Sent logs" 
-                            :count (count plogs)
-                            :first {
-                                :topic topic 
-                                :message (-> message
-                                    (String. StandardCharsets/UTF_8)
-                                    (json/read-str)
-                                )
-                            }
-                        )
-                    )
-                    (Thread/sleep 100)
-                )
-                (info "Sent all new logs. Wait for 5 secs.")
             )
         (catch IOException ex
             (error "IO error. Wait for 5 secs." :exception ex)
         ))
-        (Thread/sleep 5000)
+    )
+)
+
+(defn- fetch-logs [opts file-info]
+    (try
+        (let [files (ds/scan opts)
+            [new-file-info files] (ds/filter-files file-info files)
+            ]
+            [
+                new-file-info
+                (for [[opt f offset] files
+                    msg (llp/read-logs opt f offset)
+                    ]
+                    {
+                        :topic (name (:topic opt))
+                        :message (-> msg
+                            (json/write-str)
+                            (.getBytes StandardCharsets/UTF_8)
+                        )
+                    }
+                )
+            ]
+        )
+    (catch IOException ex
+        (error "IO error. Wait for 5 secs." :exception ex)
+        nil
+    ))
+)
+
+(defn- get-checkpoint-path [opts]
+    (let [myself (:myself opts)]
+        (util/throw-if-not myself
+            IllegalArgumentException.
+            "expect :myself in my config file"
+        )
+        (let [cpt-filename (:checkpoint myself)]
+            (util/throw-if-not cpt-filename
+                IllegalArgumentException.
+                "expect :checkpoint under :myself in my config file"
+            )
+            (sh/getPath cpt-filename)
+        )
+    )
+)
+
+(defn- write-checkpoint [opts file-info]
+    (let [
+        p (get-checkpoint-path opts)
+        cpt (into (sorted-map)
+            (for [[ln [_ fp size]] (seq file-info)]
+                [ln [(str fp) size]]
+            )
+        )
+        to-write (-> cpt
+            (prn-str)
+        )
+        ]
+        (with-open [f (io/writer (.toFile p) :encode "UTF-8")]
+            (.write f to-write)
+        )
+    )
+)
+
+(defn- main-loop [producer opts file-info]
+    (if-let [[new-file-info logs] (fetch-logs (dissoc opts :myself) file-info)]
+        (do
+            (produce producer logs)
+            (write-checkpoint opts new-file-info)
+            (Thread/sleep 5000)
+            (recur producer opts new-file-info)
+        )
+        (do
+            (Thread/sleep 5000)
+            (recur producer opts file-info)
+        )
+    )
+)
+
+(defn- read-file-info [opts]
+    (let [
+        cpt (get-checkpoint-path opts)
+        cpt-file (.toFile cpt)
+        ]
+        (if-not (.exists cpt-file)
+            {}
+            (with-open [rdr (PushbackReader. (io/reader cpt-file))]
+                (let [file-info (edn/read rdr)]
+                    (into {}
+                        (for [[first-line [filename size]] (seq file-info)]
+                            [first-line [{} (sh/getPath filename) size]]
+                        )
+                    )
+                )
+            )
+        )
     )
 )
 
 (defn main [opts]
-    (while true
+    (let [file-info (read-file-info opts)]
         (try
             (with-open [producer (kfk/newProducer (:kafka opts))]
-                (main-loop producer (dissoc opts :kafka))
+                (main-loop producer (dissoc opts :kafka) file-info)
             )
         (catch KafkaException ex
             (error "Cannot create kafka producer. Wait for 15 secs." :exception ex)
