@@ -25,6 +25,7 @@
             input-rdd (.textFile sc "/home/hadoop/build/namenodelog"
                 )
             ]
+        (println (macroexpand-1 '(sfn/fn [a] (json/read-str a)) ))
         (k/map 
             input-rdd
             (sfn/fn f [log]
@@ -41,11 +42,13 @@
     (->
         testrdd
         ;(k/map (sfn/fn [log] [(count log) log]))
-        (.saveAsObjectFile  "/home/hadoop/build/obtfile/")
+        (.count)
         println
     )    
     )
 )
+
+(println (macroexpand-1 '(sfn/fn [a] (+ 1 a)) ))
 
 (defn -main []
     (let [            
@@ -60,6 +63,7 @@
                 )
             )
         ]
+
         (run-test 
             "*hdfs_* | parse-re \"(?<=HDFS_)[a-zA-Z]*\" as type 
             | parse \"bytes: *,\" as size | last size ,min size,uc size ,max size by type " 
